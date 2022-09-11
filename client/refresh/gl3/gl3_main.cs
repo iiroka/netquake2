@@ -124,6 +124,47 @@ namespace Quake2 {
         private cvar_t? r_fixsurfsky;
         private cvar_t? gl3_usefbo;
 
+        // Yaw-Pitch-Roll
+        // equivalent to R_z * R_y * R_x where R_x is the trans matrix for rotating around X axis for aroundXdeg
+        private Matrix4X4<float> rotAroundAxisZYX(float aroundZdeg, float aroundYdeg, float aroundXdeg)
+        {
+            // Naming of variables is consistent with http://planning.cs.uiuc.edu/node102.html
+            // and https://de.wikipedia.org/wiki/Roll-Nick-Gier-Winkel#.E2.80.9EZY.E2.80.B2X.E2.80.B3-Konvention.E2.80.9C
+            float alpha = QShared.ToRadians(aroundZdeg);
+            float beta = QShared.ToRadians(aroundYdeg);
+            float gamma = QShared.ToRadians(aroundXdeg);
+
+            float sinA = MathF.Sin(alpha);
+            float cosA = MathF.Cos(alpha);
+            // TODO: or sincosf(alpha, &sinA, &cosA); ?? (not a standard function)
+            float sinB = MathF.Sin(beta);
+            float cosB = MathF.Cos(beta);
+            float sinG = MathF.Sin(gamma);
+            float cosG = MathF.Cos(gamma);
+
+            return new Matrix4X4<float>(
+                cosA*cosB,                  sinA*cosB,                   -sinB,    0, // first *column*
+                cosA*sinB*sinG - sinA*cosG, sinA*sinB*sinG + cosA*cosG, cosB*sinG, 0,
+                cosA*sinB*cosG + sinA*sinG, sinA*sinB*cosG - cosA*sinG, cosB*cosG, 0,
+                0,                          0,                          0,        1
+            );
+        }
+
+        private void GL3_RotateForEntity(GL gl, in entity_t e)
+        {
+            // angles: pitch (around y), yaw (around z), roll (around x)
+            // rot matrices to be multiplied in order Z, Y, X (yaw, pitch, roll)
+            var transMat = rotAroundAxisZYX(e.angles.X, -e.angles.Y, -e.angles.Z);
+
+            transMat.M41 = e.origin.X;
+            transMat.M42 = e.origin.Y;
+            transMat.M43 = e.origin.Z;
+
+            gl3state.uni3DData.transModelMat4 = HMM_MultiplyMat4(gl3state.uni3DData.transModelMat4, transMat);
+
+            GL3_UpdateUBO3D(gl);
+        }
+
         private void GL3_Strings(GL gl)
         {
             R_Printf(QShared.PRINT_ALL, $"GL_VENDOR: {gl3config.vendor_string}\n");
@@ -684,7 +725,7 @@ namespace Quake2 {
                             GL3_DrawAliasModel(gl, ref currententity);
                             break;
                         case modtype_t.mod_brush:
-                            GL3_DrawBrushModel(gl, currententity, (gl3brushmodel_t)currentmodel);
+                            GL3_DrawBrushModel(gl, ref currententity, (gl3brushmodel_t)currentmodel);
                             break;
                         case modtype_t.mod_sprite:
                             // GL3_DrawSpriteModel(currententity, currentmodel);
@@ -730,7 +771,7 @@ namespace Quake2 {
                             GL3_DrawAliasModel(gl, ref currententity);
                             break;
                         case modtype_t.mod_brush:
-                            GL3_DrawBrushModel(gl, currententity, (gl3brushmodel_t)currentmodel);
+                            GL3_DrawBrushModel(gl, ref currententity, (gl3brushmodel_t)currentmodel);
                             break;
                         case modtype_t.mod_sprite:
                             // GL3_DrawSpriteModel(currententity, currentmodel);
@@ -956,11 +997,34 @@ namespace Quake2 {
             );
         }
 
+        private Matrix4X4<float> HMM_MultiplyMat4(in Matrix4X4<float> Left, in Matrix4X4<float> Right)
+        {
+            return new Matrix4X4<float>(
+                // Column1
+                Left.M11 * Right.M11 + Left.M21 * Right.M12 + Left.M31 * Right.M13 + Left.M41 * Right.M14,
+                Left.M12 * Right.M11 + Left.M22 * Right.M12 + Left.M32 * Right.M13 + Left.M42 * Right.M14,
+                Left.M13 * Right.M11 + Left.M23 * Right.M12 + Left.M33 * Right.M13 + Left.M43 * Right.M14,
+                Left.M14 * Right.M11 + Left.M24 * Right.M12 + Left.M34 * Right.M13 + Left.M44 * Right.M14,
+                // Column2
+                Left.M11 * Right.M21 + Left.M21 * Right.M22 + Left.M31 * Right.M23 + Left.M41 * Right.M24,
+                Left.M12 * Right.M21 + Left.M22 * Right.M22 + Left.M32 * Right.M23 + Left.M42 * Right.M24,
+                Left.M13 * Right.M21 + Left.M23 * Right.M22 + Left.M33 * Right.M23 + Left.M43 * Right.M24,
+                Left.M14 * Right.M21 + Left.M24 * Right.M22 + Left.M34 * Right.M23 + Left.M44 * Right.M24,
+                // Column3
+                Left.M11 * Right.M31 + Left.M21 * Right.M32 + Left.M31 * Right.M33 + Left.M41 * Right.M34,
+                Left.M12 * Right.M31 + Left.M22 * Right.M32 + Left.M32 * Right.M33 + Left.M42 * Right.M34,
+                Left.M13 * Right.M31 + Left.M23 * Right.M32 + Left.M33 * Right.M33 + Left.M43 * Right.M34,
+                Left.M14 * Right.M31 + Left.M24 * Right.M32 + Left.M34 * Right.M33 + Left.M44 * Right.M34,
+                // Column4
+                Left.M11 * Right.M41 + Left.M21 * Right.M42 + Left.M31 * Right.M43 + Left.M41 * Right.M44,
+                Left.M12 * Right.M41 + Left.M22 * Right.M42 + Left.M32 * Right.M43 + Left.M42 * Right.M44,
+                Left.M13 * Right.M41 + Left.M23 * Right.M42 + Left.M33 * Right.M43 + Left.M43 * Right.M44,
+                Left.M14 * Right.M41 + Left.M24 * Right.M42 + Left.M34 * Right.M43 + Left.M44 * Right.M44
+            );
+        }
 
         private unsafe void SetupGL(GL gl)
         {
-            // int x, x2, y2, y, w, h;
-
             /* set up viewport */
             int x = (int)Math.Floor(gl3_newrefdef.x * (double)vid.width / (double)vid.width);
             int x2 = (int)Math.Ceiling((gl3_newrefdef.x + gl3_newrefdef.width) * (double)vid.width / (double)vid.width);
@@ -1057,6 +1121,11 @@ namespace Quake2 {
 
             gl.CullFace(CullFaceMode.Front);
 
+            Console.WriteLine("gl3_newrefdef.vieworg");
+            Console.WriteLine(gl3_newrefdef.vieworg);
+            Console.WriteLine("gl3_newrefdef.viewangles");
+            Console.WriteLine(gl3_newrefdef.viewangles);
+
             /* set up view matrix (world coordinates -> eye coordinates) */
             {
                 // first put Z axis going up
@@ -1070,18 +1139,18 @@ namespace Quake2 {
                 // now rotate by view angles
                 var rotMat = rotAroundAxisXYZ(-gl3_newrefdef.viewangles.Z, -gl3_newrefdef.viewangles.X, -gl3_newrefdef.viewangles.Y);
 
-                viewMat = viewMat * rotMat;
+                viewMat = HMM_MultiplyMat4(viewMat, rotMat);
 
                 // .. and apply translation for current position
                 var trans = new Vector3D<float>(-gl3_newrefdef.vieworg.X, -gl3_newrefdef.vieworg.Y, -gl3_newrefdef.vieworg.Z);
-                viewMat = viewMat * Matrix4X4.CreateTranslation(trans);
+                viewMat = HMM_MultiplyMat4(viewMat, Matrix4X4.CreateTranslation(trans));
 
                 gl3state.viewMat3D = viewMat;
             }
 
             // just use one projection-view-matrix (premultiplied here)
             // so we have one less mat4 multiplication in the 3D shaders
-            gl3state.uni3DData.transProjViewMat4 = gl3state.projMat3D * gl3state.viewMat3D;
+            gl3state.uni3DData.transProjViewMat4 = HMM_MultiplyMat4(gl3state.projMat3D, gl3state.viewMat3D);
 
             gl3state.uni3DData.transModelMat4 = gl3_identityMat4;
 
@@ -1259,7 +1328,7 @@ namespace Quake2 {
 
         //     GL3_DrawParticles();
 
-        //     GL3_DrawAlphaSurfaces();
+            GL3_DrawAlphaSurfaces(gl);
 
             // Note: R_Flash() is now GL3_Draw_Flash() and called from GL3_RenderFrame()
 

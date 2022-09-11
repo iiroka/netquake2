@@ -33,7 +33,7 @@ namespace Quake2 {
         // level_locals_t level;
         private game_import_t gi;
         // game_export_t globals;
-        // spawn_temp_t st;
+        private spawn_temp_t st;
 
         // int sm_meat_index;
         // int snd_fry;
@@ -91,9 +91,11 @@ namespace Quake2 {
         private cvar_t? aimfix;
         private cvar_t? g_machinegun_norecoil;        
 
+        private int global_num_ecicts;
+
         // public edict_s[] edicts { get{ return g_edicts; } }
         public edict_s getEdict(int index) { return g_edicts[index]; }
-        public int num_edicts { get { return game.maxclients + 1; } }             /* current number, <= max_edicts */
+        public int num_edicts { get { return global_num_ecicts; } }             /* current number, <= max_edicts */
         public int max_edicts { get { return game.maxentities; } }
 
         public QuakeGame(game_import_t gi)
@@ -177,6 +179,7 @@ namespace Quake2 {
             /* initialize all clients for this game */
             game.maxclients = maxclients!.Int;
             game.clients = new gclient_t[game.maxclients];
+            global_num_ecicts =  game.maxclients + 1;
         }
     }
 }

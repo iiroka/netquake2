@@ -23,6 +23,7 @@
  *
  * =======================================================================
  */
+using System.Text;
 
 namespace Quake2 {
 
@@ -110,7 +111,95 @@ namespace Quake2 {
         //     Cvar_Set("game", userGivenGame);
         }
 
+        /*
+        * Just sent as a hint to the client that they should
+        * drop to full console
+        */
+        private void CL_Changing_f(string[] args)
+        {
+            /* if we are downloading, we don't change!
+            This so we don't suddenly stop downloading a map */
+            // if (cls.download)
+            // {
+            //     return;
+            // }
 
+            // SCR_BeginLoadingPlaque();
+            cls.state = connstate_t.ca_connected; /* not active anymore, but not disconnected */
+            common.Com_Printf("\nChanging map...\n");
+
+        // #ifdef USE_CURL
+        //     if (cls.downloadServerRetry[0] != 0)
+        //     {
+        //         CL_SetHTTPServer(cls.downloadServerRetry);
+        //     }
+        // #endif
+        }
+
+        /*
+        * The server is changing levels
+        */
+        private void CL_Reconnect_f(string[] args)
+        {
+            /* if we are downloading, we don't change!
+            This so we don't suddenly stop downloading a map */
+            // if (cls.download)
+            // {
+            //     return;
+            // }
+
+            // S_StopAllSounds();
+
+            if (cls.state == connstate_t.ca_connected)
+            {
+                common.Com_Printf("reconnecting...\n");
+                cls.state = connstate_t.ca_connected;
+                cls.netchan.message.WriteChar((int)QCommon.clc_ops_e.clc_stringcmd);
+                cls.netchan.message.WriteString("new");
+                return;
+            }
+
+            if (!String.IsNullOrEmpty(cls.servername))
+            {
+                if (cls.state >= connstate_t.ca_connected)
+                {
+                    CL_Disconnect();
+                    cls.connect_time = cls.realtime - 1500;
+                }
+
+                else
+                {
+                    cls.connect_time = -99999; /* Hack: fire immediately */
+                }
+
+                cls.state = connstate_t.ca_connecting;
+
+                common.Com_Printf("reconnecting...\n");
+            }
+        }
+
+        private void CL_ForwardToServer_f(string[] args)
+        {
+            if ((cls.state != connstate_t.ca_connected) && (cls.state != connstate_t.ca_active))
+            {
+                common.Com_Printf($"Can't \"{args[0]}\", not connected\n");
+                return;
+            }
+
+            /* don't forward the first argument */
+            if (args.Length > 1)
+            {
+                cls.netchan.message.WriteByte((int)QCommon.clc_ops_e.clc_stringcmd);
+                var sb = new StringBuilder();
+                for (int i = 1; i < args.Length; i++)
+                {
+                    sb.Append(args[i]);
+                    if (i < (args.Length - 1))
+                        sb.Append(" ");
+                }
+                cls.netchan.message.Print(sb.ToString());
+            }
+        }
         /*
         * Called after an ERR_DROP was thrown
         */

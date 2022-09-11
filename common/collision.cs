@@ -24,6 +24,7 @@
  *
  * =======================================================================
  */
+using System.Numerics;
 using System.Text;
 
 namespace Quake2 {
@@ -34,12 +35,68 @@ namespace Quake2 {
         private string map_entitystring = "";
         private QShared.cmodel_t[] map_cmodels = new QShared.cmodel_t[MAX_MAP_MODELS];
         private cvar_t? map_noareas;
+        private int leaf_topnode;
+        private int	numareaportals;
+        private int numareas = 1;
+        private int	numbrushes;
+        private int	numbrushsides;
+        private int numclusters = 1;
+        private int	numcmodels;
+        // private int	numentitychars;
+        private int	numleafbrushes;
+        private int numleafs = 1; /* allow leaf funcs to be called without a map */
+        private int	numnodes;
+        private int	numplanes;
+        private int	numtexinfo;
+        private int	numvisibility;
+        private int trace_contents;
+
         private uint last_checksum = 0;
 
         private void CM_Init()
         {
             for (int i = 0; i < map_cmodels.Length; i++){
                 map_cmodels[i] = new QShared.cmodel_t();
+            }
+        }
+
+        private void CMod_LoadSubmodels(byte[] buf, in lump_t l)
+        {
+            // dmodel_t *in;
+            // cmodel_t *out;
+            // int i, j, count;
+
+            // in = (void *)(cmod_base + l->fileofs);
+
+            if ((l.filelen % dmodel_t.size) != 0)
+            {
+                Com_Error(QShared.ERR_DROP, "Mod_LoadSubmodels: funny lump size");
+            }
+
+            int count = l.filelen / dmodel_t.size;
+
+            if (count < 1)
+            {
+                Com_Error(QShared.ERR_DROP, "Map with no models");
+            }
+
+            if (count > MAX_MAP_MODELS)
+            {
+                Com_Error(QShared.ERR_DROP, "Map has too many models");
+            }
+
+            numcmodels = count;
+
+            for (int i = 0; i < count; i++)
+            {
+                var ind = new dmodel_t(buf, l.fileofs + i * dmodel_t.size);
+
+                /* spread the mins / maxs by a pixel */
+                map_cmodels[i].mins = new Vector3(ind.mins[0]-1, ind.mins[1]-1, ind.mins[2]-1);
+                map_cmodels[i].maxs = new Vector3(ind.maxs[0]-1, ind.maxs[1]-1, ind.maxs[2]-1);
+                map_cmodels[i].origin = new Vector3(ind.origin);
+
+                map_cmodels[i].headnode = ind.headnode;
             }
         }
 
@@ -118,20 +175,20 @@ namespace Quake2 {
             }
 
             /* free old stuff */
-            // numplanes = 0;
-            // numnodes = 0;
-            // numleafs = 0;
-            // numcmodels = 0;
-            // numvisibility = 0;
+            numplanes = 0;
+            numnodes = 0;
+            numleafs = 0;
+            numcmodels = 0;
+            numvisibility = 0;
             // numentitychars = 0;
             map_entitystring = "";
             map_name = "";
 
             if (String.IsNullOrEmpty(name))
             {
-                // numleafs = 1;
-                // numclusters = 1;
-                // numareas = 1;
+                numleafs = 1;
+                numclusters = 1;
+                numareas = 1;
                 checksum = 0;
                 return map_cmodels[0]; /* cinematic servers won't have anything at all */
             }
@@ -162,7 +219,7 @@ namespace Quake2 {
             // CMod_LoadPlanes(&header.lumps[LUMP_PLANES]);
             // CMod_LoadBrushes(&header.lumps[LUMP_BRUSHES]);
             // CMod_LoadBrushSides(&header.lumps[LUMP_BRUSHSIDES]);
-            // CMod_LoadSubmodels(&header.lumps[LUMP_MODELS]);
+            CMod_LoadSubmodels(buf, header.lumps[LUMP_MODELS]);
             // CMod_LoadNodes(&header.lumps[LUMP_NODES]);
             // CMod_LoadAreas(&header.lumps[LUMP_AREAS]);
             // CMod_LoadAreaPortals(&header.lumps[LUMP_AREAPORTALS]);
@@ -180,6 +237,29 @@ namespace Quake2 {
             map_name = name;
 
             return map_cmodels[0];
+        }
+
+        public QShared.cmodel_t CM_InlineModel(string name)
+        {
+            if (String.IsNullOrEmpty(name) || (name[0] != '*'))
+            {
+                Com_Error(QShared.ERR_DROP, "CM_InlineModel: bad name");
+            }
+
+            var num = Int32.Parse(name.Substring(1));
+
+            if ((num < 1) || (num >= numcmodels))
+            {
+                Com_Error(QShared.ERR_DROP, "CM_InlineModel: bad number");
+            }
+
+            return map_cmodels[num];
+        }
+
+
+        public int CM_NumInlineModels()
+        {
+            return numcmodels;
         }
 
         public string CM_EntityString()

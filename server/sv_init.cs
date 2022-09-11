@@ -112,15 +112,13 @@ namespace Quake2 {
             sv.configstrings[QShared.CS_MAPCHECKSUM] = checksum.ToString();
 
             /* clear physics interaction links */
-            // SV_ClearWorld();
+            SV_ClearWorld();
 
-            // for (i = 1; i < CM_NumInlineModels(); i++)
-            // {
-            //     Com_sprintf(sv.configstrings[CS_MODELS + 1 + i],
-            //             sizeof(sv.configstrings[CS_MODELS + 1 + i]),
-            //             "*%i", i);
-            //     sv.models[i + 1] = CM_InlineModel(sv.configstrings[CS_MODELS + 1 + i]);
-            // }
+            for (int i = 1; i < common.CM_NumInlineModels(); i++)
+            {
+                sv.configstrings[QShared.CS_MODELS + 1 + i] = $"*{i}";
+                sv.models[i + 1] = common.CM_InlineModel(sv.configstrings[QShared.CS_MODELS + 1 + i]);
+            }
 
             /* spawn the rest of the entities on the map */
             sv.state = server_state_t.ss_loading;

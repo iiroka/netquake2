@@ -30,6 +30,7 @@ namespace Quake2 {
     partial class QClient {
 
         private const int MAX_CLIENTWEAPONMODELS = 20;
+        private const int CMD_BACKUP = 256; /* allow a lot of command backups for very fast systems */
 
         /* the cl_parse_entities must be large enough to hold UPDATE_BACKUP frames of
         entities, so that when a delta compressed message arives from the server
@@ -104,8 +105,8 @@ namespace Quake2 {
 
             public int			parse_entities; /* index (not anded off) into cl_parse_entities[] */
 
-            // public usercmd_t	cmd;
-            // public usercmd_t	cmds[CMD_BACKUP]; /* each mesage will send several old cmds */
+            public QShared.usercmd_t	cmd;
+            public QShared.usercmd_t[]	cmds; /* each mesage will send several old cmds */
             // public int			cmd_time[CMD_BACKUP]; /* time sent, for calculating pings */
             // public short		predicted_origins[CMD_BACKUP][3]; /* for debug comparing against server */
 

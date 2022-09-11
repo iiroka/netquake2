@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 1997-2001 Id Software, Inc.
+ * Copyright (C) 2016-2017 Daniel Gibson
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ *
+ * =======================================================================
+ *
+ * Texture handling for OpenGL3
+ *
+ * =======================================================================
+ */
 using Silk.NET.OpenGL;
 
 namespace Quake2 {
@@ -652,6 +678,9 @@ namespace Quake2 {
                     if (name.EndsWith(".m8"))
                     {
             //             image = LoadM8(namewe, type);
+                        var bfr = ri.FS_LoadFile(name);
+                        if (bfr == null) Console.WriteLine("M8 NOT FOUND");
+                        else Console.WriteLine("M8 FOUND");
                     }
                     else
                     {
@@ -679,6 +708,14 @@ namespace Quake2 {
             //             return NULL;
             //         }
             //     }
+            }
+            else if (name.EndsWith(".tga"))
+            {
+                var bfr = ri.FS_LoadFile(name);
+                if (bfr == null) Console.WriteLine("TGA NOT FOUND");
+                else {
+                    Console.WriteLine("TGA FOUND");
+                }
             }
             // else if (strcmp(ext, "tga") == 0 || strcmp(ext, "png") == 0 || strcmp(ext, "jpg") == 0)
             // {

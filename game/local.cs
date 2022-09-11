@@ -1,7 +1,55 @@
+using System.Numerics;
+
 namespace Quake2 {
 
     partial class QuakeGame
     {
+        /* protocol bytes that can be directly added to messages */
+        private const int svc_muzzleflash = 1;
+        private const int svc_muzzleflash2 = 2;
+        private const int svc_temp_entity = 3;
+        private const int svc_layout = 4;
+        private const int svc_inventory = 5;
+        private const int svc_stufftext = 11;
+
+        /* ================================================================== */
+
+        /* view pitching times */
+        private const float DAMAGE_TIME = 0.5f;
+        private const float FALL_TIME = 0.3f;
+
+        /* these are set with checkboxes on each entity in the map editor */
+        private const int SPAWNFLAG_NOT_EASY = 0x00000100;
+        private const int SPAWNFLAG_NOT_MEDIUM = 0x00000200;
+        private const int SPAWNFLAG_NOT_HARD = 0x00000400;
+        private const int SPAWNFLAG_NOT_DEATHMATCH = 0x00000800;
+        private const int SPAWNFLAG_NOT_COOP = 0x00001000;
+
+        /* edict->movetype values */
+        private enum movetype_t
+        {
+            MOVETYPE_NONE, /* never moves */
+            MOVETYPE_NOCLIP, /* origin and angles change with no interaction */
+            MOVETYPE_PUSH, /* no clip to world, push on box contact */
+            MOVETYPE_STOP, /* no clip to world, stops on box contact */
+
+            MOVETYPE_WALK, /* gravity */
+            MOVETYPE_STEP, /* gravity, special edge handling */
+            MOVETYPE_FLY,
+            MOVETYPE_TOSS, /* gravity */
+            MOVETYPE_FLYMISSILE, /* extra size to monsters */
+            MOVETYPE_BOUNCE
+        }
+
+        private struct gitem_armor_t
+        {
+            public int base_count;
+            public int max_count;
+            public float normal_protection;
+            public float energy_protection;
+            public int armor;
+        }
+
         /* this structure is left intact through an entire game
         it should be initialized at dll load time, and read/written to
         the server.ssv file for savegames */
@@ -32,6 +80,63 @@ namespace Quake2 {
             public bool autosaved;
         }
 
+        /* spawn_temp_t is only used to hold entity field values that
+        can be set from the editor, but aren't actualy present
+        in edict_t during gameplay */
+        private struct spawn_temp_t
+        {
+            /* world vars */
+            public string sky;
+            public float skyrotate;
+            public Vector3 skyaxis;
+            public string nextmap;
+
+            public int lip;
+            public int distance;
+            public int height;
+            public string noise;
+            public float pausetime;
+            public string item;
+            public string gravity;
+
+            public float minyaw;
+            public float maxyaw;
+            public float minpitch;
+            public float maxpitch;
+        }
+
+
+        /* fields are needed for spawning from the entity
+        string and saving / loading games */
+        private const int FFL_SPAWNTEMP = 1;
+        private const int FFL_NOSPAWN = 2;
+        private const int FFL_ENTITYSTATE = 4;
+
+        private enum fieldtype_t
+        {
+            F_INT,
+            F_FLOAT,
+            F_LSTRING, /* string on disk, pointer in memory, TAG_LEVEL */
+            F_GSTRING, /* string on disk, pointer in memory, TAG_GAME */
+            F_VECTOR,
+            F_ANGLEHACK,
+            F_EDICT, /* index on disk, pointer in memory */
+            F_ITEM, /* index on disk, pointer in memory */
+            F_CLIENT, /* index on disk, pointer in memory */
+            F_FUNCTION,
+            F_MMOVE,
+            F_IGNORE
+        }
+
+        private record struct field_t
+        {
+            public string name { get; init; }
+            public string fname { get; init; }
+            public fieldtype_t type { get; init; }
+            public int flags { get; init; }
+            public short save_ver { get; init; }
+        }
+
         /* this structure is cleared on each PutClientInServer(),
         except for 'client->pers' */
         private class gclient_t : gclient_s
@@ -41,30 +146,30 @@ namespace Quake2 {
             // client_respawn_t resp;
             // pmove_state_t old_pmove; /* for detecting out-of-pmove changes */
 
-            // qboolean showscores; /* set layout stat */
-            // qboolean showinventory; /* set layout stat */
-            // qboolean showhelp;
-            // qboolean showhelpicon;
+            public bool showscores; /* set layout stat */
+            public bool showinventory; /* set layout stat */
+            public bool showhelp;
+            public bool showhelpicon;
 
-            // int ammo_index;
+            public int ammo_index;
 
-            // int buttons;
-            // int oldbuttons;
-            // int latched_buttons;
+            public int buttons;
+            public int oldbuttons;
+            public int latched_buttons;
 
-            // qboolean weapon_thunk;
+            public bool weapon_thunk;
 
             // gitem_t *newweapon;
 
-            // /* sum up damage over an entire frame, so
-            // shotgun blasts give a single big kick */
-            // int damage_armor; /* damage absorbed by armor */
-            // int damage_parmor; /* damage absorbed by power armor */
-            // int damage_blood; /* damage taken out of health */
-            // int damage_knockback; /* impact damage */
+            /* sum up damage over an entire frame, so
+            shotgun blasts give a single big kick */
+            public int damage_armor; /* damage absorbed by armor */
+            public int damage_parmor; /* damage absorbed by power armor */
+            public int damage_blood; /* damage taken out of health */
+            public int damage_knockback; /* impact damage */
             // vec3_t damage_from; /* origin for vector calculation */
 
-            // float killer_yaw; /* when dead, look at killer */
+            public float killer_yaw; /* when dead, look at killer */
 
             // weaponstate_t weaponstate;
             // vec3_t kick_angles; /* weapon kicks */
@@ -79,17 +184,17 @@ namespace Quake2 {
             // vec3_t oldviewangles;
             // vec3_t oldvelocity;
 
-            // float next_drown_time;
-            // int old_waterlevel;
-            // int breather_sound;
+            public float next_drown_time;
+            public int old_waterlevel;
+            public int breather_sound;
 
-            // int machinegun_shots; /* for weapon raising */
+            public int machinegun_shots; /* for weapon raising */
 
-            // /* animation vars */
-            // int anim_end;
-            // int anim_priority;
-            // qboolean anim_duck;
-            // qboolean anim_run;
+            /* animation vars */
+            public int anim_end;
+            public int anim_priority;
+            public bool anim_duck;
+            public bool anim_run;
 
             // /* powerup timers */
             // float quad_framenum;
@@ -116,46 +221,46 @@ namespace Quake2 {
 
         private class edict_t : edict_s
         {
-            public int movetype;
+            public movetype_t movetype;
             public int flags;
 
-            // char *model;
-            // float freetime; /* sv.time when the object was freed */
+            public string model;
+            public float freetime; /* sv.time when the object was freed */
 
-            // /* only used locally in game, not by server */
-            // char *message;
-            // char *classname;
-            // int spawnflags;
+            /* only used locally in game, not by server */
+            public string message;
+            public string classname;
+            public int spawnflags;
 
-            // float timestamp;
+            public float timestamp;
 
-            // float angle; /* set in qe3, -1 = up, -2 = down */
-            // char *target;
-            // char *targetname;
-            // char *killtarget;
-            // char *team;
-            // char *pathtarget;
-            // char *deathtarget;
-            // char *combattarget;
+            public float angle; /* set in qe3, -1 = up, -2 = down */
+            public string target;
+            public string targetname;
+            public string killtarget;
+            public string team;
+            public string pathtarget;
+            public string deathtarget;
+            public string combattarget;
             // edict_t *target_ent;
 
-            // float speed, accel, decel;
-            // vec3_t movedir;
-            // vec3_t pos1, pos2;
+            public float speed, accel, decel;
+            public Vector3 movedir;
+            public Vector3 pos1, pos2;
 
-            // vec3_t velocity;
-            // vec3_t avelocity;
-            // int mass;
-            // float air_finished;
-            // float gravity; /* per entity gravity multiplier (1.0 is normal)
-            //                 use for lowgrav artifact, flares */
+            public Vector3 velocity;
+            public Vector3 avelocity;
+            public int mass;
+            public float air_finished;
+            public float gravity; /* per entity gravity multiplier (1.0 is normal)
+                                     use for lowgrav artifact, flares */
 
             // edict_t *goalentity;
             // edict_t *movetarget;
-            // float yaw_speed;
-            // float ideal_yaw;
+            public float yaw_speed;
+            public float ideal_yaw;
 
-            // float nextthink;
+            public float nextthink;
             // void (*prethink)(edict_t *ent);
             // void (*think)(edict_t *self);
             // void (*blocked)(edict_t *self, edict_t *other);
@@ -166,29 +271,29 @@ namespace Quake2 {
             // void (*die)(edict_t *self, edict_t *inflictor, edict_t *attacker,
             //         int damage, vec3_t point);
 
-            // float touch_debounce_time;
-            // float pain_debounce_time;
-            // float damage_debounce_time;
-            // float fly_sound_debounce_time;	/* now also used by insane marines to store pain sound timeout */
-            // float last_move_time;
+            public float touch_debounce_time;
+            public float pain_debounce_time;
+            public float damage_debounce_time;
+            public float fly_sound_debounce_time;	/* now also used by insane marines to store pain sound timeout */
+            public float last_move_time;
 
-            // int health;
-            // int max_health;
-            // int gib_health;
-            // int deadflag;
+            public int health;
+            public int max_health;
+            public int gib_health;
+            public int deadflag;
 
-            // float show_hostile;
-            // float powerarmor_time;
+            public float show_hostile;
+            public float powerarmor_time;
 
-            // char *map; /* target_changelevel */
+            public string map; /* target_changelevel */
 
-            // int viewheight; /* height above origin where eyesight is determined */
-            // int takedamage;
-            // int dmg;
-            // int radius_dmg;
-            // float dmg_radius;
-            // int sounds; /* now also used for player death sound aggregation */
-            // int count;
+            public int viewheight; /* height above origin where eyesight is determined */
+            public int takedamage;
+            public int dmg;
+            public int radius_dmg;
+            public float dmg_radius;
+            public int sounds; /* now also used for player death sound aggregation */
+            public int count;
 
             // edict_t *chain;
             // edict_t *enemy;
@@ -202,28 +307,28 @@ namespace Quake2 {
             // edict_t *mynoise; /* can go in client only */
             // edict_t *mynoise2;
 
-            // int noise_index;
-            // int noise_index2;
-            // float volume;
-            // float attenuation;
+            public int noise_index;
+            public int noise_index2;
+            public float volume;
+            public float attenuation;
 
-            // /* timing variables */
-            // float wait;
-            // float delay; /* before firing targets */
-            // float random;
+            /* timing variables */
+            public float wait;
+            public float delay; /* before firing targets */
+            public float random;
 
-            // float last_sound_time;
+            public float last_sound_time;
 
-            // int watertype;
-            // int waterlevel;
+            public int watertype;
+            public int waterlevel;
 
             // vec3_t move_origin;
             // vec3_t move_angles;
 
-            // /* move this to clientinfo? */
-            // int light_level;
+            /* move this to clientinfo? */
+            public int light_level;
 
-            // int style; /* also used as areaportal number */
+            public int style; /* also used as areaportal number */
 
             // gitem_t *item; /* for bonus items */
 

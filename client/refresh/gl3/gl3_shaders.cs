@@ -524,11 +524,6 @@ namespace Quake2 {
                 gl3state.currentUBO = gl3state.uniCommonUBO;
                 gl.BindBuffer(BufferTargetARB.UniformBuffer, gl3state.uniCommonUBO);
             }
-            Console.WriteLine("GL3_UpdateUBOCommon");
-            Console.WriteLine($" gamma: {gl3state.uniCommonData.gamma}");
-            Console.WriteLine($" color: {gl3state.uniCommonData.color}");
-            Console.WriteLine($" intensity: {gl3state.uniCommonData.intensity}");
-            Console.WriteLine($" intensity2D: {gl3state.uniCommonData.intensity2D}");
             gl.BufferData(BufferTargetARB.UniformBuffer, gl3UniCommon_size, gl3state.uniCommonData, BufferUsageARB.DynamicDraw);
         }
 
@@ -542,7 +537,7 @@ namespace Quake2 {
             gl.BufferData(BufferTargetARB.UniformBuffer, gl3Uni2D_size, gl3state.uni2DData, BufferUsageARB.DynamicDraw);
         }
 
-        private void GL3_UpdateUBO3D(GL gl)
+        private unsafe void GL3_UpdateUBO3D(GL gl)
         {
             if(gl3state.currentUBO != gl3state.uni3DUBO)
             {
@@ -550,13 +545,17 @@ namespace Quake2 {
                 gl.BindBuffer(BufferTargetARB.UniformBuffer, gl3state.uni3DUBO);
             }
             // Console.WriteLine("GL3_UpdateUBO3D");
-            // Console.WriteLine($" alpha: {gl3state.uni3DData.alpha}");
-            // Console.WriteLine($" overbrightbits: {gl3state.uni3DData.overbrightbits}");
-            // Console.WriteLine($" particleFadeFactor: {gl3state.uni3DData.particleFadeFactor}");
-            // Console.WriteLine($" scroll: {gl3state.uni3DData.scroll}");
-            // Console.WriteLine($" time: {gl3state.uni3DData.time}");
-            // Console.WriteLine($" transModelMat4: {gl3state.uni3DData.transModelMat4}");
-            // Console.WriteLine($" transProjViewMat4: {gl3state.uni3DData.transProjViewMat4}");
+            // Console.WriteLine(gl3state.uni3DData.transProjViewMat4);
+            // fixed(void *p = &gl3state.uni3DData) {
+            //     float *fp = (float *)p;
+            //     for (int i = 0; i < 4; i++) {
+            //         for (int j = 0; j < 4; j++) {
+            //             Console.Write($"{fp[i*4 + j]} ");
+            //         }
+            //         Console.WriteLine("");
+            //     }
+            //     gl.BufferData(BufferTargetARB.UniformBuffer, gl3Uni3D_size, p, BufferUsageARB.DynamicDraw);
+            // }
             gl.BufferData(BufferTargetARB.UniformBuffer, gl3Uni3D_size, gl3state.uni3DData, BufferUsageARB.DynamicDraw);
         }
 
@@ -831,11 +830,14 @@ void main()
 {
     passTexCoord = texCoord;
     passLMcoord = lmTexCoord;
-    vec4 worldCoord = transModel * vec4(position, 1.0);
+    // vec4 worldCoord = transModel * vec4(position, 1.0);
+    vec4 worldCoord = vec4(position, 1.0);
     passWorldCoord = worldCoord.xyz;
-    vec4 worldNormal = transModel * vec4(normal, 0.0f);
+    // vec4 worldNormal = transModel * vec4(normal, 0.0f);
+    vec4 worldNormal = vec4(normal, 0.0f);
     passNormal = normalize(worldNormal.xyz);
-    passLightFlags = lightFlags;
+    // passLightFlags = lightFlags;
+    passLightFlags = 0xFFFFFFFFU;
 
     gl_Position = transProjView * worldCoord;
 }
@@ -1077,7 +1079,7 @@ void main()
     outColor = lmTex*texel;
     outColor.rgb = pow(outColor.rgb, vec3(gamma)); // apply gamma correction to result
 
-    outColor.a = 1; // lightmaps aren't used with translucent surfaces
+    outColor.a = 1.0; // lightmaps aren't used with translucent surfaces
 }
 ";
 

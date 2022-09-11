@@ -29,6 +29,83 @@ namespace Quake2 {
 
     partial class QClient {
 
+        private int frame_msec;
+        private int old_sys_frame_time;
+
+        private void CL_RefreshCmd()
+        {
+            // CMD to fill
+            ref var cmd = ref cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
+
+            // Calculate delta
+            frame_msec = input.sys_frame_time - old_sys_frame_time;
+
+            // Check bounds
+            if (frame_msec < 1)
+            {
+                return;
+            }
+            else if (frame_msec > 200)
+            {
+                frame_msec = 200;
+            }
+
+            // Add movement
+            // CL_BaseMove(cmd);
+            // IN_Move(cmd);
+
+            // Clamp angels for prediction
+            // CL_ClampPitch();
+
+            // cmd->angles[0] = ANGLE2SHORT(cl.viewangles[0]);
+            // cmd->angles[1] = ANGLE2SHORT(cl.viewangles[1]);
+            // cmd->angles[2] = ANGLE2SHORT(cl.viewangles[2]);
+
+            // Update time for prediction
+            var ms = (int)(cls.nframetime * 1000.0f);
+
+            if (ms > 250)
+            {
+                ms = 100;
+            }
+
+            cmd.msec = (byte)ms;
+
+            // Update frame time for the next call
+            old_sys_frame_time = input.sys_frame_time;
+
+            // // Important events are send immediately
+            // if (((in_attack.state & 2)) || (in_use.state & 2))
+            // {
+            //     cls.forcePacket = true;
+            // }
+        }
+
+        private void CL_RefreshMove()
+        {
+            // CMD to fill
+            ref var cmd = ref cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
+
+            // Calculate delta
+            frame_msec = input.sys_frame_time - old_sys_frame_time;
+
+            // Check bounds
+            if (frame_msec < 1)
+            {
+                return;
+            }
+            else if (frame_msec > 200)
+            {
+                frame_msec = 200;
+            }
+
+            // Add movement
+            // CL_BaseMove(cmd);
+            // IN_Move(cmd);
+
+            old_sys_frame_time = input.sys_frame_time;
+        }
+
         private void CL_SendCmd()
         {
             // sizebuf_t buf;
@@ -40,14 +117,14 @@ namespace Quake2 {
 
             // memset(&buf, 0, sizeof(buf));
 
-            // /* save this command off for prediction */
-            // i = cls.netchan.outgoing_sequence & (CMD_BACKUP - 1);
-            // cmd = &cl.cmds[i];
+            /* save this command off for prediction */
+            var i = cls.netchan.outgoing_sequence & (CMD_BACKUP - 1);
+            ref var cmd = ref cl.cmds[i];
             // cl.cmd_time[i] = cls.realtime; /* for netgraph ping calculation */
 
             // CL_FinalizeCmd();
 
-            // cl.cmd = *cmd;
+            cl.cmd = cmd;
 
             if ((cls.state == connstate_t.ca_disconnected) || (cls.state == connstate_t.ca_connecting))
             {
@@ -73,7 +150,7 @@ namespace Quake2 {
             //     MSG_WriteString(&cls.netchan.message, Cvar_Userinfo());
             // }
 
-            // SZ_Init(&buf, data, sizeof(data));
+            var buf = new QWritebuf(128);
 
             // if ((cls.realtime > abort_cinematic) && (cl.cinematictime > 0) &&
             //         !cl.attractloop && (cls.realtime - cl.cinematictime > 1000) &&
@@ -83,27 +160,28 @@ namespace Quake2 {
             //     SCR_FinishCinematic();
             // }
 
-            // /* begin a client move command */
-            // MSG_WriteByte(&buf, clc_move);
+            /* begin a client move command */
+            buf.WriteByte((int)QCommon.clc_ops_e.clc_move);
 
-            // /* save the position for a checksum byte */
+            /* save the position for a checksum byte */
             // checksumIndex = buf.cursize;
-            // MSG_WriteByte(&buf, 0);
+            buf.WriteByte(0);
 
-            // /* let the server know what the last frame we
-            // got was, so the next message can be delta
-            // compressed */
-            // if (cl_nodelta->value || !cl.frame.valid || cls.demowaiting)
-            // {
-            //     MSG_WriteLong(&buf, -1); /* no compression */
-            // }
-            // else
-            // {
-            //     MSG_WriteLong(&buf, cl.frame.serverframe);
-            // }
+            /* let the server know what the last frame we
+            got was, so the next message can be delta
+            compressed */
+            // if (cl_nodelta!.Bool || !cl.frame.valid || cls.demowaiting)
+            if (!cl.frame.valid)
+            {
+                buf.WriteLong(-1); /* no compression */
+            }
+            else
+            {
+                buf.WriteLong(cl.frame.serverframe);
+            }
 
-            // /* send this and the previous cmds in the message, so
-            // if the last packet was dropped, it can be recovered */
+            /* send this and the previous cmds in the message, so
+               if the last packet was dropped, it can be recovered */
             // i = (cls.netchan.outgoing_sequence - 2) & (CMD_BACKUP - 1);
             // cmd = &cl.cmds[i];
             // memset(&nullcmd, 0, sizeof(nullcmd));
@@ -119,15 +197,15 @@ namespace Quake2 {
             // cmd = &cl.cmds[i];
             // MSG_WriteDeltaUsercmd(&buf, oldcmd, cmd);
 
-            // /* calculate a checksum over the move commands */
+            /* calculate a checksum over the move commands */
             // buf.data[checksumIndex] = COM_BlockSequenceCRCByte(
             //         buf.data + checksumIndex + 1, buf.cursize - checksumIndex - 1,
             //         cls.netchan.outgoing_sequence);
 
-            // /* deliver the message */
-            // Netchan_Transmit(&cls.netchan, buf.cursize, buf.data);
+            /* deliver the message */
+            cls.netchan.Transmit(buf.Data);
 
-            // /* Reinit the current cmd buffer */
+            /* Reinit the current cmd buffer */
             // cmd = &cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
             // memset(cmd, 0, sizeof(*cmd));
         }

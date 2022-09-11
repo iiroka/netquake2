@@ -213,6 +213,17 @@ namespace Quake2 {
         }
 
 
+        /* usercmd_t is sent to the server each client frame */
+        public struct usercmd_t
+        {
+            public byte msec;
+            public byte buttons;
+            public short[] angles;
+            public short forwardmove, sidemove, upmove;
+            public byte impulse;           /* remove? */
+            public byte lightlevel;        /* light level the player is standing on */
+        }
+
         /* entity_state_t->effects
         * Effects are things handled on the client side (lights, particles,
         * frame animations)  that happen constantly on the given entity.

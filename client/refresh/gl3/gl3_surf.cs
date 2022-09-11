@@ -285,6 +285,63 @@ namespace Quake2 {
             // Note: lightmap chains are gone, lightmaps are rendered together with normal texture in one pass
         }
 
+        /*
+        * Draw water surfaces and windows.
+        * The BSP tree is waled front to back, so unwinding the chain
+        * of alpha_surfaces will draw back to front, giving proper ordering.
+        */
+        private void GL3_DrawAlphaSurfaces(GL gl)
+        {
+            // msurface_t *s;
+
+            /* go back to the world matrix */
+            gl3state.uni3DData.transModelMat4 = gl3_identityMat4;
+            GL3_UpdateUBO3D(gl);
+
+            gl.Enable(EnableCap.Blend);
+
+            for (var s = gl3_alpha_surfaces; s != null; s = s.texturechain)
+            {
+                GL3_Bind(gl, s.texinfo!.image!.texnum);
+                c_brush_polys++;
+                float alpha = 1.0f;
+                if ((s.texinfo.flags & QCommon.SURF_TRANS33) != 0)
+                {
+                    alpha = 0.333f;
+                }
+                else if ((s.texinfo.flags & QCommon.SURF_TRANS66) != 0)
+                {
+                    alpha = 0.666f;
+                }
+                if(alpha != gl3state.uni3DData.alpha)
+                {
+                    gl3state.uni3DData.alpha = alpha;
+                    GL3_UpdateUBO3D(gl);
+                }
+
+                // if ((s.flags & SURF_DRAWTURB) != 0)
+                // {
+                //     // GL3_EmitWaterPolys(s);
+                // }
+                // else if ((s.texinfo.flags & QCommon.SURF_FLOWING) != 0)
+                // {
+                //     // GL3_UseProgram(gl3state.si3DtransFlow.shaderProgram);
+                //     // GL3_DrawGLFlowingPoly(s);
+                // }
+                // else
+                {
+                    GL3_UseProgram(gl, gl3state.si3Dtrans.shaderProgram);
+                    GL3_DrawGLPoly(gl, s);
+                }
+            }
+
+            gl3state.uni3DData.alpha = 1.0f;
+            GL3_UpdateUBO3D(gl);
+
+            gl.Disable(EnableCap.Blend);
+
+            gl3_alpha_surfaces = null;
+        }
 
         private void DrawTextureChains(GL gl, in entity_t currententity)
         {
@@ -386,7 +443,7 @@ namespace Quake2 {
             // }
         }
 
-        private void GL3_DrawBrushModel(GL gl, in entity_t e, in gl3brushmodel_t currentmodel)
+        private void GL3_DrawBrushModel(GL gl, ref entity_t e, in gl3brushmodel_t currentmodel)
         {
             // vec3_t mins, maxs;
             // int i;
@@ -444,11 +501,11 @@ namespace Quake2 {
             //glPushMatrix();
             var oldMat = gl3state.uni3DData.transModelMat4;
 
-            // e->angles[0] = -e->angles[0];
-            // e->angles[2] = -e->angles[2];
-            // GL3_RotateForEntity(e);
-            // e->angles[0] = -e->angles[0];
-            // e->angles[2] = -e->angles[2];
+            e.angles.X = -e.angles.X;
+            e.angles.Z = -e.angles.Z;
+            GL3_RotateForEntity(gl, e);
+            e.angles.X = -e.angles.X;
+            e.angles.Z = -e.angles.Z;
 
             DrawInlineBModel(gl, e, currentmodel);
 

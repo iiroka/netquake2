@@ -83,6 +83,128 @@ namespace Quake2 {
             }
         }
 
+        private void SV_Configstrings_f(string[] args, ref client_t client)
+        {
+            common.Com_DPrintf($"Configstrings() from {client.name}\n");
+
+            if (client.state != client_state_t.cs_connected)
+            {
+                common.Com_Printf("configstrings not valid -- already spawned\n");
+                return;
+            }
+
+            /* handle the case of a level changing while a client was connecting */
+            if (Int32.Parse(args[1]) != svs.spawncount)
+            {
+                common.Com_Printf("SV_Configstrings_f from different level\n");
+                SV_New_f(args, ref client);
+                return;
+            }
+
+            int start = Int32.Parse(args[2]);
+
+            /* write a packet full of data */
+            while (client.netchan.message.Size < QCommon.MAX_MSGLEN / 2 && start < QShared.MAX_CONFIGSTRINGS)
+            {
+                if (!String.IsNullOrEmpty(sv.configstrings[start])) 
+                {
+                    client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_configstring);
+                    client.netchan.message.WriteShort(start);
+                    client.netchan.message.WriteString(sv.configstrings[start]);
+                }
+
+                start++;
+            }
+
+            /* send next command */
+            if (start == QShared.MAX_CONFIGSTRINGS)
+            {
+                client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_stufftext);
+                client.netchan.message.WriteString($"cmd baselines {svs.spawncount} 0\n");
+            }
+            else
+            {
+                client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_stufftext);
+                client.netchan.message.WriteString($"cmd configstrings {svs.spawncount} {start}\n");
+            }
+        }
+
+
+        private void SV_Baselines_f(string[] args, ref client_t client)
+        {
+            // int start;
+            // entity_state_t nullstate;
+            // entity_state_t *base;
+
+            common.Com_DPrintf($"Baselines() from {client.name}\n");
+
+            if (client.state != client_state_t.cs_connected)
+            {
+                common.Com_Printf("baselines not valid -- already spawned\n");
+                return;
+            }
+
+            /* handle the case of a level changing while a client was connecting */
+            if (Int32.Parse(args[1]) != svs.spawncount)
+            {
+                common.Com_Printf("SV_Baselines_f from different level\n");
+                SV_New_f(args, ref client);
+                return;
+            }
+
+            int start = Int32.Parse(args[2]);
+            // memset(&nullstate, 0, sizeof(nullstate));
+
+            /* write a packet full of data */
+            // while (client.netchan.message.Size < QCommon.MAX_MSGLEN / 2 && start < QShared.MAX_EDICTS)
+            // {
+            //     ref var b = ref sv.baselines[start];
+
+            //     if (b.modelindex || b.sound || b.effects)
+            //     {
+            //         MSG_WriteByte(&sv_client->netchan.message, svc_spawnbaseline);
+            //         MSG_WriteDeltaEntity(&nullstate, base,
+            //                 &sv_client->netchan.message,
+            //                 true, true);
+            //     }
+
+            //     start++;
+            // }
+
+            // /* send next command */
+            // if (start == MAX_EDICTS)
+            // {
+                client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_stufftext);
+                client.netchan.message.WriteString($"precache {svs.spawncount}\n");
+            // }
+            // else
+            // {
+            //     MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+            //     MSG_WriteString(&sv_client->netchan.message,
+            //             va("cmd baselines %i %i\n", svs.spawncount, start));
+            // }
+        }
+
+        private void SV_Begin_f(string[] args, ref client_t client)
+        {
+            common.Com_DPrintf($"Begin() from {client.name}\n");
+
+            /* handle the case of a level changing while a client was connecting */
+            if (Int32.Parse(args[1]) != svs.spawncount)
+            {
+                common.Com_Printf("SV_Begin_f from different level\n");
+                SV_New_f(args, ref client);
+                return;
+            }
+
+            client.state = client_state_t.cs_spawned;
+
+            /* call the game begin function */
+            ge.ClientBegin(client.edict!);
+
+            // Cbuf_InsertFromDefer();
+        }
+
         private void SV_Nextserver()
         {
             if ((sv.state == server_state_t.ss_game) ||
@@ -140,9 +262,15 @@ namespace Quake2 {
                 case "new":
                     SV_New_f(args, ref cl);
                     return;
-                // {"configstrings", SV_Configstrings_f},
-                // {"baselines", SV_Baselines_f},
-                // {"begin", SV_Begin_f},
+                case "configstrings":
+                    SV_Configstrings_f(args, ref cl);
+                    return;
+                case "baselines":
+                    SV_Baselines_f(args, ref cl);
+                    return;
+                case "begin":
+                    SV_Begin_f(args, ref cl);
+                    return;
                 case "nextserver":
                     SV_Nextserver_f(args, ref cl);
                     return;

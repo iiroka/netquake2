@@ -764,7 +764,7 @@ namespace Quake2 {
 
             common.Com_DPrintf("Serverdata packet received.\n");
 
-            /* wipe the client_state_t struct */
+            /* wipe the  struct */
             CL_ClearState();
             cls.state = connstate_t.ca_connected;
 

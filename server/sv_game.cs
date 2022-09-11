@@ -53,6 +53,38 @@ namespace Quake2 {
             {
                 return server.common.Cvar_Get(var_name, value, flags);
             }
+
+            public void linkentity(edict_s ent)
+            {
+                server.SV_LinkEdict(ent);
+            }
+
+            public void configstring(int index, string str)
+            {
+                if ((index < 0) || (index >= QShared.MAX_CONFIGSTRINGS))
+                {
+                    server.common.Com_Error(QShared.ERR_DROP, $"configstring: bad index {index}\n");
+                }
+
+                if (str == null)
+                {
+                    str = "";
+                }
+
+                /* change the string in sv */
+                server.sv.configstrings[index] = str;
+
+                // if (sv.state != ss_loading)
+                // {
+                //     /* send the update to everyone */
+                //     SZ_Clear(&sv.multicast);
+                //     MSG_WriteChar(&sv.multicast, svc_configstring);
+                //     MSG_WriteShort(&sv.multicast, index);
+                //     MSG_WriteString(&sv.multicast, val);
+
+                //     SV_Multicast(vec3_origin, MULTICAST_ALL_R);
+                // }                
+            }
         }
 
         /*

@@ -229,6 +229,59 @@ namespace Quake2 {
         }
 
         /*
+        * Pull specific info from a newly changed userinfo string
+        * into a more C freindly form.
+        */
+        private void SV_UserinfoChanged(ref client_t cl)
+        {
+            // char *val;
+            // int i;
+
+            // /* call prog code to allow overrides */
+            // ge->ClientUserinfoChanged(cl->edict, cl->userinfo);
+
+            /* name for C code */
+            cl.name = QShared.Info_ValueForKey(cl.userinfo, "name");
+
+            // /* mask off high bit */
+            // for (i = 0; i < sizeof(cl->name); i++)
+            // {
+            //     cl->name[i] &= 127;
+            // }
+
+            // /* rate command */
+            // val = Info_ValueForKey(cl->userinfo, "rate");
+
+            // if (strlen(val))
+            // {
+            //     i = (int)strtol(val, (char **)NULL, 10);
+            //     cl->rate = i;
+
+            //     if (cl->rate < 100)
+            //     {
+            //         cl->rate = 100;
+            //     }
+
+            //     if (cl->rate > 15000)
+            //     {
+            //         cl->rate = 15000;
+            //     }
+            // }
+            // else
+            // {
+            //     cl->rate = 5000;
+            // }
+
+            // /* msg command */
+            // val = Info_ValueForKey(cl->userinfo, "msg");
+
+            // if (strlen(val))
+            // {
+            //     cl->messagelevel = (int)strtol(val, (char **)NULL, 10);
+            // }
+        }
+
+        /*
         * Only called at quake2.exe startup, not for each game
         */
         public void Init()

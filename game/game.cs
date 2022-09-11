@@ -47,6 +47,9 @@ namespace Quake2 {
 
     internal abstract class edict_s
     {
+        public edict_s? next;
+        public edict_s? prev;
+
         public QShared.entity_state_t s = new QShared.entity_state_t();
         public gclient_s? client;
         public bool inuse;
@@ -83,11 +86,11 @@ namespace Quake2 {
         // void (*positioned_sound)(vec3_t origin, edict_t *ent, int channel,
         //         int soundinedex, float volume, float attenuation, float timeofs);
 
-        // /* config strings hold all the index strings, the lightstyles,
-        // and misc data like the sky definition and cdtrack.
-        // All of the current configstrings are sent to clients when
-        // they connect, and changes are sent to all connected clients. */
-        // void (*configstring)(int num, char *string);
+        /* config strings hold all the index strings, the lightstyles,
+        and misc data like the sky definition and cdtrack.
+        All of the current configstrings are sent to clients when
+        they connect, and changes are sent to all connected clients. */
+        void configstring(int num, string str);
 
         void error(string msg);
 
@@ -111,7 +114,7 @@ namespace Quake2 {
         // /* an entity will never be sent to a client or used for collision
         // if it is not passed to linkentity. If the size, position, or
         // solidity changes, it must be relinked. */
-        // void (*linkentity)(edict_t *ent);
+        void linkentity(edict_s ent);
         // void (*unlinkentity)(edict_t *ent); /* call before removing an interactive edict */
         // int (*BoxEdicts)(vec3_t mins, vec3_t maxs, edict_t **list, int maxcount,
         //         int areatype);
@@ -179,8 +182,8 @@ namespace Quake2 {
         // void (*WriteLevel)(char *filename);
         // void (*ReadLevel)(char *filename);
 
-        // qboolean (*ClientConnect)(edict_t *ent, char *userinfo);
-        // void (*ClientBegin)(edict_t *ent);
+        bool ClientConnect(edict_s ent, string userinfo);
+        void ClientBegin(edict_s ent);
         // void (*ClientUserinfoChanged)(edict_t *ent, char *userinfo);
         // void (*ClientDisconnect)(edict_t *ent);
         // void (*ClientCommand)(edict_t *ent);

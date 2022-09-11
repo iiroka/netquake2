@@ -151,6 +151,49 @@ namespace Quake2 {
             sv.multicast.Clear();
         }
 
+        private bool SV_SendClientDatagram(ref client_t client)
+        {
+            var msg = new QWritebuf(QCommon.MAX_MSGLEN);
+
+            // SV_BuildClientFrame(client);
+
+            msg.allowoverflow = true;
+
+            /* send over all the relevant entity_state_t
+            and the player_state_t */
+            // SV_WriteFrameToClient(client, &msg);
+
+            // /* copy the accumulated multicast datagram
+            // for this client out to the message
+            // it is necessary for this to be after the WriteEntities
+            // so that entity references will be current */
+            // if (client->datagram.overflowed)
+            // {
+            //     Com_Printf("WARNING: datagram overflowed for %s\n", client->name);
+            // }
+            // else
+            // {
+            //     SZ_Write(&msg, client->datagram.data, client->datagram.cursize);
+            // }
+
+            // SZ_Clear(&client->datagram);
+
+            if (msg.overflowed)
+            {
+                /* must have room left for the packet header */
+                common.Com_Printf($"WARNING: msg overflowed for {client.name}\n");
+                msg.Clear();
+            }
+
+            /* send the datagram */
+            client.netchan.Transmit(msg.Data);
+
+            // /* record the size for rate estimation */
+            // client->message_size[sv.framenum % RATE_MESSAGES] = msg.cursize;
+
+            return true;
+        }
+
         private void SV_DemoCompleted()
         {
             sv.demofile?.Close();
@@ -238,7 +281,7 @@ namespace Quake2 {
                     //     continue;
                     // }
 
-                    // SV_SendClientDatagram(c);
+                    SV_SendClientDatagram(ref svs.clients[i]);
                 }
                 else
                 {

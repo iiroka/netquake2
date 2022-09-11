@@ -44,6 +44,7 @@ namespace Quake2 {
             {
                 this.cl_parse_entities[i] = new QShared.entity_state_t();
             }
+            this.cl.cmds = new QShared.usercmd_t[CMD_BACKUP];
         }
 
         private client_state_t cl;
@@ -119,6 +120,7 @@ namespace Quake2 {
                 cl.frames[i] = new frame_t();
             }
             cl.clientinfo = new clientinfo_t[QShared.MAX_CLIENTS];
+            cl.cmds = new QShared.usercmd_t[CMD_BACKUP];
 
             cl_entities = new centity_t[QShared.MAX_EDICTS];
             for (int i = 0; i < cl_entities.Length; i++)
@@ -131,6 +133,12 @@ namespace Quake2 {
 
             cls.netchan.message.Clear();
         }
+
+        private int precache_check;
+        private int precache_spawncount;
+        private int precache_tex;
+        private int precache_model_skin;
+        private byte[]? precache_model;
 
         /*
         * The server will send this command right
@@ -149,13 +157,13 @@ namespace Quake2 {
                 return;
             }
 
-            // precache_check = CS_MODELS;
+            precache_check = QShared.CS_MODELS;
 
-            // precache_spawncount = (int)strtol(Cmd_Argv(1), (char **)NULL, 10);
-            // precache_model = 0;
-            // precache_model_skin = 0;
+            precache_spawncount = Int32.Parse(args[1]);
+            precache_model = null;
+            precache_model_skin = 0;
 
-            // CL_RequestNextDownload();
+            CL_RequestNextDownload();
         }        
 
         private void CL_InitLocal()
@@ -236,8 +244,8 @@ namespace Quake2 {
         //     cl_http_bw_limit_tmout = Cvar_Get("cl_http_bw_limit_tmout", "0", 0);
         // #endif
 
-        //     /* register our commands */
-        //     Cmd_AddCommand("cmd", CL_ForwardToServer_f);
+            /* register our commands */
+            common.Cmd_AddCommand("cmd", CL_ForwardToServer_f);
         //     Cmd_AddCommand("pause", CL_Pause_f);
         //     Cmd_AddCommand("pingservers", CL_PingServers_f);
         //     Cmd_AddCommand("skins", CL_Skins_f);
@@ -245,7 +253,7 @@ namespace Quake2 {
         //     Cmd_AddCommand("userinfo", CL_Userinfo_f);
         //     Cmd_AddCommand("snd_restart", CL_Snd_Restart_f);
 
-        //     Cmd_AddCommand("changing", CL_Changing_f);
+            common.Cmd_AddCommand("changing", CL_Changing_f);
         //     Cmd_AddCommand("disconnect", CL_Disconnect_f);
         //     Cmd_AddCommand("record", CL_Record_f);
         //     Cmd_AddCommand("stop", CL_Stop_f);
@@ -253,7 +261,7 @@ namespace Quake2 {
         //     Cmd_AddCommand("quit", CL_Quit_f);
 
         //     Cmd_AddCommand("connect", CL_Connect_f);
-        //     Cmd_AddCommand("reconnect", CL_Reconnect_f);
+            common.Cmd_AddCommand("reconnect", CL_Reconnect_f);
 
         //     Cmd_AddCommand("rcon", CL_Rcon_f);
 
@@ -359,14 +367,14 @@ namespace Quake2 {
                 common.Cbuf_Execute();
         //         CL_FixCvarCheats();
 
-        //         if (cls.state > ca_connecting)
-        //         {
-        //             CL_RefreshCmd();
-        //         }
-        //         else
-        //         {
-        //             CL_RefreshMove();
-        //         }
+                if (cls.state > connstate_t.ca_connecting)
+                {
+                    CL_RefreshCmd();
+                }
+                else
+                {
+                    CL_RefreshMove();
+                }
             }
 
             if (cls.forcePacket || common.userinfo_modified)

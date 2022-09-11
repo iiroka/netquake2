@@ -648,7 +648,7 @@ namespace Quake2 {
 
             // glTranslatef(gl3_origin[0], gl3_origin[1], gl3_origin[2]);
             var transl = new Vector3D<float>(gl3_origin.X, gl3_origin.Y, gl3_origin.Z);
-            var modMVmat = origModelMat * Matrix4X4.CreateTranslation(transl);
+            var modMVmat = HMM_MultiplyMat4(origModelMat, Matrix4X4.CreateTranslation(transl));
             if(skyrotate != 0.0f)
             {
                 // glRotatef(gl3_newrefdef.time * skyrotate, skyaxis[0], skyaxis[1], skyaxis[2]);

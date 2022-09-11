@@ -155,13 +155,14 @@ namespace Quake2 {
             is the only place a client_t is ever initialized */
             svs.clients[i] = new client_t() { index = i };
             svs.clients[i].netchan = new QCommon.netchan_t(common);
-            var ent = ge.getEdict(i + 1);
+            var ent = ge!.getEdict(i + 1);
+            ent.s.number = i + 1;
             svs.clients[i].edict = ent;
             svs.clients[i].challenge = challenge; /* save challenge for checksumming */
 
-        //     /* get the game a chance to reject this connection or modify the userinfo */
-        //     if (!(ge->ClientConnect(ent, userinfo)))
-        //     {
+            /* get the game a chance to reject this connection or modify the userinfo */
+            if (!(ge.ClientConnect(ent, userinfo)))
+            {
         //         if (*Info_ValueForKey(userinfo, "rejmsg"))
         //         {
         //             Netchan_OutOfBandPrint(NS_SERVER, adr,
@@ -170,17 +171,17 @@ namespace Quake2 {
         //         }
         //         else
         //         {
-        //             Netchan_OutOfBandPrint(NS_SERVER, adr,
-        //                     "print\nConnection refused.\n");
+                    common.Netchan_OutOfBandPrint(QCommon.netsrc_t.NS_SERVER, adr,
+                            "print\nConnection refused.\n");
         //         }
 
-        //         Com_DPrintf("Game rejected a connection.\n");
-        //         return;
-        //     }
+                common.Com_DPrintf("Game rejected a connection.\n");
+                return;
+            }
 
             /* parse some info from the info strings */
             svs.clients[i].userinfo = userinfo;
-        //     SV_UserinfoChanged(newcl);
+            SV_UserinfoChanged(ref svs.clients[i]);
 
         //     /* send the connect packet to the client */
         //     if (sv_downloadserver->string[0])

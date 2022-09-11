@@ -232,9 +232,8 @@ namespace Quake2 {
                 if (colorOnly)
                 {
             //         int i;
-                    for(int i=0; i<count; ++i)
+                    for(int i = 0; i < count; ++i)
                     {
-            //             int j=0;
                         ref var cur = ref vertexBuffer[vertexCount + i];
                         var index_xyz = model.glcmds[order+2];
                         order += 3;
