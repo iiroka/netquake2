@@ -32,6 +32,7 @@ namespace Quake2 {
         private lightstyle_t[] r_lightstyles = new lightstyle_t[QRef.MAX_LIGHTSTYLES];
         private entity_t[] r_entities = new entity_t[QRef.MAX_ENTITIES];
         private int r_numentities;
+        private string[] cl_weaponmodels = {};
 
         /*
         * Specifies the model that will be used as the world
@@ -120,9 +121,10 @@ namespace Quake2 {
 
                 if (name[0] == '#')
                 {
-            //         /* special player weapon model */
+                    /* special player weapon model */
             //         if (num_cl_weaponmodels < MAX_CLIENTWEAPONMODELS)
             //         {
+                    cl_weaponmodels.Append(cl.configstrings[QShared.CS_MODELS + i].Substring(1));
             //             Q_strlcpy(cl_weaponmodels[num_cl_weaponmodels],
             //                     cl.configstrings[CS_MODELS + i] + 1,
             //                     sizeof(cl_weaponmodels[num_cl_weaponmodels]));
@@ -140,7 +142,7 @@ namespace Quake2 {
 
                     else
                     {
-            //             cl.model_clip[i] = NULL;
+                        // cl.model_clip[i] = null;
                     }
                 }
 
@@ -352,9 +354,9 @@ namespace Quake2 {
                 // VectorScale( cl.v_right, stereo_separation, tmp );
                 // VectorAdd( cl.refdef.vieworg, tmp, cl.refdef.vieworg );
 
-                // cl.refdef.vieworg[0] += 1.0/16;
-                // cl.refdef.vieworg[1] += 1.0/16;
-                // cl.refdef.vieworg[2] += 1.0/16;
+                cl.refdef.vieworg.X += 1.0f/16;
+                cl.refdef.vieworg.Y += 1.0f/16;
+                cl.refdef.vieworg.Z += 1.0f/16;
 
                 cl.refdef.time = cl.time*0.001f;
             }

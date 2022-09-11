@@ -154,7 +154,7 @@ namespace Quake2 {
         {
             // angles: pitch (around y), yaw (around z), roll (around x)
             // rot matrices to be multiplied in order Z, Y, X (yaw, pitch, roll)
-            var transMat = rotAroundAxisZYX(e.angles.X, -e.angles.Y, -e.angles.Z);
+            var transMat = rotAroundAxisZYX(e.angles.Y, -e.angles.X, -e.angles.Z);
 
             transMat.M41 = e.origin.X;
             transMat.M42 = e.origin.Y;
@@ -684,6 +684,53 @@ namespace Quake2 {
             }
         }
 
+        private void GL3_DrawNullModel(GL gl, in entity_t currententity)
+        {
+            Vector3 shadelight;
+
+            // if ((currententity.flags & RF_FULLBRIGHT) != 0)
+            {
+                shadelight = new Vector3(1.0f);
+                // shadelight[0] = shadelight[1] = shadelight[2] = 1.0F;
+            }
+            // else
+            // {
+                // GL3_LightPoint(currententity, currententity.origin, shadelight);
+            // }
+
+            var origModelMat = gl3state.uni3DData.transModelMat4;
+            GL3_RotateForEntity(gl, currententity);
+
+            gl3state.uniCommonData.color = new Vector4D<float>( shadelight.X, shadelight.Y, shadelight.Z, 1 );
+            GL3_UpdateUBOCommon(gl);
+
+            GL3_UseProgram(gl, gl3state.si3DcolorOnly.shaderProgram);
+
+            GL3_BindVAO(gl, gl3state.vao3D);
+            GL3_BindVBO(gl, gl3state.vbo3D);
+
+            gl3_3D_vtx_t[] vtxA = new gl3_3D_vtx_t[6]{
+                new gl3_3D_vtx_t(){pos={X=0, Y=0, Z=-16}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0} },
+                new gl3_3D_vtx_t(){pos={X=16 * MathF.Cos( 0 * MathF.PI / 2 ), Y=16 * MathF.Sin( 0 * MathF.PI / 2 ), Z=0}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0}},
+                new gl3_3D_vtx_t(){pos={X=16 * MathF.Cos( 1 * MathF.PI / 2 ), Y=16 * MathF.Sin( 1 * MathF.PI / 2 ), Z=0}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0}},
+                new gl3_3D_vtx_t(){pos={X=16 * MathF.Cos( 2 * MathF.PI / 2 ), Y=16 * MathF.Sin( 2 * MathF.PI / 2 ), Z=0}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0}},
+                new gl3_3D_vtx_t(){pos={X=16 * MathF.Cos( 3 * MathF.PI / 2 ), Y=16 * MathF.Sin( 3 * MathF.PI / 2 ), Z=0}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0}},
+                new gl3_3D_vtx_t(){pos={X=16 * MathF.Cos( 4 * MathF.PI / 2 ), Y=16 * MathF.Sin( 4 * MathF.PI / 2 ), Z=0}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0}}
+            };
+
+            GL3_BufferAndDraw3D(gl, vtxA, PrimitiveType.TriangleFan);
+
+            gl3_3D_vtx_t[] vtxB = new gl3_3D_vtx_t[6]{
+                new gl3_3D_vtx_t(){pos={X=0, Y=0, Z=16}, texCoord={X=0,Y=0}, lmTexCoord={X=0,Y=0}},
+                vtxA[5], vtxA[4], vtxA[3], vtxA[2], vtxA[1]
+            };
+
+            GL3_BufferAndDraw3D(gl, vtxB, PrimitiveType.TriangleFan);
+
+            gl3state.uni3DData.transModelMat4 = origModelMat;
+            GL3_UpdateUBO3D(gl);
+        }
+
         private void GL3_DrawEntitiesOnList(GL gl)
         {
             int i;
@@ -713,8 +760,7 @@ namespace Quake2 {
                 {
                     if (currententity.model == null)
                     {
-                        Console.WriteLine("GL3_DrawNullModel");
-                        // GL3_DrawNullModel(currententity);
+                        GL3_DrawNullModel(gl, currententity);
                         continue;
                     }
                     var currentmodel = (gl3model_t)currententity.model;
@@ -759,8 +805,7 @@ namespace Quake2 {
                 {
                     if (currententity.model == null)
                     {
-                        Console.WriteLine("GL3_DrawNullModel");
-                        // GL3_DrawNullModel(currententity);
+                        GL3_DrawNullModel(gl, currententity);
                         continue;
                     }
                     var currentmodel = (gl3model_t)currententity.model;
@@ -1120,11 +1165,6 @@ namespace Quake2 {
             }
 
             gl.CullFace(CullFaceMode.Front);
-
-            Console.WriteLine("gl3_newrefdef.vieworg");
-            Console.WriteLine(gl3_newrefdef.vieworg);
-            Console.WriteLine("gl3_newrefdef.viewangles");
-            Console.WriteLine(gl3_newrefdef.viewangles);
 
             /* set up view matrix (world coordinates -> eye coordinates) */
             {

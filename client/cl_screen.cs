@@ -559,26 +559,26 @@ namespace Quake2 {
             //         continue;
             //     }
 
-            //     if (!strcmp(token, "stat_string"))
-            //     {
-            //         token = COM_Parse(&s);
-            //         index = (int)strtol(token, (char **)NULL, 10);
+                if (token.Equals("stat_string"))
+                {
+                    token = QShared.COM_Parse(s, ref index);
+                    var indx = Int32.Parse(token);
 
-            //         if ((index < 0) || (index >= MAX_CONFIGSTRINGS))
-            //         {
-            //             Com_Error(ERR_DROP, "Bad stat_string index");
-            //         }
+                    if ((indx < 0) || (indx >= QShared.MAX_CONFIGSTRINGS))
+                    {
+                        common.Com_Error(QShared.ERR_DROP, "Bad stat_string index");
+                    }
 
-            //         index = cl.frame.playerstate.stats[index];
+                    indx = cl.frame.playerstate.stats[indx];
 
-            //         if ((index < 0) || (index >= MAX_CONFIGSTRINGS))
-            //         {
-            //             Com_Error(ERR_DROP, "Bad stat_string index");
-            //         }
+                    if ((indx < 0) || (indx >= QShared.MAX_CONFIGSTRINGS))
+                    {
+                        common.Com_Error(QShared.ERR_DROP, "Bad stat_string index");
+                    }
 
-            //         DrawStringScaled(x, y, cl.configstrings[index], scale);
-            //         continue;
-            //     }
+                    DrawStringScaled(x, y, cl.configstrings[indx], scale);
+                    continue;
+                }
 
             //     if (!strcmp(token, "cstring"))
             //     {

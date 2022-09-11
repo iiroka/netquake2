@@ -193,9 +193,9 @@ namespace Quake2 {
                 //     CL_BlasterParticles(pos, dir);
                 //     break;
 
-                // case TE_BLASTER: /* blaster hitting wall */
-                //     MSG_ReadPos(&net_message, pos);
-                //     MSG_ReadDir(&net_message, dir);
+                case (int)QShared.temp_event_t.TE_BLASTER: { /* blaster hitting wall */
+                    pos = msg.ReadPos();
+                    dir = msg.ReadDir(common);
                 //     CL_BlasterParticles(pos, dir);
 
                 //     ex = CL_AllocExplosion();
@@ -229,7 +229,8 @@ namespace Quake2 {
                 //     ex->ent.model = cl_mod_explode;
                 //     ex->frames = 4;
                 //     S_StartSound(pos, 0, 0, cl_sfx_lashit, 1, ATTN_NORM, 0);
-                //     break;
+                    break;
+                }
 
                 // case TE_RAILTRAIL: /* railgun effect */
                 //     MSG_ReadPos(&net_message, pos);
@@ -238,10 +239,10 @@ namespace Quake2 {
                 //     S_StartSound(pos2, 0, 0, cl_sfx_railg, 1, ATTN_NORM, 0);
                 //     break;
 
-                // case TE_EXPLOSION2:
-                // case TE_GRENADE_EXPLOSION:
-                // case TE_GRENADE_EXPLOSION_WATER:
-                //     MSG_ReadPos(&net_message, pos);
+                case (int)QShared.temp_event_t.TE_EXPLOSION2:
+                case (int)QShared.temp_event_t.TE_GRENADE_EXPLOSION:
+                case (int)QShared.temp_event_t.TE_GRENADE_EXPLOSION_WATER: {
+                    pos = msg.ReadPos();
                 //     ex = CL_AllocExplosion();
                 //     VectorCopy(pos, ex->ent.origin);
                 //     ex->type = ex_poly;
@@ -266,7 +267,8 @@ namespace Quake2 {
                 //         S_StartSound(pos, 0, 0, cl_sfx_grenexp, 1, ATTN_NORM, 0);
                 //     }
 
-                //     break;
+                    break;
+                }
 
                 // case TE_PLASMA_EXPLOSION:
                 //     MSG_ReadPos(&net_message, pos);
@@ -292,12 +294,12 @@ namespace Quake2 {
                 //     S_StartSound(pos, 0, 0, cl_sfx_rockexp, 1, ATTN_NORM, 0);
                 //     break;
 
-                // case TE_EXPLOSION1_BIG:
-                // case TE_EXPLOSION1_NP:
-                // case TE_EXPLOSION1:
-                // case TE_ROCKET_EXPLOSION:
-                // case TE_ROCKET_EXPLOSION_WATER:
-                //     MSG_ReadPos(&net_message, pos);
+                case (int)QShared.temp_event_t.TE_EXPLOSION1_BIG:
+                case (int)QShared.temp_event_t.TE_EXPLOSION1_NP:
+                case (int)QShared.temp_event_t.TE_EXPLOSION1:
+                case (int)QShared.temp_event_t.TE_ROCKET_EXPLOSION:
+                case (int)QShared.temp_event_t.TE_ROCKET_EXPLOSION_WATER: {
+                    pos = msg.ReadPos();
                 //     ex = CL_AllocExplosion();
                 //     VectorCopy(pos, ex->ent.origin);
                 //     ex->type = ex_poly;
@@ -339,7 +341,8 @@ namespace Quake2 {
                 //         S_StartSound(pos, 0, 0, cl_sfx_rockexp, 1, ATTN_NORM, 0);
                 //     }
 
-                //     break;
+                    break;
+                }
 
                 // case TE_BFG_EXPLOSION:
                 //     MSG_ReadPos(&net_message, pos);

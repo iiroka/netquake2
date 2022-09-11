@@ -55,6 +55,17 @@ namespace Quake2 {
         private console_t con;
         private cvar_t? con_notifytime;
 
+        private void DrawStringScaled(int x, int y, string s, float factor)
+        {
+            int index = 0;
+            while (index < s.Length)
+            {
+                vid.Draw_CharScaled(x, y, s[index], factor);
+                x += (int)(8*factor);
+                index++;
+            }
+        }
+
         /*
         * If the line width has changed, reformat the buffer.
         */

@@ -119,10 +119,9 @@ namespace Quake2 {
             float frontlerp = 1.0f - backlerp;
             // float *lerp;
             // draw without texture? used for quad damage effect etc, I think
-            var colorOnly = true;
-            // var colorOnly = (0 != (entity.flags &
-            //         (QShared.RF_SHELL_RED | QShared.RF_SHELL_GREEN | QShared.RF_SHELL_BLUE | QShared.RF_SHELL_DOUBLE |
-            //         QShared.RF_SHELL_HALF_DAM)));
+            var colorOnly = (0 != (entity.flags &
+                    (QShared.RF_SHELL_RED | QShared.RF_SHELL_GREEN | QShared.RF_SHELL_BLUE | QShared.RF_SHELL_DOUBLE |
+                    QShared.RF_SHELL_HALF_DAM)));
 
             // // TODO: maybe we could somehow store the non-rotated normal and do the dot in shader?
             // float* shadedots = r_avertexnormal_dots[((int)(entity->angles[1] *
@@ -137,14 +136,14 @@ namespace Quake2 {
             // order = (int *)((byte *)paliashdr + paliashdr->ofs_glcmds);
 
             float alpha;
-            // if (entity->flags & RF_TRANSLUCENT)
-            // {
-            //     alpha = entity->alpha * 0.666f;
-            // }
-            // else
-            // {
+            if ((entity.flags & QShared.RF_TRANSLUCENT) != 0)
+            {
+                alpha = entity.alpha * 0.666f;
+            }
+            else
+            {
                 alpha = 1.0f;
-            // }
+            }
 
             if (colorOnly)
             {
@@ -163,7 +162,7 @@ namespace Quake2 {
 
             /* move should be the delta back to the previous frame * backlerp */
             var delta = entity.oldorigin - entity.origin;
-            var vectors = new Vector3[3]{ new Vector3(), new Vector3(), new Vector3() };
+            var vectors = new Vector3[3];
             QShared.AngleVectors(entity.angles, ref vectors[0], ref vectors[1], ref vectors[2]);
 
             var move = new Vector3();
@@ -320,6 +319,135 @@ namespace Quake2 {
             gl.DrawElements(PrimitiveType.Triangles, (uint)indexCount, DrawElementsType.UnsignedShort, null);
         }
 
+        private bool CullAliasModel(out Vector3[] bbox, ref entity_t e)
+        {
+            // int i;
+            // vec3_t mins, maxs;
+            // dmdl_t *paliashdr;
+            // vec3_t vectors[3];
+            // vec3_t thismins, oldmins, thismaxs, oldmaxs;
+            // daliasframe_t *pframe, *poldframe;
+            // vec3_t angles;
+
+            gl3aliasmodel_t model = (gl3aliasmodel_t)e.model!;
+
+            var paliashdr = model.header;
+
+            if ((e.frame >= paliashdr.num_frames) || (e.frame < 0))
+            {
+                R_Printf(QShared.PRINT_DEVELOPER, $"R_CullAliasModel {model.name}: no such frame {e.frame}\n");
+                e.frame = 0;
+            }
+
+            if ((e.frame >= paliashdr.num_frames) || (e.oldframe < 0))
+            {
+                R_Printf(QShared.PRINT_DEVELOPER, $"R_CullAliasModel {model.name}: no such oldframe {e.oldframe}\n");
+                e.oldframe = 0;
+            }
+
+            ref var pframe = ref model.frames[e.frame];
+            ref var poldframe = ref model.frames[e.oldframe];
+
+            /* compute axially aligned mins and maxs */
+            Vector3 mins, maxs;
+            if (pframe == poldframe)
+            {
+                mins = new Vector3(pframe.translate);
+                maxs = mins + new Vector3(pframe.scale) * 255;
+            }
+            else
+            {
+                var thismins = new Vector3(pframe.translate);
+                var thismaxs = thismins + new Vector3(pframe.scale) * 255;
+
+                var oldmins = new Vector3(poldframe.translate);
+                var oldmaxs = oldmins + new Vector3(poldframe.scale) * 255;
+
+                mins = Vector3.Min(thismins, oldmins);
+                maxs = Vector3.Max(thismaxs, oldmaxs);
+            }
+
+            /* compute a full bounding box */
+            bbox = new Vector3[8];
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 tmp = new Vector3();
+
+                if ((i & 1) != 0)
+                {
+                    tmp.X = mins.X;
+                }
+                else
+                {
+                    tmp.X = maxs.X;
+                }
+
+                if ((i & 2) != 0)
+                {
+                    tmp.Y = mins.Y;
+                }
+                else
+                {
+                    tmp.Y = maxs.Y;
+                }
+
+                if ((i & 4) != 0)
+                {
+                    tmp.Z = mins.Z;
+                }
+                else
+                {
+                    tmp.Z = maxs.Z;
+                }
+
+                bbox[i] = tmp;
+            }
+
+            /* rotate the bounding box */
+            var angles = e.angles;
+            angles.SetYaw(angles.Yaw());
+            var vectors = new Vector3[3];
+            QShared.AngleVectors(angles, ref vectors[0], ref vectors[1], ref vectors[2]);
+
+            for (var i = 0; i < 8; i++)
+            {
+                var tmp = bbox[i];
+
+                bbox[i].X = Vector3.Dot(vectors[0], tmp);
+                bbox[i].Y = -Vector3.Dot(vectors[1], tmp);
+                bbox[i].Z = Vector3.Dot(vectors[2], tmp);
+
+                bbox[i] += e.origin;
+            }
+
+            // int p, f, aggregatemask = ~0;
+            var aggregatemask = 0xFFFFFFFFU;
+
+            for (int p = 0; p < 8; p++)
+            {
+                uint mask = 0;
+
+                for (var f = 0; f < 4; f++)
+                {
+                    float dp = Vector3.Dot(frustum[f].normal, bbox[p]);
+
+                    if ((dp - frustum[f].dist) < 0)
+                    {
+                        mask |= (1U << f);
+                    }
+                }
+
+                aggregatemask &= mask;
+            }
+
+            if (aggregatemask != 0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void GL3_DrawAliasModel(GL gl, ref entity_t entity)
         {
             // int i;
@@ -335,10 +463,10 @@ namespace Quake2 {
 
             if ((entity.flags & QShared.RF_WEAPONMODEL) == 0)
             {
-            //     if (CullAliasModel(bbox, entity))
-            //     {
-            //         return;
-            //     }
+                if (CullAliasModel(out var bbox, ref entity))
+                {
+                    return;
+                }
             }
 
             // if (entity->flags & RF_WEAPONMODEL)
@@ -390,7 +518,7 @@ namespace Quake2 {
             // }
             // else if (entity->flags & RF_FULLBRIGHT)
             // {
-                shadelight = new Vector3(1, 1, 1);
+                shadelight = new Vector3(1.0f);
             // }
             // else
             // {
@@ -426,23 +554,13 @@ namespace Quake2 {
             //     }
             // }
 
-            // if (entity->flags & RF_MINLIGHT)
-            // {
-            //     for (i = 0; i < 3; i++)
-            //     {
-            //         if (shadelight[i] > 0.1)
-            //         {
-            //             break;
-            //         }
-            //     }
-
-            //     if (i == 3)
-            //     {
-            //         shadelight[0] = 0.1;
-            //         shadelight[1] = 0.1;
-            //         shadelight[2] = 0.1;
-            //     }
-            // }
+            if ((entity.flags & QShared.RF_MINLIGHT) != 0)
+            {
+                if (shadelight.X <= 0.1 && shadelight.X <= 0.1 && shadelight.X <= 0.1)
+                {
+                    shadelight = new Vector3(0.1f);
+                }
+            }
 
             // if (entity->flags & RF_GLOW)
             // {
@@ -464,7 +582,7 @@ namespace Quake2 {
             //     }
             // }
 
-            // // Note: gl_overbrightbits are now applied in shader.
+            // Note: gl_overbrightbits are now applied in shader.
 
             // /* ir goggles color override */
             // if ((gl3_newrefdef.rdflags & RDF_IRGOGGLES) && (entity->flags & RF_IR_VISIBLE))
@@ -483,32 +601,31 @@ namespace Quake2 {
             /* locate the proper data */
             c_alias_polys += model.header.num_tris;
 
-            // /* draw all the triangles */
-            // if (entity->flags & RF_DEPTHHACK)
-            // {
-            //     /* hack the depth range to prevent view model from poking into walls */
-            //     glDepthRange(gl3depthmin, gl3depthmin + 0.3 * (gl3depthmax - gl3depthmin));
-            // }
+            /* draw all the triangles */
+            if ((entity.flags & QShared.RF_DEPTHHACK) != 0)
+            {
+                /* hack the depth range to prevent view model from poking into walls */
+                gl.DepthRange(gl3depthmin, gl3depthmin + 0.3 * (gl3depthmax - gl3depthmin));
+            }
 
-            // if (entity->flags & RF_WEAPONMODEL)
-            // {
+            var origProjViewMat = gl3state.uni3DData.transProjViewMat4;
+            if ((entity.flags &QShared.RF_WEAPONMODEL) != 0)
+            {
             //     extern hmm_mat4 GL3_MYgluPerspective(GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar);
 
-            //     origProjViewMat = gl3state.uni3DData.transProjViewMat4;
+                // render weapon with a different FOV (r_gunfov) so it's not distorted at high view FOV
+                double screenaspect = (double)gl3_newrefdef.width / (double)gl3_newrefdef.height;
+                double dist = (r_farsee!.Int == 0) ? 4096.0 : 8192.0;
 
-            //     // render weapon with a different FOV (r_gunfov) so it's not distorted at high view FOV
-            //     float screenaspect = (float)gl3_newrefdef.width / gl3_newrefdef.height;
-            //     float dist = (r_farsee->value == 0) ? 4096.0f : 8192.0f;
-
-            //     hmm_mat4 projMat;
-            //     if (r_gunfov->value < 0)
-            //     {
-            //         projMat = GL3_MYgluPerspective(gl3_newrefdef.fov_y, screenaspect, 4, dist);
-            //     }
-            //     else
-            //     {
-            //         projMat = GL3_MYgluPerspective(r_gunfov->value, screenaspect, 4, dist);
-            //     }
+                Matrix4X4<float> projMat;
+                if (r_gunfov!.Int < 0)
+                {
+                    projMat = GL3_MYgluPerspective(gl3_newrefdef.fov_y, screenaspect, 4, dist);
+                }
+                else
+                {
+                    projMat = GL3_MYgluPerspective(r_gunfov!.Double, screenaspect, 4, dist);
+                }
 
             //     if(gl_lefthand->value == 1.0F)
             //     {
@@ -522,16 +639,18 @@ namespace Quake2 {
 
             //         glCullFace(GL_BACK);
             //     }
-            //     gl3state.uni3DData.transProjViewMat4 = HMM_MultiplyMat4(projMat, gl3state.viewMat3D);
-            // }
+                gl3state.uni3DData.transProjViewMat4 = HMM_MultiplyMat4(projMat, gl3state.viewMat3D);
+            }
 
 
             //glPushMatrix();
             var origModelMat = gl3state.uni3DData.transModelMat4;
 
-            entity.angles.SetPitch(-entity.angles.Pitch());
-            // GL3_RotateForEntity(entity);
-            entity.angles.SetPitch(-entity.angles.Pitch());
+            // entity.angles.SetPitch(-entity.angles.Pitch());
+            entity.angles.X = -entity.angles.X;
+            GL3_RotateForEntity(gl, entity);
+            // entity.angles.SetPitch(-entity.angles.Pitch());
+            entity.angles.X = -entity.angles.X;
 
 
             /* select skin */
@@ -592,23 +711,23 @@ namespace Quake2 {
             gl3state.uni3DData.transModelMat4 = origModelMat;
             GL3_UpdateUBO3D(gl);
 
-            // if (entity->flags & RF_WEAPONMODEL)
-            // {
-            //     gl3state.uni3DData.transProjViewMat4 = origProjViewMat;
-            //     GL3_UpdateUBO3D();
+            if ((entity.flags & QShared.RF_WEAPONMODEL) != 0)
+            {
+                gl3state.uni3DData.transProjViewMat4 = origProjViewMat;
+                GL3_UpdateUBO3D(gl);
             //     if(gl_lefthand->value == 1.0F)
             //         glCullFace(GL_FRONT);
-            // }
+            }
 
             // if (entity->flags & RF_TRANSLUCENT)
             // {
             //     glDisable(GL_BLEND);
             // }
 
-            // if (entity->flags & RF_DEPTHHACK)
-            // {
-            //     glDepthRange(gl3depthmin, gl3depthmax);
-            // }
+            if ((entity.flags & QShared.RF_DEPTHHACK) != 0)
+            {
+                gl.DepthRange(gl3depthmin, gl3depthmax);
+            }
 
             // if (gl_shadows->value && gl3config.stencil && !(entity->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL | RF_NOSHADOW)))
             // {

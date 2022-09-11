@@ -65,25 +65,25 @@ namespace Quake2 {
                     ent.frame = autoanim & 1;
                 }
 
-                // else if (effects & EF_ANIM23)
-                // {
-                //     ent.frame = 2 + (autoanim & 1);
-                // }
+                else if ((effects & QShared.EF_ANIM23) != 0)
+                {
+                    ent.frame = 2 + (autoanim & 1);
+                }
 
-                // else if (effects & EF_ANIM_ALL)
-                // {
-                //     ent.frame = autoanim;
-                // }
+                else if ((effects & QShared.EF_ANIM_ALL) != 0)
+                {
+                    ent.frame = autoanim;
+                }
 
-                // else if (effects & EF_ANIM_ALLFAST)
-                // {
-                //     ent.frame = cl.time / 100;
-                // }
+                else if ((effects & QShared.EF_ANIM_ALLFAST) != 0)
+                {
+                    ent.frame = cl.time / 100;
+                }
 
-                // else
-                // {
+                else
+                {
                     ent.frame = s1.frame;
-                // }
+                }
 
                 // /* quad and pent can do different things on client */
                 // if (effects & EF_PENT)
@@ -130,7 +130,7 @@ namespace Quake2 {
                     ent.origin = cent.prev.origin + cl.lerpfrac * (cent.current.origin - cent.prev.origin);
                 // }
 
-                // /* tweak the color of beams */
+                /* tweak the color of beams */
                 // if (renderfx & RF_BEAM)
                 // {
                 //     /* the four beam colors are encoded in 32 bits of skinnum (hack) */
@@ -574,6 +574,76 @@ namespace Quake2 {
             }
         }
 
+        private void CL_AddViewWeapon(in QShared.player_state_t ps, in QShared.player_state_t ops)
+        {
+            entity_t gun = new entity_t(); /* view model */
+
+            /* allow the gun to be completely removed */
+            if (!cl_gun!.Bool)
+            {
+                return;
+            }
+
+            /* don't draw gun if in wide angle view and drawing not forced */
+            if (ps.fov > 90)
+            {
+                if (cl_gun!.Int < 2)
+                {
+                    return;
+                }
+            }
+
+            // if (gun_model)
+            // {
+            //     gun.model = gun_model;
+            // }
+
+            // else
+            // {
+                gun.model = cl.model_draw[ps.gunindex];
+            // }
+
+            if (gun.model == null)
+            {
+                return;
+            }
+
+            /* set up gun position */
+            gun.origin = cl.refdef.vieworg + ops.gunoffset + cl.lerpfrac * (ps.gunoffset - ops.gunoffset);
+            gun.angles = cl.refdef.viewangles + QShared.LerpAngles(ops.gunangles, ps.gunangles, cl.lerpfrac);
+            // for (i = 0; i < 3; i++)
+            // {
+            //     gun.origin[i] = cl.refdef.vieworg[i] + ops->gunoffset[i]
+            //         + cl.lerpfrac * (ps->gunoffset[i] - ops->gunoffset[i]);
+            //     gun.angles[i] = cl.refdef.viewangles[i] + LerpAngle(ops->gunangles[i],
+            //         ps->gunangles[i], cl.lerpfrac);
+            // }
+
+            // if (gun_frame)
+            // {
+            //     gun.frame = gun_frame;
+            //     gun.oldframe = gun_frame;
+            // }
+            // else
+            // {
+                gun.frame = ps.gunframe;
+
+                if (gun.frame == 0)
+                {
+                    gun.oldframe = 0; /* just changed weapons, don't lerp from old */
+                }
+                else
+                {
+                    gun.oldframe = ops.gunframe;
+                }
+            // }
+
+            gun.flags = QShared.RF_MINLIGHT | QShared.RF_DEPTHHACK | QShared.RF_WEAPONMODEL;
+            gun.backlerp = 1.0f - cl.lerpfrac;
+            gun.oldorigin = gun.origin; /* don't lerp at all */
+            V_AddEntity(gun);
+        }
+
         /*
         * Sets cl.refdef view values
         */
@@ -591,7 +661,7 @@ namespace Quake2 {
 
             if ((oldframe.serverframe != cl.frame.serverframe - 1) || !oldframe.valid)
             {
-                oldframe = ref cl.frame; /* previous frame was dropped or invalid */
+                oldframe = ref cl.frame!; /* previous frame was dropped or invalid */
             }
 
             ref var ops = ref oldframe.playerstate;
@@ -605,13 +675,13 @@ namespace Quake2 {
             }
 
             float lerp;
-            // if(cl_paused->value){
-            //     lerp = 1.0f;
-            // }
-            // else
-            // {
+            if(cl_paused!.Bool){
+                lerp = 1.0f;
+            }
+            else
+            {
                 lerp = cl.lerpfrac;
-            // }
+            }
 
             /* calculate the origin */
             if ((cl_predict?.Bool ?? false) && (cl.frame.playerstate.pmove.pm_flags & QShared.PMF_NO_PREDICTION) == 0)
@@ -684,8 +754,8 @@ namespace Quake2 {
             /* don't interpolate blend color */
             cl.refdef.blend = new Vector4(ps.blend);
 
-            // /* add the weapon */
-            // CL_AddViewWeapon(ps, ops);
+            /* add the weapon */
+            CL_AddViewWeapon(ps, ops);
         }
 
         /*

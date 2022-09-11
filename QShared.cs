@@ -1485,6 +1485,11 @@ namespace Quake2 {
         {
             v.X = value;
         }
+        public static void SetYaw(this Vector3 v, float value)
+        {
+            v.Y = value;
+        }
+
     }        
 
 }

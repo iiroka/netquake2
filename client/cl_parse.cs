@@ -923,11 +923,10 @@ namespace Quake2 {
                 }
 
                 /* weapon file */
-            //     for (i = 0; i < num_cl_weaponmodels; i++)
-            //     {
-            //         Com_sprintf(weapon_filename, sizeof(weapon_filename),
-            //                 "players/%s/%s", model_name, cl_weaponmodels[i]);
-            //         ci->weaponmodel[i] = R_RegisterModel(weapon_filename);
+                for (int i = 0; i < cl_weaponmodels.Length; i++)
+                {
+                    var weapon_filename = $"players/{model_name}/{cl_weaponmodels[i]}";
+                    ci.weaponmodel[i] = vid.R_RegisterModel(weapon_filename);
 
             //         if (!ci->weaponmodel[i] && (strcmp(model_name, "cyborg") == 0))
             //         {
@@ -937,11 +936,11 @@ namespace Quake2 {
             //             ci->weaponmodel[i] = R_RegisterModel(weapon_filename);
             //         }
 
-            //         if (!cl_vwep->value)
-            //         {
-            //             break; /* only one when vwep is off */
-            //         }
-            //     }
+                    if (!cl_vwep!.Bool)
+                    {
+                        break; /* only one when vwep is off */
+                    }
+                }
 
             //     /* icon file */
             //     Com_sprintf(ci->iconname, sizeof(ci->iconname),
@@ -1184,18 +1183,18 @@ namespace Quake2 {
                         cls.connect_time = -99999; /* CL_CheckForResend() will fire immediately */
                         break;
 
-                    // case (int)QCommon.svc_ops_e.svc_print:
-                    //     i = MSG_ReadByte(&net_message);
+                    case (int)QCommon.svc_ops_e.svc_print:
+                        var i = msg.ReadByte();
 
-                    //     if (i == PRINT_CHAT)
-                    //     {
-                    //         S_StartLocalSound("misc/talk.wav");
-                    //         con.ormask = 128;
-                    //     }
+                        if (i == QShared.PRINT_CHAT)
+                        {
+                            // S_StartLocalSound("misc/talk.wav");
+                            con.ormask = 128;
+                        }
 
-                    //     Com_Printf("%s", MSG_ReadString(&net_message));
-                    //     con.ormask = 0;
-                    //     break;
+                        common.Com_Printf(msg.ReadString());
+                        con.ormask = 0;
+                        break;
 
                     // case (int)QCommon.svc_ops_e.svc_centerprint:
                     //     SCR_CenterPrint(MSG_ReadString(&net_message));
@@ -1228,13 +1227,13 @@ namespace Quake2 {
                         CL_ParseTEnt(ref msg);
                         break;
 
-                    // case (int)QCommon.svc_ops_e.svc_muzzleflash:
-                    //     CL_AddMuzzleFlash();
-                    //     break;
+                    case (int)QCommon.svc_ops_e.svc_muzzleflash:
+                        CL_AddMuzzleFlash(ref msg);
+                        break;
 
-                    // case (int)QCommon.svc_ops_e.svc_muzzleflash2:
-                    //     CL_AddMuzzleFlash2();
-                    //     break;
+                    case (int)QCommon.svc_ops_e.svc_muzzleflash2:
+                        CL_AddMuzzleFlash2(ref msg);
+                        break;
 
                     // case svc_download:
                     //     CL_ParseDownload();

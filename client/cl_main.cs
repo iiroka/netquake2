@@ -185,7 +185,7 @@ namespace Quake2 {
             cl_gun = common.Cvar_Get("cl_gun", "2", cvar_t.CVAR_ARCHIVE);
             cl_footsteps = common.Cvar_Get("cl_footsteps", "1", 0);
             cl_noskins = common.Cvar_Get("cl_noskins", "0", 0);
-            cl_predict = common.Cvar_Get("cl_predict", "0", 0);
+            cl_predict = common.Cvar_Get("cl_predict", "0", 0); // IKn
             cl_showfps = common.Cvar_Get("cl_showfps", "0", cvar_t.CVAR_ARCHIVE);
 
             // cl_upspeed = common.Cvar_Get("cl_upspeed", "200", 0);
@@ -197,7 +197,7 @@ namespace Quake2 {
 
             // cl_run = common.Cvar_Get("cl_run", "0", cvar_t.CVAR_ARCHIVE);
 
-            cl_shownet = common.Cvar_Get("cl_shownet", "2", 0);
+            cl_shownet = common.Cvar_Get("cl_shownet", "0", 0);
             cl_showmiss = common.Cvar_Get("cl_showmiss", "0", 0);
             cl_showclamp = common.Cvar_Get("showclamp", "0", 0);
             cl_timeout = common.Cvar_Get("cl_timeout", "120", 0);
