@@ -161,11 +161,10 @@ namespace Quake2 {
 
         private void SetLightFlags(in msurface_t surf)
         {
-            uint lightFlags = 0xffffffff;
-            // uint lightFlags = 0;
+            uint lightFlags = 0;
             // if (surf.dlightframe == gl3_framecount)
             // {
-            //     lightFlags = surf.dlightbits;
+                lightFlags = (uint)surf.dlightbits;
             // }
 
             for(int i=0; i<surf.polys!.vertices.Length; ++i)
@@ -177,12 +176,6 @@ namespace Quake2 {
         private void SetAllLightFlags(in msurface_t surf)
         {
             uint lightFlags = 0xffffffff;
-
-            // uint lightFlags = 0xffffffff;
-            // if (surf.dlightframe == gl3_framecount)
-            // {
-            //     lightFlags = surf.dlightbits;
-            // }
 
             for(int i=0; i<surf.polys!.vertices.Length; ++i)
             {
@@ -197,6 +190,30 @@ namespace Quake2 {
 
             GL3_BufferAndDraw3D(gl, fa.polys!.vertices, PrimitiveType.TriangleFan);
         }
+
+        private void GL3_DrawGLFlowingPoly(GL gl, in msurface_t fa)
+        {
+            var p = fa.polys!;
+
+            float scroll = -64.0f * ((gl3_newrefdef.time / 40.0f) - (int)(gl3_newrefdef.time / 40.0f));
+
+            if (scroll == 0.0f)
+            {
+                scroll = -64.0f;
+            }
+
+            if(gl3state.uni3DData.scroll != scroll)
+            {
+                gl3state.uni3DData.scroll = scroll;
+                GL3_UpdateUBO3D(gl);
+            }
+
+            GL3_BindVAO(gl, gl3state.vao3D);
+            GL3_BindVBO(gl, gl3state.vbo3D);
+
+            GL3_BufferAndDraw3D(gl, p.vertices, PrimitiveType.TriangleFan);
+        }
+
 
         private unsafe void UpdateLMscales(GL gl, in Vector4[] lmScales, ref gl3ShaderInfo_t si)
         {
@@ -269,18 +286,18 @@ namespace Quake2 {
                 lmScales[map].W = 1.0f;
             }
 
-            // if (fa->texinfo->flags & SURF_FLOWING)
-            // {
-            //     GL3_UseProgram(gl3state.si3DlmFlow.shaderProgram);
-            //     UpdateLMscales(lmScales, &gl3state.si3DlmFlow);
-            //     GL3_DrawGLFlowingPoly(fa);
-            // }
-            // else
-            // {
+            if ((fa.texinfo!.flags & QCommon.SURF_FLOWING) != 0)
+            {
+                GL3_UseProgram(gl, gl3state.si3DlmFlow.shaderProgram);
+                UpdateLMscales(gl, lmScales, ref gl3state.si3DlmFlow);
+                GL3_DrawGLFlowingPoly(gl, fa);
+            }
+            else
+            {
                 GL3_UseProgram(gl, gl3state.si3Dlm.shaderProgram);
                 UpdateLMscales(gl, lmScales, ref gl3state.si3Dlm);
                 GL3_DrawGLPoly(gl, fa);
-            // }
+            }
 
             // Note: lightmap chains are gone, lightmaps are rendered together with normal texture in one pass
         }
@@ -319,16 +336,16 @@ namespace Quake2 {
                     GL3_UpdateUBO3D(gl);
                 }
 
-                // if ((s.flags & SURF_DRAWTURB) != 0)
-                // {
+                if ((s.flags & SURF_DRAWTURB) != 0)
+                {
                 //     // GL3_EmitWaterPolys(s);
-                // }
-                // else if ((s.texinfo.flags & QCommon.SURF_FLOWING) != 0)
-                // {
-                //     // GL3_UseProgram(gl3state.si3DtransFlow.shaderProgram);
-                //     // GL3_DrawGLFlowingPoly(s);
-                // }
-                // else
+                }
+                else if ((s.texinfo.flags & QCommon.SURF_FLOWING) != 0)
+                {
+                    GL3_UseProgram(gl, gl3state.si3DtransFlow.shaderProgram);
+                    GL3_DrawGLFlowingPoly(gl, s);
+                }
+                else
                 {
                     GL3_UseProgram(gl, gl3state.si3Dtrans.shaderProgram);
                     GL3_DrawGLPoly(gl, s);
@@ -379,6 +396,45 @@ namespace Quake2 {
             // TODO: maybe one loop for normal faces and one for SURF_DRAWTURB ???
         }
 
+        private void RenderLightmappedPoly(GL gl, in entity_t currententity, in msurface_t surf)
+        {
+            // int map;
+            var image = TextureAnimation(currententity, surf.texinfo!);
+
+            var lmScales = new Vector4[MAX_LIGHTMAPS_PER_SURFACE];
+            lmScales[0] = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
+            // assert((surf->texinfo->flags & (SURF_SKY | SURF_TRANS33 | SURF_TRANS66 | SURF_WARP)) == 0
+            //         && "RenderLightMappedPoly mustn't be called with transparent, sky or warping surfaces!");
+
+            // Any dynamic lights on this surface?
+            for (int map = 0; map < MAX_LIGHTMAPS_PER_SURFACE && surf.styles[map] != 255; map++)
+            {
+                lmScales[map].X = gl3_newrefdef.lightstyles[surf.styles[map]].rgb[0];
+                lmScales[map].Y = gl3_newrefdef.lightstyles[surf.styles[map]].rgb[1];
+                lmScales[map].Z = gl3_newrefdef.lightstyles[surf.styles[map]].rgb[2];
+                lmScales[map].W = 1.0f;
+            }
+
+            c_brush_polys++;
+
+            GL3_Bind(gl, image.texnum);
+            GL3_BindLightmap(gl, surf.lightmaptexturenum);
+
+            if ((surf.texinfo!.flags & QCommon.SURF_FLOWING) != 0)
+            {
+                GL3_UseProgram(gl, gl3state.si3DlmFlow.shaderProgram);
+                UpdateLMscales(gl, lmScales, ref gl3state.si3DlmFlow);
+                GL3_DrawGLFlowingPoly(gl, surf);
+            }
+            else
+            {
+                GL3_UseProgram(gl, gl3state.si3Dlm.shaderProgram);
+                UpdateLMscales(gl, lmScales, ref gl3state.si3Dlm);
+                GL3_DrawGLPoly(gl, surf);
+            }
+        }        
+
         private void DrawInlineBModel(GL gl, in entity_t currententity, in gl3brushmodel_t currentmodel)
         {
             // int i, k;
@@ -419,21 +475,21 @@ namespace Quake2 {
                 if (((psurf.flags & SURF_PLANEBACK) != 0 && (dot < -BACKFACE_EPSILON)) ||
                     ((psurf.flags & SURF_PLANEBACK) == 0 && (dot > BACKFACE_EPSILON)))
                 {
-            //         if (psurf->texinfo->flags & (SURF_TRANS33 | SURF_TRANS66))
-            //         {
-            //             /* add to the translucent chain */
-            //             psurf->texturechain = gl3_alpha_surfaces;
-            //             gl3_alpha_surfaces = psurf;
-            //         }
-            //         else if(!(psurf->flags & SURF_DRAWTURB))
-            //         {
-            //             SetAllLightFlags(psurf);
-            //             RenderLightmappedPoly(currententity, psurf);
-            //         }
-            //         else
-            //         {
+                    if ((psurf.texinfo!.flags & (QCommon.SURF_TRANS33 | QCommon.SURF_TRANS66)) != 0)
+                    {
+                        /* add to the translucent chain */
+                        psurf.texturechain = gl3_alpha_surfaces;
+                        gl3_alpha_surfaces = psurf;
+                    }
+                    else if((psurf.flags & SURF_DRAWTURB) == 0)
+                    {
+                        SetAllLightFlags(psurf);
+                        RenderLightmappedPoly(gl, currententity, psurf);
+                    }
+                    else
+                    {
                         RenderBrushPoly(gl, currententity, psurf);
-            //         }
+                    }
                 }
             }
 
@@ -486,14 +542,15 @@ namespace Quake2 {
 
             if (rotated)
             {
-            //     vec3_t temp;
-            //     vec3_t forward, right, up;
+                var forward = new Vector3();
+                var right = new Vector3();
+                var up = new Vector3();
 
-            //     VectorCopy(modelorg, temp);
-            //     AngleVectors(e->angles, forward, right, up);
-            //     modelorg[0] = DotProduct(temp, forward);
-            //     modelorg[1] = -DotProduct(temp, right);
-            //     modelorg[2] = DotProduct(temp, up);
+                var temp = modelorg;
+                QShared.AngleVectors(e.angles, ref forward, ref right, ref up);
+                modelorg.X = Vector3.Dot(temp, forward);
+                modelorg.Y = -Vector3.Dot(temp, right);
+                modelorg.Z = Vector3.Dot(temp, up);
             }
 
 

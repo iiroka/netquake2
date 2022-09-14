@@ -2,12 +2,68 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
-        private void G_InitEdict(ref edict_t e, int num)
+        /*
+        * Searches all active entities for the next
+        * one that holds the matching string at fieldofs
+        * (use the FOFS() macro) in the structure.
+        *
+        * Searches beginning at the edict after from, or
+        * the beginning. If NULL, NULL will be returned
+        * if the end of the list is reached.
+        */
+        private edict_t? G_Find(in edict_t? from, string field, string match)
+        {
+            var edict_indx = 0;
+
+            if (from == null)
+            {
+                edict_indx = 0;
+            }
+            else
+            {
+                edict_indx = from.index+1;
+            }
+
+            if (String.IsNullOrEmpty(match) || String.IsNullOrEmpty(field))
+            {
+                return null;
+            }
+
+            var finfo = typeof(edict_t).GetField(field);
+            if (finfo == null)
+            {
+                return null;
+            }
+
+
+            for ( ; edict_indx < num_edicts; edict_indx++)
+            {
+                if (!g_edicts[edict_indx].inuse)
+                {
+                    continue;
+                }
+
+                object? obj = finfo.GetValue(g_edicts[edict_indx]);
+                if (obj == null || !(obj is string))
+                {
+                    continue;
+                }
+
+                if (((string)obj).Equals(match))
+                {
+                    return g_edicts[edict_indx];
+                }
+            }
+
+            return null;
+        }
+
+        private void G_InitEdict(ref edict_t e)
         {
             e.inuse = true;
             e.classname = "noclass";
-            // e.gravity = 1.0;
-            e.s.number = num;
+            e.gravity = 1.0f;
+            e.s.number = e.index;
         }
 
         /*
@@ -32,7 +88,7 @@ namespace Quake2 {
                 // if (!g_edicts[i].inuse && (policy == POLICY_DESPERATE || g_edicts[i].freetime < 2.0f || (level.time - g_edicts[i].freetime) > 0.5f))
                 if (!g_edicts[i].inuse)
                 {
-                    G_InitEdict (ref g_edicts[i], i);
+                    G_InitEdict (ref g_edicts[i]);
                     return g_edicts[i];
                 }
             }
@@ -56,7 +112,7 @@ namespace Quake2 {
 
             int n = global_num_ecicts++;
             ref var e2 = ref g_edicts[n];
-            G_InitEdict (ref e2, n);
+            G_InitEdict (ref e2);
 
             return e2;
         }

@@ -1489,6 +1489,10 @@ namespace Quake2 {
         {
             v.Y = value;
         }
+        public static void SetRoll(this Vector3 v, float value)
+        {
+            v.Z = value;
+        }
 
     }        
 

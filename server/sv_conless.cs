@@ -156,7 +156,6 @@ namespace Quake2 {
             svs.clients[i] = new client_t() { index = i };
             svs.clients[i].netchan = new QCommon.netchan_t(common);
             var ent = ge!.getEdict(i + 1);
-            ent.s.number = i + 1;
             svs.clients[i].edict = ent;
             svs.clients[i].challenge = challenge; /* save challenge for checksumming */
 

@@ -247,14 +247,12 @@ namespace Quake2 {
                 }
                 else if (mod.type == modtype_t.mod_alias)
                 {
-                //     pheader = (dmdl_t *)mod->extradata;
-
-                //     for (i = 0; i < pheader->num_skins; i++)
-                //     {
-                //         mod->skins[i] = GL3_FindImage((char *)pheader + pheader->ofs_skins + i * MAX_SKINNAME, it_skin);
-                //     }
-
-                //     mod->numframes = pheader->num_frames;
+                    gl3aliasmodel_t amod = (gl3aliasmodel_t)mod;
+                    for (int i = 0; i < amod.skins.Length; i++)
+                    {
+                        amod.skins[i] = GL3_FindImage(gl, amod.skinnames[i], imagetype_t.it_skin);
+                    }
+                    amod.numframes = amod.header.num_frames;
                 }
                 else if (mod.type == modtype_t.mod_brush)
                 {
@@ -366,7 +364,8 @@ namespace Quake2 {
             public byte[] styles = new byte[QCommon.MAXLIGHTMAPS]; // MAXLIGHTMAPS = MAX_LIGHTMAPS_PER_SURFACE (defined in local.h)
             // I think cached_light is not used/needed anymore
             //float cached_light[MAXLIGHTMAPS];       /* values currently used in lightmap */
-            public byte[]? samples = null;                          /* [numstyles*surfsize] */
+            public byte[]? samples_b = null;                          /* [numstyles*surfsize] */
+            public int samples_i;
         }
 
         public class mnode_or_leaf_t
@@ -416,6 +415,7 @@ namespace Quake2 {
             public gl3brushmodel_t[] submodels;
             public int[] surfedges;
             public short[] marksurfaces;
+            public byte[]? lightdata;
 
             public Vector3		origin;	// for sounds or lights
 
@@ -431,6 +431,7 @@ namespace Quake2 {
                 submodels = new gl3brushmodel_t[0];
                 surfedges = new int[0];
                 marksurfaces = new short[0];
+                lightdata = null;
             }
 
             public object Clone()
@@ -459,7 +460,7 @@ namespace Quake2 {
                 mod.LoadVertexes(qref, buffer, header.lumps[QCommon.LUMP_VERTEXES]);
                 mod.LoadEdges(qref, buffer, header.lumps[QCommon.LUMP_EDGES]);
                 mod.LoadSurfedges(qref, buffer, header.lumps[QCommon.LUMP_SURFEDGES]);
-                // Mod_LoadLighting(qref, buffer, header.lumps[QCommon.LUMP_LIGHTING]);
+                mod.LoadLighting(buffer, header.lumps[QCommon.LUMP_LIGHTING]);
                 mod.LoadPlanes(qref, buffer, header.lumps[QCommon.LUMP_PLANES]);
                 mod.LoadTexinfo(qref, gl, buffer, header.lumps[QCommon.LUMP_TEXINFO]);
                 mod.LoadFaces(qref, gl, buffer, header.lumps[QCommon.LUMP_FACES]);
@@ -471,6 +472,18 @@ namespace Quake2 {
                 mod.numframes = 2; /* regular and alternate animation */
 
                 return mod;
+            }
+
+            private void LoadLighting(byte[] mod_base, in QCommon.lump_t l)
+            {
+                if (l.filelen == 0)
+                {
+                    lightdata = null;
+                    return;
+                }
+
+                lightdata = new byte[l.filelen];
+                Array.Copy(mod_base, l.fileofs, lightdata, 0, l.filelen);
             }
 
             private void LoadVertexes(QRefGl3 qref, byte[] mod_base, in QCommon.lump_t l)
@@ -736,14 +749,15 @@ namespace Quake2 {
 
                     i = ind.lightofs;
 
-                    // if (i == -1)
-                    // {
-                        outd.samples = null;
-                    // }
-                    // else
-                    // {
-                    //     out->samples = loadmodel->lightdata + i;
-                    // }
+                    if (i == -1)
+                    {
+                        outd.samples_b = null;
+                    }
+                    else
+                    {
+                        outd.samples_b = lightdata;
+                        outd.samples_i = i;
+                    }
 
                     /* set the drawing flags */
                     if ((outd.texinfo.flags & QCommon.SURF_WARP) != 0)

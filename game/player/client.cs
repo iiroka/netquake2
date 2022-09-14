@@ -1,3 +1,31 @@
+/*
+ * Copyright (C) 1997-2001 Id Software, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ *
+ * =======================================================================
+ *
+ * Interface between client <-> game and client calculations.
+ *
+ * =======================================================================
+ */
+
+using System.Numerics;
+
 namespace Quake2 {
 
     partial class QuakeGame
@@ -14,23 +42,130 @@ namespace Quake2 {
             // client->resp.coop_respawn = client->pers;
         }
 
+        /*
+        * Chooses a player start, deathmatch start, coop start, etc
+        */
+        private void SelectSpawnPoint(in edict_t ent, out Vector3 origin, out Vector3 angles)
+        {
+            // edict_t *spot = NULL;
+            // edict_t *coopspot = NULL;
+            // int index;
+            // int counter = 0;
+            // vec3_t d;
+
+            if (ent == null)
+            {
+                origin = new Vector3();
+                angles = new Vector3();
+                return;
+            }
+
+            edict_t? spot = null;
+            // if (deathmatch!.Bool)
+            // {
+            //     spot = SelectDeathmatchSpawnPoint();
+            // }
+            // else if (coop->value)
+            // {
+            //     spot = SelectCoopSpawnPoint(ent);
+            // }
+
+            /* find a single player start spot */
+            if (spot == null)
+            {
+                while ((spot = G_Find(spot, "classname", "info_player_start")) != null)
+                {
+                    if (String.IsNullOrEmpty(game.spawnpoint) && String.IsNullOrEmpty(spot.targetname))
+                    {
+                        break;
+                    }
+
+                    if (String.IsNullOrEmpty(game.spawnpoint) || String.IsNullOrEmpty(spot.targetname))
+                    {
+                        continue;
+                    }
+
+                    if (game.spawnpoint.Equals(spot.targetname))
+                    {
+                        break;
+                    }
+                }
+
+                if (spot == null)
+                {
+                    if (String.IsNullOrEmpty(game.spawnpoint))
+                    {
+                        /* there wasn't a spawnpoint without a target, so use any */
+                        spot = G_Find(spot, "classname", "info_player_start");
+                    }
+
+                    if (spot == null)
+                    {
+                        gi.error($"Couldn't find spawn point {game.spawnpoint}\n");
+                    }
+                }
+            }
+
+            /* If we are in coop and we didn't find a coop
+            spawnpoint due to map bugs (not correctly
+            connected or the map was loaded via console
+            and thus no previously map is known to the
+            client) use one in 550 units radius. */
+            // if (coop->value)
+            // {
+            //     index = ent->client - game.clients;
+
+            //     if (Q_stricmp(spot->classname, "info_player_start") == 0 && index != 0)
+            //     {
+            //         while(counter < 3)
+            //         {
+            //             coopspot = G_Find(coopspot, FOFS(classname), "info_player_coop");
+
+            //             if (!coopspot)
+            //             {
+            //                 break;
+            //             }
+
+            //             VectorSubtract(coopspot->s.origin, spot->s.origin, d);
+
+            //             if ((VectorLength(d) < 550))
+            //             {
+            //                 if (index == counter)
+            //                 {
+            //                     spot = coopspot;
+            //                     break;
+            //                 }
+            //                 else
+            //                 {
+            //                     counter++;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+
+            origin = spot!.s.origin;
+            origin.Z += 9;
+            angles = spot!.s.angles;
+        }
+
         /* ============================================================== */
 
         /*
         * Called when a player connects to
         * a server or respawns in a deathmatch.
         */
-        private void PutClientInServer(edict_t ent)
+        private void PutClientInServer(ref edict_t ent)
         {
             // char userinfo[MAX_INFO_STRING];
 
-            // if (!ent)
-            // {
-            //     return;
-            // }
+            if (ent == null)
+            {
+                return;
+            }
 
-            // vec3_t mins = {-16, -16, -24};
-            // vec3_t maxs = {16, 16, 32};
+            var mins = new Vector3(-16f, -16f, -24f);
+            var  maxs = new Vector3(16f, 16f, 32f);
             // int index;
             // vec3_t spawn_origin, spawn_angles;
             // gclient_t *client;
@@ -38,13 +173,13 @@ namespace Quake2 {
             // client_persistant_t saved;
             // client_respawn_t resp;
 
-            // /* find a spawn point do it before setting
-            // health back up, so farthest ranging
-            // doesn't count this client */
-            // SelectSpawnPoint(ent, spawn_origin, spawn_angles);
+            /* find a spawn point do it before setting
+               health back up, so farthest ranging
+               doesn't count this client */
+            SelectSpawnPoint(ent, out var spawn_origin, out var spawn_angles);
 
-            // index = ent - g_edicts - 1;
-            // client = ent->client;
+            var index = ent.index - 1;
+            var client = (gclient_t)ent.client!;
 
             // /* deathmatch wipes most client data every spawn */
             // if (deathmatch->value)
@@ -76,24 +211,22 @@ namespace Quake2 {
             // memcpy(userinfo, client->pers.userinfo, sizeof(userinfo));
             // ClientUserinfoChanged(ent, userinfo);
 
-            // /* clear everything but the persistant data */
-            // saved = client->pers;
-            // memset(client, 0, sizeof(*client));
-            // client->pers = saved;
+            /* clear everything but the persistant data */
+            client.Clear();
 
             // if (client->pers.health <= 0)
             // {
             //     InitClientPersistant(client);
             // }
 
-            // client->resp = resp;
+            // client.resp = resp;
 
             // /* copy some data from the client to the entity */
             // FetchClientEntData(ent);
 
             /* clear entity values */
             // ent.groundentity = NULL;
-            // ent.client = &game.clients[index];
+            ent.client = game.clients[index];
             // ent.takedamage = DAMAGE_AIM;
             ent.movetype = movetype_t.MOVETYPE_WALK;
             ent.viewheight = 22;
@@ -112,16 +245,18 @@ namespace Quake2 {
             // ent->flags &= ~FL_NO_KNOCKBACK;
             ent.svflags = 0;
 
-            // VectorCopy(mins, ent->mins);
-            // VectorCopy(maxs, ent->maxs);
-            // VectorClear(ent->velocity);
+            ent.mins = mins;
+            ent.maxs = maxs;
+            ent.velocity = new Vector3();
 
-            // /* clear playerstate values */
-            // memset(&ent->client->ps, 0, sizeof(client->ps));
+            /* clear playerstate values */
+            ent.client.ps = new QShared.player_state_t();
 
-            // client->ps.pmove.origin[0] = spawn_origin[0] * 8;
-            // client->ps.pmove.origin[1] = spawn_origin[1] * 8;
-            // client->ps.pmove.origin[2] = spawn_origin[2] * 8;
+
+            client!.ps.pmove.origin = new short[3]{
+                (short)(spawn_origin.X * 8),
+                (short)(spawn_origin.Y * 8),
+                (short)(spawn_origin.Z * 8)};
 
             // if (deathmatch->value && ((int)dmflags->value & DF_FIXED_FOV))
             // {
@@ -150,12 +285,12 @@ namespace Quake2 {
 
             /* sknum is player num and weapon number
             weapon number will be added in changeweapon */
-            // ent.s.skinnum = ent - g_edicts - 1;
+            ent.s.skinnum = ent.index - 1;
 
-            // ent->s.frame = 0;
-            // VectorCopy(spawn_origin, ent->s.origin);
-            // ent->s.origin[2] += 1;  /* make sure off ground */
-            // VectorCopy(ent->s.origin, ent->s.old_origin);
+            ent.s.frame = 0;
+            ent.s.origin = spawn_origin;
+            ent.s.origin.Z += 1;  /* make sure off ground */
+            ent.s.old_origin = ent.s.origin;
 
             // /* set the delta angle */
             // for (i = 0; i < 3; i++)
@@ -164,13 +299,13 @@ namespace Quake2 {
             //             spawn_angles[i] - client->resp.cmd_angles[i]);
             // }
 
-            // ent->s.angles[PITCH] = 0;
-            // ent->s.angles[YAW] = spawn_angles[YAW];
-            // ent->s.angles[ROLL] = 0;
-            // VectorCopy(ent->s.angles, client->ps.viewangles);
-            // VectorCopy(ent->s.angles, client->v_angle);
+            ent.s.angles.SetPitch(0);
+            ent.s.angles.SetYaw(spawn_angles.Yaw());
+            ent.s.angles.SetRoll(0);
+            client.ps.viewangles = ent.s.angles;
+            // client.v_angle = ent.s.angles;
 
-            // /* spawn a spectator */
+            /* spawn a spectator */
             // if (client->pers.spectator)
             // {
             //     client->chase_target = NULL;
@@ -186,7 +321,7 @@ namespace Quake2 {
             // }
             // else
             // {
-            //     client->resp.spectator = false;
+                // client.resp.spectator = false;
             // }
 
             // if (!KillBox(ent))
@@ -208,6 +343,7 @@ namespace Quake2 {
         public void ClientBegin(edict_s sent)
         {
             int i;
+            Console.WriteLine("ClientBegin");
 
             if (sent == null || !(sent is edict_t))
             {
@@ -215,7 +351,7 @@ namespace Quake2 {
             }
             var ent = (edict_t)sent;
 
-            ent.client = game.clients[ent.s.number - 1];
+            ent.client = game.clients[ent.index - 1];
 
             // if (deathmatch->value)
             // {
@@ -225,6 +361,9 @@ namespace Quake2 {
 
             /* if there is already a body waiting for us (a loadgame),
             just take it, otherwise spawn one from scratch */
+            Console.WriteLine($"ent.inuse {ent.inuse}");
+            Console.WriteLine($"ent.index {ent.index}");
+            Console.WriteLine($"ent.client {ent.client}");
             if (ent.inuse == true)
             {
                 /* the client has cleared the client side viewangles upon
@@ -242,10 +381,10 @@ namespace Quake2 {
                 /* a spawn point will completely reinitialize the entity
                 except for the persistant data that was initialized at
                 ClientConnect() time */
-                G_InitEdict(ref ent, ent.s.number);
+                G_InitEdict(ref ent);
                 ent.classname = "player";
                 InitClientResp((gclient_t)ent.client!);
-                PutClientInServer(ent);
+                PutClientInServer(ref ent);
             }
 
             // if (level.intermissiontime)
@@ -335,8 +474,7 @@ namespace Quake2 {
             // }
 
             /* they can connect */
-            Console.WriteLine($"**** Connect for {ent.s.number} {ent.classname}");
-            ent.client = game.clients[ent.s.number - 1];
+            ent.client = game.clients[ent.index - 1];
 
             /* if there is already a body waiting for us (a loadgame),
             just take it, otherwise spawn one from scratch */

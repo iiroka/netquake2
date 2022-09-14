@@ -137,12 +137,62 @@ namespace Quake2 {
             public short save_ver { get; init; }
         }
 
+        /* ============================================================================ */
+
+        /* client_t->anim_priority */
+        private const int ANIM_BASIC = 0; /* stand / run */
+        private const int ANIM_WAVE = 1;
+        private const int ANIM_JUMP = 2;
+        private const int ANIM_PAIN = 3;
+        private const int ANIM_ATTACK = 4;
+        private const int ANIM_DEATH = 5;
+        private const int ANIM_REVERSE = 6;
+
+        /* client data that stays across multiple level loads */
+        private struct client_persistant_t
+        {
+            public string userinfo;
+            public string  netname;
+            public int hand;
+
+            public bool connected; /* a loadgame will leave valid entities that
+                                just don't have a connection yet */
+
+            /* values saved and restored
+            from edicts when changing levels */
+            public int health;
+            public int max_health;
+            public int savedFlags;
+
+            public int selected_item;
+            // int inventory[MAX_ITEMS];
+
+            /* ammo capacities */
+            public int max_bullets;
+            public int max_shells;
+            public int max_rockets;
+            public int max_grenades;
+            public int max_cells;
+            public int max_slugs;
+
+            // gitem_t *weapon;
+            // gitem_t *lastweapon;
+
+            public int power_cubes; /* used for tracking the cubes in coop games */
+            public int score; /* for calculating total unit score in coop games */
+
+            public int game_helpchanged;
+            public int helpchanged;
+
+            public bool spectator; /* client is a spectator */
+        }
+
         /* this structure is cleared on each PutClientInServer(),
         except for 'client->pers' */
         private class gclient_t : gclient_s
         {
             /* private to game */
-            // client_persistant_t pers;
+            public client_persistant_t pers;
             // client_respawn_t resp;
             // pmove_state_t old_pmove; /* for detecting out-of-pmove changes */
 
@@ -217,10 +267,74 @@ namespace Quake2 {
 
             // edict_t *chase_target; /* player we are chasing */
             // qboolean update_chase; /* need to update chase info? */
+
+            public void Clear()
+            {
+            // client_respawn_t resp;
+            // pmove_state_t old_pmove; /* for detecting out-of-pmove changes */
+                showscores = false;
+                showinventory = false;
+                showhelp = false;
+                showhelpicon = false;
+                ammo_index = 0;
+                buttons = 0;
+                oldbuttons = 0;
+                latched_buttons = 0;
+                weapon_thunk = false;
+                // gitem_t *newweapon;
+                damage_armor = 0;
+                damage_parmor = 0; /* damage absorbed by power armor */
+                damage_blood = 0; /* damage taken out of health */
+                damage_knockback = 0; /* impact damage */
+                // vec3_t damage_from; /* origin for vector calculation */
+                killer_yaw = 0; /* when dead, look at killer */
+                // weaponstate_t weaponstate;
+                // vec3_t kick_angles; /* weapon kicks */
+                // vec3_t kick_origin;
+                // float v_dmg_roll, v_dmg_pitch, v_dmg_time; /* damage kicks */
+                // float fall_time, fall_value; /* for view drop on fall */
+                // float damage_alpha;
+                // float bonus_alpha;
+                // vec3_t damage_blend;
+                // vec3_t v_angle; /* aiming direction */
+                // float bobtime; /* so off-ground doesn't change it */
+                // vec3_t oldviewangles;
+                // vec3_t oldvelocity;
+                next_drown_time = 0;
+                old_waterlevel = 0;
+                breather_sound = 0;
+                machinegun_shots = 0; /* for weapon raising */
+                anim_end = 0;
+                anim_priority = 0;
+                anim_duck = false;
+                anim_run = false;
+                // /* powerup timers */
+                // float quad_framenum;
+                // float invincible_framenum;
+                // float breather_framenum;
+                // float enviro_framenum;
+
+                // qboolean grenade_blew_up;
+                // float grenade_time;
+                // int silencer_shots;
+                // int weapon_sound;
+
+                // float pickup_msg_time;
+
+                // float flood_locktill; /* locked from talking */
+                // float flood_when[10]; /* when messages were said */
+                // int flood_whenhead; /* head pointer for when said */
+
+                // float respawn_time; /* can respawn when time > this */
+
+                // edict_t *chase_target; /* player we are chasing */
+                // qboolean update_chase; /* need to update chase info? */                
+            }
         }
 
         private class edict_t : edict_s
         {
+            public int index { get; init; }
             public movetype_t movetype;
             public int flags;
 

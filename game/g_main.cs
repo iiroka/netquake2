@@ -173,12 +173,15 @@ namespace Quake2 {
             game.maxentities = maxentities!.Int;
             g_edicts = new edict_t[game.maxentities];
             for (int i = 0; i < g_edicts.Length; i++) {
-                g_edicts[i] = new edict_t();
+                g_edicts[i] = new edict_t() { index = i };
             }
 
             /* initialize all clients for this game */
             game.maxclients = maxclients!.Int;
             game.clients = new gclient_t[game.maxclients];
+            for (int i = 0; i < game.clients.Length; i++) {
+                game.clients[i] = new gclient_t();
+            }
             global_num_ecicts =  game.maxclients + 1;
         }
     }

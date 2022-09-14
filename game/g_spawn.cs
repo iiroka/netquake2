@@ -397,7 +397,7 @@ namespace Quake2 {
             // memset(&level, 0, sizeof(level));
             for (int i = 0; i < g_edicts.Length; i++)
             {
-                g_edicts[i] = new edict_t();
+                g_edicts[i] = new edict_t() { index = i };
             }
 
             // Q_strlcpy(level.mapname, mapname, sizeof(level.mapname));

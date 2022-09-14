@@ -72,21 +72,21 @@ namespace Quake2 {
             for (numMaps = 0; numMaps < MAX_LIGHTMAPS_PER_SURFACE && surf.styles[numMaps] != 255; ++numMaps)
             {}
 
-            // if (surf.samples == null)
+            int map;
+            if (surf.samples_b == null)
             {
                 // no lightmap samples? set at least one lightmap to fullbright, rest to 0 as normal
 
                 if (numMaps == 0)  numMaps = 1; // make sure at least one lightmap is set to fullbright
 
-                for (int map = 0; map < MAX_LIGHTMAPS_PER_SURFACE; ++map)
+                for (map = 0; map < MAX_LIGHTMAPS_PER_SURFACE; ++map)
                 {
                     // we always create 4 (MAX_LIGHTMAPS_PER_SURFACE) lightmaps.
                     // if surf has less (numMaps < 4), the remaining ones are zeroed out.
                     // this makes sure that all 4 lightmap textures in gl3state.lightmap_textureIDs[i] have the same layout
                     // and the shader can use the same texture coordinates for all of them
 
-                    // int c = (map < numMaps) ? 255 : 0;
-                    byte c = 255;
+                    byte c = (map < numMaps) ? (byte)255 : (byte)0;
                     int dest_i = map * gl3lightmapstate_t.LIGHTMAP_BUFFER_SIZE + offsetInLMbuf;
 
                     for (int i = 0; i < tmax; i++, dest_i += stride)
@@ -107,56 +107,58 @@ namespace Quake2 {
             // the code has gotten a lot easier and we can copy directly from surf->samples to dest
             // without converting to float first etc
 
-            // lightmap = surf.samples;
+            var lightmap_b = surf.samples_b;
+            var lightmap_i = surf.samples_i;
 
-            // for(map=0; map<numMaps; ++map)
-            // {
-            //     byte* dest = gl3_lms.lightmap_buffers[map] + offsetInLMbuf;
-            //     int idxInLightmap = 0;
-            //     for (i = 0; i < tmax; i++, dest += stride)
-            //     {
-            //         for (j = 0; j < smax; j++)
-            //         {
-            //             r = lightmap[idxInLightmap * 3 + 0];
-            //             g = lightmap[idxInLightmap * 3 + 1];
-            //             b = lightmap[idxInLightmap * 3 + 2];
+            for(map=0; map<numMaps; ++map)
+            {
+                int dest_i = map * gl3lightmapstate_t.LIGHTMAP_BUFFER_SIZE + offsetInLMbuf;
+                int idxInLightmap = 0;
+                for (int i = 0; i < tmax; i++, dest_i += stride)
+                {
+                    for (int j = 0; j < smax; j++)
+                    {
+                        var r = lightmap_b[lightmap_i + idxInLightmap * 3 + 0];
+                        var g = lightmap_b[lightmap_i + idxInLightmap * 3 + 1];
+                        var b = lightmap_b[lightmap_i + idxInLightmap * 3 + 2];
 
-            //             /* determine the brightest of the three color components */
-            //             if (r > g)  max = r;
-            //             else  max = g;
+                        /* determine the brightest of the three color components */
+                        byte max;
+                        if (r > g)  max = r;
+                        else  max = g;
 
-            //             if (b > max)  max = b;
+                        if (b > max)  max = b;
 
-            //             /* alpha is ONLY used for the mono lightmap case. For this
-            //             reason we set it to the brightest of the color components
-            //             so that things don't get too dim. */
-            //             a = max;
+                        /* alpha is ONLY used for the mono lightmap case. For this
+                        reason we set it to the brightest of the color components
+                        so that things don't get too dim. */
+                        var a = max;
 
-            //             dest[0] = r;
-            //             dest[1] = g;
-            //             dest[2] = b;
-            //             dest[3] = a;
+                        gl3_lms.lightmap_buffers[dest_i+0] = r;
+                        gl3_lms.lightmap_buffers[dest_i+1] = g;
+                        gl3_lms.lightmap_buffers[dest_i+2] = b;
+                        gl3_lms.lightmap_buffers[dest_i+3] = a;
 
-            //             dest += 4;
-            //             ++idxInLightmap;
-            //         }
-            //     }
+                        dest_i += 4;
+                        ++idxInLightmap;
+                    }
+                }
 
-            //     lightmap += size * 3; /* skip to next lightmap */
-            // }
+                lightmap_i += size * 3; /* skip to next lightmap */
+            }
 
-            // for ( ; map < MAX_LIGHTMAPS_PER_SURFACE; ++map)
-            // {
-            //     // like above, fill up remaining lightmaps with 0
+            for ( ; map < MAX_LIGHTMAPS_PER_SURFACE; ++map)
+            {
+                // like above, fill up remaining lightmaps with 0
 
-            //     byte* dest = gl3_lms.lightmap_buffers[map] + offsetInLMbuf;
+                int dest_i = map * gl3lightmapstate_t.LIGHTMAP_BUFFER_SIZE + offsetInLMbuf;
 
-            //     for (i = 0; i < tmax; i++, dest += stride)
-            //     {
-            //         memset(dest, 0, 4*smax);
-            //         dest += 4*smax;
-            //     }
-            // }
+                for (int i = 0; i < tmax; i++, dest_i += stride)
+                {
+                    Array.Fill(gl3_lms.lightmap_buffers, (byte)0, dest_i, 4 * smax);
+                    dest_i += 4*smax;
+                }
+            }
         }
 
     }

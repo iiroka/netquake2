@@ -117,18 +117,19 @@ namespace Quake2 {
                 ent.oldframe = cent.prev.frame;
                 ent.backlerp = 1.0f - cl.lerpfrac;
 
-                // if (renderfx & (RF_FRAMELERP | RF_BEAM))
-                // {
-                //     /* step origin discretely, because the
-                //     frames do the animation properly */
-                //     VectorCopy(cent->current.origin, ent.origin);
-                //     VectorCopy(cent->current.old_origin, ent.oldorigin);
-                // }
-                // else
-                // {
+                if ((renderfx & (QShared.RF_FRAMELERP | QShared.RF_BEAM)) != 0)
+                {
+                    /* step origin discretely, because the
+                    frames do the animation properly */
+                    ent.origin = cent.current.origin;
+                    ent.oldorigin = cent.current.old_origin;
+                }
+                else
+                {
                     /* interpolate origin */
                     ent.origin = cent.prev.origin + cl.lerpfrac * (cent.current.origin - cent.prev.origin);
-                // }
+                    ent.oldorigin = ent.origin;
+                }
 
                 /* tweak the color of beams */
                 // if (renderfx & RF_BEAM)
@@ -241,10 +242,10 @@ namespace Quake2 {
                 {
                     ent.flags |= QShared.RF_VIEWERMODEL;
 
-                //     if (effects & EF_FLAG1)
-                //     {
-                //         V_AddLight(ent.origin, 225, 1.0f, 0.1f, 0.1f);
-                //     }
+                    // if (effects & EF_FLAG1)
+                    // {
+                    //     V_AddLight(ent.origin, 225, 1.0f, 0.1f, 0.1f);
+                    // }
 
                 //     else if (effects & EF_FLAG2)
                 //     {
