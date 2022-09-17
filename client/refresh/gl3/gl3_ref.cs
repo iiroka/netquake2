@@ -124,7 +124,7 @@ namespace Quake2 {
             public Vector3D<float> origin;
             private float _padding;
             public Vector3D<float> color;
-            private float intensity;
+            public float intensity;
         } ;
 
         private const int gl3UniDynLight_size = 8 * sizeof(float);

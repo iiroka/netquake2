@@ -1359,8 +1359,21 @@ namespace Quake2 {
         public static int DVIS_PHS = 1;
         public record struct dvis_t
         {
-        //     int numclusters;
-        //     int bitofs[8][2]; /* bitofs[numclusters][2] */
+           public int numclusters { get; }
+           public int[][] bitofs { get; } /* bitofs[numclusters][2] */
+
+            public dvis_t(byte[] buffer, int offset)
+            {
+                this.numclusters = BitConverter.ToInt32(buffer, offset);
+                this.bitofs = new int[numclusters][];
+                for (int i = 0; i < numclusters; i++) {
+                    this.bitofs[i] = new int[2]{
+                        BitConverter.ToInt32(buffer, offset + (1 + 2 * i) * 4),
+                        BitConverter.ToInt32(buffer, offset + (2 + 2 * i) * 4)
+                    };
+                }
+            }
+
         }
 
         // /* each area has a list of portals that lead into other areas

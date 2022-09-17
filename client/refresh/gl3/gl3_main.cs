@@ -591,7 +591,7 @@ namespace Quake2 {
 
             registration_sequence = 1; // from R_InitImages() (everything else from there shouldn't be needed anymore)
 
-        //     GL3_Mod_Init();
+            GL3_Mod_Init();
 
             GL3_InitParticleTexture(gl);
 
@@ -688,15 +688,14 @@ namespace Quake2 {
         {
             Vector3 shadelight;
 
-            // if ((currententity.flags & RF_FULLBRIGHT) != 0)
+            if ((currententity.flags & QShared.RF_FULLBRIGHT) != 0)
             {
                 shadelight = new Vector3(1.0f);
-                // shadelight[0] = shadelight[1] = shadelight[2] = 1.0F;
             }
-            // else
-            // {
-                // GL3_LightPoint(currententity, currententity.origin, shadelight);
-            // }
+            else
+            {
+                GL3_LightPoint(currententity, currententity.origin, out shadelight);
+            }
 
             var origModelMat = gl3state.uni3DData.transModelMat4;
             GL3_RotateForEntity(gl, currententity);
@@ -1344,7 +1343,7 @@ namespace Quake2 {
                 c_alias_polys = 0;
             }
 
-        //     GL3_PushDlights();
+            GL3_PushDlights(gl);
 
             if (gl_finish?.Bool ?? false)
             {
@@ -1363,8 +1362,8 @@ namespace Quake2 {
 
             GL3_DrawEntitiesOnList(gl);
 
-        //     // kick the silly gl1_flashblend poly lights
-        //     // GL3_RenderDlights();
+            // kick the silly gl1_flashblend poly lights
+            // GL3_RenderDlights();
 
         //     GL3_DrawParticles();
 

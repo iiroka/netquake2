@@ -45,7 +45,7 @@ namespace Quake2 {
             // cvar_t *game = Cvar_Get("game",  "", CVAR_LATCH | CVAR_SERVERINFO);
 
             /* bonus items rotate at a fixed rate */
-            // autorotate = anglemod(cl.time * 0.1f);
+            var autorotate = QShared.anglemod(cl.time * 0.1f);
 
             /* brush models can auto animate their frames */
             int autoanim = 2 * cl.time / 1000;
@@ -203,13 +203,11 @@ namespace Quake2 {
                 // }
 
                 // /* calculate angles */
-                // if (effects & EF_ROTATE)
-                // {
-                //     /* some bonus items auto-rotate */
-                //     ent.angles[0] = 0;
-                //     ent.angles[1] = autorotate;
-                //     ent.angles[2] = 0;
-                // }
+                if ((effects & QShared.EF_ROTATE) != 0)
+                {
+                    /* some bonus items auto-rotate */
+                    ent.angles = new Vector3(0, autorotate, 0);
+                }
                 // else if (effects & EF_SPINNINGLIGHTS)
                 // {
                 //     ent.angles[0] = 0;
@@ -646,6 +644,25 @@ namespace Quake2 {
         }
 
         /*
+        * Adapts a 4:3 aspect FOV to the current aspect (Hor+)
+        */
+        private float AdaptFov(float fov, float w, float h)
+        {
+            if (w <= 0 || h <= 0)
+                return fov;
+
+            /*
+            * Formula:
+            *
+            * fov = 2.0 * atan(width / height * 3.0 / 4.0 * tan(fov43 / 2.0))
+            *
+            * The code below is equivalent but precalculates a few values and
+            * converts between degrees and radians when needed.
+            */
+            return (MathF.Atan(MathF.Atan(fov / 360.0f * MathF.PI) * (w / h * 0.75f)) / MathF.PI * 360.0f);
+        }
+
+        /*
         * Sets cl.refdef view values
         */
         private void CL_CalcViewValues()
@@ -730,27 +747,23 @@ namespace Quake2 {
                 cl.refdef.viewangles = QShared.LerpAngles(ops.viewangles, ps.viewangles, lerp);
             }
 
-            // if (cl_kickangles->value)
-            // {
-            //     for (i = 0; i < 3; i++)
-            //     {
-            //         cl.refdef.viewangles[i] += LerpAngle(ops->kick_angles[i],
-            //                 ps->kick_angles[i], lerp);
-            //     }
-            // }
+            if (cl_kickangles!.Bool)
+            {
+                cl.refdef.viewangles += QShared.LerpAngles(ops.kick_angles, ps.kick_angles, lerp);
+            }
 
             QShared.AngleVectors(cl.refdef.viewangles, ref cl.v_forward, ref cl.v_right, ref cl.v_up);
 
             /* interpolate field of view */
             float ifov = ops.fov + lerp * (ps.fov - ops.fov);
-            // if (horplus->value)
-            // {
-            //     cl.refdef.fov_x = AdaptFov(ifov, cl.refdef.width, cl.refdef.height);
-            // }
-            // else
-            // {
+            if (horplus!.Bool)
+            {
+                cl.refdef.fov_x = AdaptFov(ifov, cl.refdef.width, cl.refdef.height);
+            }
+            else
+            {
                 cl.refdef.fov_x = ifov;
-            // }
+            }
 
             /* don't interpolate blend color */
             cl.refdef.blend = new Vector4(ps.blend);
@@ -803,7 +816,7 @@ namespace Quake2 {
             CL_AddPacketEntities(cl.frame);
             // CL_AddTEnts();
             // CL_AddParticles();
-            // CL_AddDLights();
+            CL_AddDLights();
             CL_AddLightStyles();
         }
 

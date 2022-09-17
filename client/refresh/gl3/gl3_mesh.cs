@@ -646,10 +646,8 @@ namespace Quake2 {
             //glPushMatrix();
             var origModelMat = gl3state.uni3DData.transModelMat4;
 
-            // entity.angles.SetPitch(-entity.angles.Pitch());
             entity.angles.X = -entity.angles.X;
             GL3_RotateForEntity(gl, entity);
-            // entity.angles.SetPitch(-entity.angles.Pitch());
             entity.angles.X = -entity.angles.X;
 
 

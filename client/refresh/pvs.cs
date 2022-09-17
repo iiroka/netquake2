@@ -30,6 +30,45 @@ namespace Quake2 {
 
     class QPVS
     {
+        /*
+        ===================
+        Mod_DecompressVis
+        ===================
+        */
+        public static byte[] Mod_DecompressVis(ReadOnlySpan<byte> ind, int row)
+        {
+            var decompressed = new byte[row];
+
+            if (ind == null)
+            {
+                /* no vis info, so make all visible */
+                Array.Fill(decompressed, (byte)0xFF);
+                return decompressed;
+            }
+
+            var index = 0;
+            var out_i = 0;
+            do
+            {
+                if (ind[index] != 0)
+                {
+                    decompressed[out_i++] = ind[index++];
+                    continue;
+                }
+
+                var c = ind[index + 1];
+                index += 2;
+
+                while (c > 0)
+                {
+                    decompressed[out_i++] = 0;
+                    c--;
+                }
+            } while (out_i < row);
+
+            return decompressed;
+        }
+
         public static float Mod_RadiusFromBounds(in Vector3 mins, in Vector3 maxs)
         {
             Vector3 corner = new Vector3();

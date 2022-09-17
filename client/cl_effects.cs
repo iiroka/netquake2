@@ -54,24 +54,27 @@ namespace Quake2 {
 
             // pl = &cl_entities[i];
 
-            // dl = CL_AllocDlight(i);
-            // VectorCopy(pl->current.origin, dl->origin);
-            // AngleVectors(pl->current.angles, fv, rv, NULL);
+            var dl = CL_AllocDlight(i);
+            dl.origin = cl_entities[i].current.origin;
+            var fv = new Vector3();
+            var rv = new Vector3();
+            var ignored = new Vector3();
+            QShared.AngleVectors(cl_entities[i].current.angles, ref fv, ref rv, ref ignored);
             // VectorMA(dl->origin, 18, fv, dl->origin);
             // VectorMA(dl->origin, 16, rv, dl->origin);
 
-            // if (silenced)
-            // {
-            //     dl->radius = 100.0f + (randk() & 31);
-            // }
+            if (silenced != 0)
+            {
+                dl.radius = 100.0f + (QShared.randk() & 31);
+            }
 
-            // else
-            // {
-            //     dl->radius = 200.0f + (randk() & 31);
-            // }
+            else
+            {
+                dl.radius = 200.0f + (QShared.randk() & 31);
+            }
 
-            // dl->minlight = 32;
-            // dl->die = cl.time;
+            dl.minlight = 32;
+            dl.die = cl.time;
 
             // if (silenced)
             // {
@@ -83,15 +86,13 @@ namespace Quake2 {
             //     volume = 1;
             // }
 
-            // switch (weapon)
-            // {
-            //     case MZ_BLASTER:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
+            switch (weapon)
+            {
+                case QShared.MZ_BLASTER:
+                    dl.color = new Vector3(1, 1, 0);
             //         S_StartSound(NULL, i, CHAN_WEAPON,
             //             S_RegisterSound("weapons/blastf1a.wav"), volume, ATTN_NORM, 0);
-            //         break;
+                    break;
             //     case MZ_BLUEHYPERBLASTER:
             //         dl->color[0] = 0;
             //         dl->color[1] = 0;
@@ -308,7 +309,7 @@ namespace Quake2 {
             //         dl->color[2] = 1;
             //         dl->die = cl.time + 100;
             //         break;
-            // }
+            }
         }
 
         private void CL_AddMuzzleFlash2(ref QReadbuf msg)
@@ -764,5 +765,13 @@ namespace Quake2 {
             //         break;
             // }
         }        
+
+        private void CL_ClearEffects()
+        {
+            // CL_ClearParticles();
+            CL_ClearDlights();
+            CL_ClearLightStyles();
+        }
+
     }
 }

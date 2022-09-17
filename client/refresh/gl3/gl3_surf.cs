@@ -162,10 +162,10 @@ namespace Quake2 {
         private void SetLightFlags(in msurface_t surf)
         {
             uint lightFlags = 0;
-            // if (surf.dlightframe == gl3_framecount)
-            // {
+            if (surf.dlightframe == gl3_framecount)
+            {
                 lightFlags = (uint)surf.dlightbits;
-            // }
+            }
 
             for(int i=0; i<surf.polys!.vertices.Length; ++i)
             {
@@ -443,13 +443,13 @@ namespace Quake2 {
             // msurface_t *psurf;
             // dlight_t *lt;
 
-            // /* calculate dynamic lighting for bmodel */
-            // lt = gl3_newrefdef.dlights;
+            /* calculate dynamic lighting for bmodel */
 
-            // for (k = 0; k < gl3_newrefdef.num_dlights; k++, lt++)
-            // {
-            //     GL3_MarkLights(lt, 1 << k, currentmodel->nodes + currentmodel->firstnode);
-            // }
+            for (int k = 0; k < gl3_newrefdef.num_dlights; k++)
+            {
+                ref var lt = ref gl3_newrefdef.dlights[k];
+                GL3_MarkLights(lt, 1 << k, currentmodel.nodes[currentmodel.firstnode]);
+            }
 
             // psurf = &currentmodel->surfaces[currentmodel->firstmodelsurface];
 
@@ -566,7 +566,7 @@ namespace Quake2 {
 
             DrawInlineBModel(gl, e, currentmodel);
 
-            // // glPopMatrix();
+            // glPopMatrix();
             gl3state.uni3DData.transModelMat4 = oldMat;
             GL3_UpdateUBO3D(gl);
 
@@ -676,10 +676,10 @@ namespace Quake2 {
             for (int c = 0; c < node.numsurfaces; c++)
             {
                 ref var surf = ref gl3_worldmodel!.surfaces[node.firstsurface + c];
-                // if (surf.visframe != gl3_framecount)
-                // {
-                //     continue;
-                // }
+                if (surf.visframe != gl3_framecount)
+                {
+                    continue;
+                }
 
                 if ((surf.flags & SURF_PLANEBACK) != sidebit)
                 {
@@ -756,13 +756,6 @@ namespace Quake2 {
         */
         private void GL3_MarkLeaves()
         {
-            // const byte *vis;
-            // YQ2_ALIGNAS_TYPE(int) byte fatvis[MAX_MAP_LEAFS / 8];
-            // mnode_t *node;
-            // int i, c;
-            // mleaf_t *leaf;
-            // int cluster;
-
             if ((gl3_oldviewcluster == gl3_viewcluster) &&
                 (gl3_oldviewcluster2 == gl3_viewcluster2) &&
                 !r_novis!.Bool &&
@@ -782,8 +775,8 @@ namespace Quake2 {
             gl3_oldviewcluster = gl3_viewcluster;
             gl3_oldviewcluster2 = gl3_viewcluster2;
 
-            // if (r_novis->value || (gl3_viewcluster == -1) || !gl3_worldmodel->vis)
-            // {
+            if (r_novis!.Bool || (gl3_viewcluster == -1) || gl3_worldmodel!.vis == null)
+            {
                 /* mark everything */
                 for (int i = 0; i < gl3_worldmodel!.numleafs; i++)
                 {
@@ -796,53 +789,53 @@ namespace Quake2 {
                 }
 
                 return;
-            // }
+            }
 
-            // vis = GL3_Mod_ClusterPVS(gl3_viewcluster, gl3_worldmodel);
+            var vis = GL3_Mod_ClusterPVS(gl3_viewcluster, gl3_worldmodel!);
 
-            // /* may have to combine two clusters because of solid water boundaries */
-            // if (gl3_viewcluster2 != gl3_viewcluster)
-            // {
-            //     memcpy(fatvis, vis, (gl3_worldmodel->numleafs + 7) / 8);
-            //     vis = GL3_Mod_ClusterPVS(gl3_viewcluster2, gl3_worldmodel);
-            //     c = (gl3_worldmodel->numleafs + 31) / 32;
+            /* may have to combine two clusters because of solid water boundaries */
+            if (gl3_viewcluster2 != gl3_viewcluster)
+            {
+                var fatvis = new byte[QCommon.MAX_MAP_LEAFS / 8];
+                Array.Copy(fatvis, vis, (gl3_worldmodel.numleafs + 7) / 8);
+                vis = GL3_Mod_ClusterPVS(gl3_viewcluster2, gl3_worldmodel);
+                var c = (gl3_worldmodel.numleafs + 7) / 8;
 
-            //     for (i = 0; i < c; i++)
-            //     {
-            //         ((int *)fatvis)[i] |= ((int *)vis)[i];
-            //     }
+                for (int i = 0; i < c; i++)
+                {
+                    fatvis[i] |= vis[i];
+                }
 
-            //     vis = fatvis;
-            // }
+                vis = fatvis;
+            }
 
-            // for (i = 0, leaf = gl3_worldmodel->leafs;
-            //     i < gl3_worldmodel->numleafs;
-            //     i++, leaf++)
-            // {
-            //     cluster = leaf->cluster;
+            for (var i = 0; i < gl3_worldmodel.numleafs; i++)
+            {
+                ref var leaf = ref gl3_worldmodel.leafs[i];
+                var cluster = leaf.cluster;
 
-            //     if (cluster == -1)
-            //     {
-            //         continue;
-            //     }
+                if (cluster == -1)
+                {
+                    continue;
+                }
 
-            //     if (vis[cluster >> 3] & (1 << (cluster & 7)))
-            //     {
-            //         node = (mnode_t *)leaf;
+                if ((vis[cluster >> 3] & (1 << (cluster & 7))) != 0)
+                {
+                    mnode_or_leaf_t? node = (mnode_or_leaf_t)leaf;
 
-            //         do
-            //         {
-            //             if (node->visframe == gl3_visframecount)
-            //             {
-            //                 break;
-            //             }
+                    do
+                    {
+                        if (node.visframe == gl3_visframecount)
+                        {
+                            break;
+                        }
 
-            //             node->visframe = gl3_visframecount;
-            //             node = node->parent;
-            //         }
-            //         while (node);
-            //     }
-            // }
+                        node.visframe = gl3_visframecount;
+                        node = node.parent;
+                    }
+                    while (node != null);
+                }
+            }
         }
 
 

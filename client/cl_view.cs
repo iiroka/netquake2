@@ -30,6 +30,9 @@ namespace Quake2 {
     partial class QClient {
 
         private lightstyle_t[] r_lightstyles = new lightstyle_t[QRef.MAX_LIGHTSTYLES];
+        private int r_numdlights;
+        private dlight_t[] r_dlights = new dlight_t[QRef.MAX_DLIGHTS];
+
         private entity_t[] r_entities = new entity_t[QRef.MAX_ENTITIES];
         private int r_numentities;
         private string[] cl_weaponmodels = {};
@@ -39,7 +42,7 @@ namespace Quake2 {
         */
         private void V_ClearScene()
         {
-            // r_numdlights = 0;
+            r_numdlights = 0;
             r_numentities = 0;
             // r_numparticles = 0;
         }
@@ -65,6 +68,21 @@ namespace Quake2 {
             r_lightstyles[style].rgb[0] = r;
             r_lightstyles[style].rgb[1] = g;
             r_lightstyles[style].rgb[2] = b;
+        }
+
+        private void V_AddLight(in Vector3 org, float intensity, float r, float g, float b)
+        {
+            if (r_numdlights >= QRef.MAX_DLIGHTS)
+            {
+                return;
+            }
+
+            ref var dl = ref r_dlights[r_numdlights++];
+            dl.origin = org;
+            dl.intensity = intensity;
+            dl.color.X = r;
+            dl.color.Y = g;
+            dl.color.Z = b;
         }
 
         /*
@@ -337,8 +355,8 @@ namespace Quake2 {
                 cl.refdef.entities = r_entities;
                 // cl.refdef.num_particles = r_numparticles;
                 // cl.refdef.particles = r_particles;
-                // cl.refdef.num_dlights = r_numdlights;
-                // cl.refdef.dlights = r_dlights;
+                cl.refdef.num_dlights = r_numdlights;
+                cl.refdef.dlights = r_dlights;
                 cl.refdef.lightstyles = r_lightstyles;
 
                 cl.refdef.rdflags = cl.frame.playerstate.rdflags;

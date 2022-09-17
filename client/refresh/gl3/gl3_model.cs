@@ -76,6 +76,26 @@ namespace Quake2 {
         }
 
         private List<gl3model_t> mod_known = new List<gl3model_t>();
+        private byte[] mod_novis;
+
+        private void GL3_Mod_Init()
+        {
+            // mod_max = 0;
+            mod_novis = new byte[QCommon.MAX_MAP_LEAFS / 8];
+            Array.Fill(mod_novis, (byte)0xFF);
+        }
+
+        private byte[] GL3_Mod_ClusterPVS(int cluster, in gl3brushmodel_t model)
+        {
+            if ((cluster == -1) || model.vis == null || model.vis_b == null)
+            {
+                return mod_novis;
+            }
+            QCommon.dvis_t vis = model.vis.Value;
+
+            return QPVS.Mod_DecompressVis(new ReadOnlySpan<byte>(model.vis_b, vis.bitofs[cluster][QCommon.DVIS_PVS], model.vis_b.Length - vis.bitofs[cluster][QCommon.DVIS_PVS]),
+                    (vis.numclusters + 7) >> 3);
+        }
 
         private mleaf_t GL3_Mod_PointInLeaf(GL gl, in Vector3 p, gl3brushmodel_t? model)
         {
@@ -416,6 +436,8 @@ namespace Quake2 {
             public int[] surfedges;
             public short[] marksurfaces;
             public byte[]? lightdata;
+            public QCommon.dvis_t? vis;
+            public byte[]? vis_b;
 
             public Vector3		origin;	// for sounds or lights
 
@@ -465,7 +487,7 @@ namespace Quake2 {
                 mod.LoadTexinfo(qref, gl, buffer, header.lumps[QCommon.LUMP_TEXINFO]);
                 mod.LoadFaces(qref, gl, buffer, header.lumps[QCommon.LUMP_FACES]);
                 mod.LoadMarksurfaces(qref, buffer, header.lumps[QCommon.LUMP_LEAFFACES]);
-                // Mod_LoadVisibility(qref, buffer, header.lumps[QCommon.LUMP_VISIBILITY]);
+                mod.LoadVisibility(qref, buffer, header.lumps[QCommon.LUMP_VISIBILITY]);
                 mod.LoadLeafs(qref, buffer, header.lumps[QCommon.LUMP_LEAFS]);
                 mod.LoadNodes(qref, buffer, header.lumps[QCommon.LUMP_NODES]);
                 mod.LoadSubmodels(qref, buffer, header.lumps[QCommon.LUMP_MODELS]);
@@ -485,6 +507,20 @@ namespace Quake2 {
                 lightdata = new byte[l.filelen];
                 Array.Copy(mod_base, l.fileofs, lightdata, 0, l.filelen);
             }
+
+            private void LoadVisibility(QRefGl3 qref, byte[] mod_base, in QCommon.lump_t l)
+            {
+                if (l.filelen == 0)
+                {
+                    vis = null;
+                    return;
+                }
+
+                vis = new QCommon.dvis_t(mod_base, l.fileofs);
+                vis_b = new byte[l.filelen];
+                Array.Copy(mod_base, l.fileofs, vis_b, 0, l.filelen);
+            }
+
 
             private void LoadVertexes(QRefGl3 qref, byte[] mod_base, in QCommon.lump_t l)
             {

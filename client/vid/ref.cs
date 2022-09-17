@@ -62,6 +62,11 @@ namespace Quake2 {
         public int		flags;
     }
 
+    internal struct dlight_t {
+        public Vector3	origin;
+        public Vector3	color;
+        public float	intensity;
+    }
 
     internal struct lightstyle_t {
         public float[]		rgb; /* 0.0 - 2.0 */
@@ -84,8 +89,8 @@ namespace Quake2 {
         public int			num_entities;
         public entity_t[]	entities;
 
-        // int			num_dlights; // <= 32 (MAX_DLIGHTS)
-        // dlight_t	*dlights;
+        public int			num_dlights; // <= 32 (MAX_DLIGHTS)
+        public dlight_t[]	dlights;
 
         // int			num_particles;
         // particle_t	*particles;

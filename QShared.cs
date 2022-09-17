@@ -805,6 +805,11 @@ namespace Quake2 {
 
 
         public static Random rand = new Random();
+
+        public static int randk() {
+            return rand.Next();
+        }
+
         public static System.Globalization.NumberFormatInfo provider = new System.Globalization.NumberFormatInfo();
         
         public static float ToRadians(float Degrees) => Degrees * (MathF.PI / 180.0f);
@@ -986,6 +991,11 @@ namespace Quake2 {
                 LerpAngle(a2.Y, a1.Y, frac),
                 LerpAngle(a2.Z, a1.Z, frac)
             );
+        }
+
+        public static float anglemod(float a)
+        {
+            return (360.0f / 65536) * ((int)(a * (65536 / 360.0)) & 65535);
         }
 
         /*

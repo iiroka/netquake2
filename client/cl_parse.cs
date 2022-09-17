@@ -998,23 +998,23 @@ namespace Quake2 {
             //         OGG_PlayTrack((int)strtol(cl.configstrings[CS_CDTRACK], (char **)NULL, 10));
             //     }
             // }
-            // else if ((i >= CS_MODELS) && (i < CS_MODELS + MAX_MODELS))
-            // {
-            //     if (cl.refresh_prepped)
-            //     {
-            //         cl.model_draw[i - CS_MODELS] = R_RegisterModel(cl.configstrings[i]);
+            else if ((i >= QShared.CS_MODELS) && (i < QShared.CS_MODELS + QShared.MAX_MODELS))
+            {
+                if (cl.refresh_prepped)
+                {
+                    cl.model_draw[i - QShared.CS_MODELS] = vid.R_RegisterModel(cl.configstrings[i]);
 
-            //         if (cl.configstrings[i][0] == '*')
-            //         {
-            //             cl.model_clip[i - CS_MODELS] = CM_InlineModel(cl.configstrings[i]);
-            //         }
+                    if (cl.configstrings[i][0] == '*')
+                    {
+                        // cl.model_clip[i - QShared.CS_MODELS] = CM_InlineModel(cl.configstrings[i]);
+                    }
 
-            //         else
-            //         {
-            //             cl.model_clip[i - CS_MODELS] = NULL;
-            //         }
-            //     }
-            // }
+                    else
+                    {
+                        // cl.model_clip[i - CS_MODELS] = NULL;
+                    }
+                }
+            }
             // else if ((i >= CS_SOUNDS) && (i < CS_SOUNDS + MAX_MODELS))
             // {
             //     if (cl.refresh_prepped)

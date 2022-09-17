@@ -544,19 +544,17 @@ namespace Quake2 {
                 gl3state.currentUBO = gl3state.uni3DUBO;
                 gl.BindBuffer(BufferTargetARB.UniformBuffer, gl3state.uni3DUBO);
             }
-            // Console.WriteLine("GL3_UpdateUBO3D");
-            // Console.WriteLine(gl3state.uni3DData.transProjViewMat4);
-            // fixed(void *p = &gl3state.uni3DData) {
-            //     float *fp = (float *)p;
-            //     for (int i = 0; i < 4; i++) {
-            //         for (int j = 0; j < 4; j++) {
-            //             Console.Write($"{fp[i*4 + j]} ");
-            //         }
-            //         Console.WriteLine("");
-            //     }
-            //     gl.BufferData(BufferTargetARB.UniformBuffer, gl3Uni3D_size, p, BufferUsageARB.DynamicDraw);
-            // }
             gl.BufferData(BufferTargetARB.UniformBuffer, gl3Uni3D_size, gl3state.uni3DData, BufferUsageARB.DynamicDraw);
+        }
+
+        private unsafe void GL3_UpdateUBOLights(GL gl)
+        {
+            if(gl3state.currentUBO != gl3state.uniLightsUBO)
+            {
+                gl3state.currentUBO = gl3state.uniLightsUBO;
+                gl.BindBuffer(BufferTargetARB.UniformBuffer, gl3state.uniLightsUBO);
+            }
+            gl.BufferData(BufferTargetARB.UniformBuffer, gl3UniLights_size, gl3state.uniLightsData, BufferUsageARB.DynamicDraw);
         }
 
         private readonly string vertexSrc2D = @"
