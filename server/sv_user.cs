@@ -156,33 +156,30 @@ namespace Quake2 {
             // memset(&nullstate, 0, sizeof(nullstate));
 
             /* write a packet full of data */
-            // while (client.netchan.message.Size < QCommon.MAX_MSGLEN / 2 && start < QShared.MAX_EDICTS)
-            // {
-            //     ref var b = ref sv.baselines[start];
+            while (client.netchan.message.Size < QCommon.MAX_MSGLEN / 2 && start < QShared.MAX_EDICTS)
+            {
+                ref var b = ref sv.baselines[start];
 
-            //     if (b.modelindex || b.sound || b.effects)
-            //     {
-            //         MSG_WriteByte(&sv_client->netchan.message, svc_spawnbaseline);
-            //         MSG_WriteDeltaEntity(&nullstate, base,
-            //                 &sv_client->netchan.message,
-            //                 true, true);
-            //     }
+                if (b.modelindex != 0 || b.sound != 0 || b.effects != 0)
+                {
+                    client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_spawnbaseline);
+                    client.netchan.message.WriteDeltaEntity(new QShared.entity_state_t(), b, true, true, common);
+                }
 
-            //     start++;
-            // }
+                start++;
+            }
 
-            // /* send next command */
-            // if (start == MAX_EDICTS)
-            // {
+            /* send next command */
+            if (start == QShared.MAX_EDICTS)
+            {
                 client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_stufftext);
                 client.netchan.message.WriteString($"precache {svs.spawncount}\n");
-            // }
-            // else
-            // {
-            //     MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
-            //     MSG_WriteString(&sv_client->netchan.message,
-            //             va("cmd baselines %i %i\n", svs.spawncount, start));
-            // }
+            }
+            else
+            {
+                client.netchan.message.WriteByte((int)QCommon.svc_ops_e.svc_stufftext);
+                client.netchan.message.WriteString($"cmd baselines {svs.spawncount} {start}\n");
+            }
         }
 
         private void SV_Begin_f(string[] args, ref client_t client)
@@ -295,6 +292,20 @@ namespace Quake2 {
             // }
         }
 
+        private void SV_ClientThink(ref client_t cl, in QShared.usercmd_t cmd)
+
+        {
+            cl.commandMsec -= cmd.msec;
+
+            if ((cl.commandMsec < 0) && sv_enforcetime!.Bool)
+            {
+                common.Com_DPrintf($"commandMsec underflow from {cl.name}\n");
+                return;
+            }
+
+            ge!.ClientThink(cl.edict!, cmd);
+        }
+
         /*
         * The current net_message is parsed for the given client
         */
@@ -316,7 +327,7 @@ namespace Quake2 {
             // sv_player = sv_client->edict;
 
             /* only allow one move command */
-            // move_issued = false;
+            var move_issued = false;
             var stringCmdCount = 0;
 
             while (true)
@@ -338,47 +349,48 @@ namespace Quake2 {
                 switch (c)
                 {
 
-            //         case clc_nop:
-            //             break;
+                    case (int)QCommon.clc_ops_e.clc_nop:
+                        break;
 
             //         case clc_userinfo:
             //             Q_strlcpy(cl->userinfo, MSG_ReadString(&net_message), sizeof(cl->userinfo));
             //             SV_UserinfoChanged(cl);
             //             break;
 
-            //         case clc_move:
+                    case (int)QCommon.clc_ops_e.clc_move:
 
-            //             if (move_issued)
-            //             {
-            //                 return; /* someone is trying to cheat... */
-            //             }
+                        if (move_issued)
+                        {
+                            return; /* someone is trying to cheat... */
+                        }
 
-            //             move_issued = true;
+                        move_issued = true;
             //             checksumIndex = net_message.readcount;
-            //             checksum = MSG_ReadByte(&net_message);
-            //             lastframe = MSG_ReadLong(&net_message);
+                        var checksum = msg.ReadByte();
+                        var lastframe = msg.ReadLong();
 
-            //             if (lastframe != cl->lastframe)
-            //             {
-            //                 cl->lastframe = lastframe;
+                        if (lastframe != cl.lastframe)
+                        {
+                            cl.lastframe = lastframe;
 
-            //                 if (cl->lastframe > 0)
-            //                 {
-            //                     cl->frame_latency[cl->lastframe & (LATENCY_COUNTS - 1)] =
-            //                         svs.realtime - cl->frames[cl->lastframe & UPDATE_MASK].senttime;
-            //                 }
-            //             }
+                            if (cl.lastframe > 0)
+                            {
+                                // cl->frame_latency[cl->lastframe & (LATENCY_COUNTS - 1)] =
+                                //     svs.realtime - cl->frames[cl->lastframe & UPDATE_MASK].senttime;
+                            }
+                        }
 
-            //             memset(&nullcmd, 0, sizeof(nullcmd));
-            //             MSG_ReadDeltaUsercmd(&net_message, &nullcmd, &oldest);
-            //             MSG_ReadDeltaUsercmd(&net_message, &oldest, &oldcmd);
-            //             MSG_ReadDeltaUsercmd(&net_message, &oldcmd, &newcmd);
+                        var nullcmd = new QShared.usercmd_t();
+                        nullcmd.angles = new short[3];
+                        msg.ReadDeltaUsercmd(nullcmd, out var oldest);
+                        msg.ReadDeltaUsercmd(oldest, out var oldcmd);
+                        msg.ReadDeltaUsercmd(oldcmd, out var newcmd);
 
-            //             if (cl->state != cs_spawned)
-            //             {
-            //                 cl->lastframe = -1;
-            //                 break;
-            //             }
+                        if (cl.state != client_state_t.cs_spawned)
+                        {
+                            cl.lastframe = -1;
+                            break;
+                        }
 
             //             /* if the checksum fails, ignore the rest of the packet */
             //             calculatedChecksum = COM_BlockSequenceCRCByte(
@@ -394,35 +406,35 @@ namespace Quake2 {
             //                 return;
             //             }
 
-            //             if (!sv_paused->value)
-            //             {
-            //                 net_drop = cl->netchan.dropped;
+                        if (!sv_paused!.Bool)
+                        {
+                            var net_drop = cl.netchan.dropped;
 
-            //                 if (net_drop < 20)
-            //                 {
-            //                     while (net_drop > 2)
-            //                     {
-            //                         SV_ClientThink(cl, &cl->lastcmd);
+                            if (net_drop < 20)
+                            {
+                                while (net_drop > 2)
+                                {
+                                    SV_ClientThink(ref cl, cl.lastcmd);
 
-            //                         net_drop--;
-            //                     }
+                                    net_drop--;
+                                }
 
-            //                     if (net_drop > 1)
-            //                     {
-            //                         SV_ClientThink(cl, &oldest);
-            //                     }
+                                if (net_drop > 1)
+                                {
+                                    SV_ClientThink(ref cl, oldest);
+                                }
 
-            //                     if (net_drop > 0)
-            //                     {
-            //                         SV_ClientThink(cl, &oldcmd);
-            //                     }
-            //                 }
+                                if (net_drop > 0)
+                                {
+                                    SV_ClientThink(ref cl, oldcmd);
+                                }
+                            }
 
-            //                 SV_ClientThink(cl, &newcmd);
-            //             }
+                            SV_ClientThink(ref cl, newcmd);
+                        }
 
-            //             cl->lastcmd = newcmd;
-            //             break;
+                        cl.lastcmd = newcmd;
+                        break;
 
                     case (int)QCommon.clc_ops_e.clc_stringcmd:
                         var s = msg.ReadString();

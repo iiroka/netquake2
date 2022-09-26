@@ -45,6 +45,14 @@ namespace Quake2 {
                 this.cl_parse_entities[i] = new QShared.entity_state_t();
             }
             this.cl.cmds = new QShared.usercmd_t[CMD_BACKUP];
+            for (int i = 0; i < this.cl.cmds.Length; i++)
+            {
+                this.cl.cmds[i].angles = new short[3];
+            }
+            this.cl.frame = new frame_t();
+            this.cl.frame.playerstate.pmove.origin = new short[3];
+            this.cl.frame.playerstate.pmove.velocity = new short[3];
+            this.cl.frame.playerstate.pmove.delta_angles = new short[3];
         }
 
         private client_state_t cl;
@@ -114,6 +122,9 @@ namespace Quake2 {
             cl.configstrings = new string[QShared.MAX_CONFIGSTRINGS];
             cl.model_draw = new model_s?[QShared.MAX_MODELS];
             cl.frame = new frame_t();
+            cl.frame.playerstate.pmove.origin = new short[3];
+            cl.frame.playerstate.pmove.velocity = new short[3];
+            cl.frame.playerstate.pmove.delta_angles = new short[3];
             cl.frames = new frame_t[QCommon.UPDATE_BACKUP];
             for (int i = 0; i < cl.frames.Length; i++)
             {
@@ -121,6 +132,15 @@ namespace Quake2 {
             }
             cl.clientinfo = new clientinfo_t[QShared.MAX_CLIENTS];
             cl.cmds = new QShared.usercmd_t[CMD_BACKUP];
+            for (int i = 0; i < cl.cmds.Length; i++)
+            {
+                cl.cmds[i].angles = new short[3];
+            }
+            cl.predicted_origins = new short[CMD_BACKUP][];
+            for (int i = 0; i < cl.predicted_origins.Length; i++)
+            {
+                cl.predicted_origins[i] = new short[3];
+            }
 
             cl_entities = new centity_t[QShared.MAX_EDICTS];
             for (int i = 0; i < cl_entities.Length; i++)
@@ -172,7 +192,7 @@ namespace Quake2 {
             cls.state = connstate_t.ca_disconnected;
             cls.realtime = common.Sys_Milliseconds();
 
-        //     CL_InitInput();
+            CL_InitInput();
 
             /* register our variables */
             // cin_force43 = common.Cvar_Get("cin_force43", "1", 0);
@@ -185,17 +205,17 @@ namespace Quake2 {
             cl_gun = common.Cvar_Get("cl_gun", "2", cvar_t.CVAR_ARCHIVE);
             cl_footsteps = common.Cvar_Get("cl_footsteps", "1", 0);
             cl_noskins = common.Cvar_Get("cl_noskins", "0", 0);
-            cl_predict = common.Cvar_Get("cl_predict", "0", 0); // IKn
+            cl_predict = common.Cvar_Get("cl_predict", "1", 0);
             cl_showfps = common.Cvar_Get("cl_showfps", "0", cvar_t.CVAR_ARCHIVE);
 
-            // cl_upspeed = common.Cvar_Get("cl_upspeed", "200", 0);
-            // cl_forwardspeed = common.Cvar_Get("cl_forwardspeed", "200", 0);
-            // cl_sidespeed = common.Cvar_Get("cl_sidespeed", "200", 0);
-            // cl_yawspeed = common.Cvar_Get("cl_yawspeed", "140", 0);
-            // cl_pitchspeed = common.Cvar_Get("cl_pitchspeed", "150", 0);
-            // cl_anglespeedkey = common.Cvar_Get("cl_anglespeedkey", "1.5", 0);
+            cl_upspeed = common.Cvar_Get("cl_upspeed", "200", 0);
+            cl_forwardspeed = common.Cvar_Get("cl_forwardspeed", "200", 0);
+            cl_sidespeed = common.Cvar_Get("cl_sidespeed", "200", 0);
+            cl_yawspeed = common.Cvar_Get("cl_yawspeed", "140", 0);
+            cl_pitchspeed = common.Cvar_Get("cl_pitchspeed", "150", 0);
+            cl_anglespeedkey = common.Cvar_Get("cl_anglespeedkey", "1.5", 0);
 
-            // cl_run = common.Cvar_Get("cl_run", "0", cvar_t.CVAR_ARCHIVE);
+            cl_run = common.Cvar_Get("cl_run", "0", cvar_t.CVAR_ARCHIVE);
 
             cl_shownet = common.Cvar_Get("cl_shownet", "0", 0);
             cl_showmiss = common.Cvar_Get("cl_showmiss", "0", 0);
@@ -397,7 +417,7 @@ namespace Quake2 {
             if (renderframe)
             {
                 vid.VID_CheckChanges();
-        //         CL_PredictMovement();
+                CL_PredictMovement();
 
                 if (!cl.refresh_prepped && (cls.state == connstate_t.ca_active))
                 {
@@ -420,8 +440,8 @@ namespace Quake2 {
         //         /* update audio */
         //         S_Update(cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
 
-        //         /* advance local effects for next frame */
-        //         CL_RunDLights();
+                /* advance local effects for next frame */
+                CL_RunDLights();
                 CL_RunLightStyles();
         //         SCR_RunCinematic();
         //         SCR_RunConsole();

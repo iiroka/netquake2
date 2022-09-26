@@ -26,6 +26,7 @@
  *
  * =======================================================================
  */
+using System.Text;
 
 namespace Quake2 {
 
@@ -475,6 +476,99 @@ namespace Quake2 {
         private int[] key_repeats = new int[(int)QKEYS.K_LAST]; /* if > 1, it is autorepeating */
         private bool[] keydown = new bool[(int)QKEYS.K_LAST];
 
+        /*
+        * Returns a key number to be used to index
+        * keybindings[] by looking at the given string.
+        * Single ascii characters return themselves, while
+        * the K_* names are matched up.
+        */
+        private int Key_StringToKeynum(in string str)
+        {
+            if (String.IsNullOrEmpty(str))
+            {
+                return -1;
+            }
+
+            if (str.Length == 1)
+            {
+                return str[0];
+            }
+
+            foreach (var kn in keynames)
+            {
+                if (kn.name.Equals(str))
+                {
+                    return (int)kn.keynum;
+                }
+            }
+
+            return -1;
+        }
+
+
+        private void Key_Bind_f(string[] args)
+        {
+            // int i, c, b;
+            // char cmd[1024];
+
+            // c = Cmd_Argc();
+
+            if (args.Length < 2)
+            {
+                common.Com_Printf("bind <key> [command] : attach a command to a key\n");
+                return;
+            }
+
+            var b = Key_StringToKeynum(args[1]);
+
+            if (b == -1)
+            {
+                common.Com_Printf($"\"{args[1]}\" isn't a valid key\n");
+                return;
+            }
+
+            /* don't allow binding escape or the special console keys */
+            if(b == (int)QKEYS.K_ESCAPE || b == '^' || b == '`' || b == '~' || b == (int)QKEYS.K_JOY_BACK)
+            {
+                // if(doneWithDefaultCfg)
+                // {
+                    /* don't warn about this when it's from default.cfg, we can't change that anyway */
+                    common.Com_Printf($"You can't bind the special key \"{args[1]}\"!\n");
+                // }
+                return;
+            }
+
+            if (args.Length == 2)
+            {
+                if (!String.IsNullOrEmpty(keybindings[b]))
+                {
+                    common.Com_Printf($"\"{args[1]}\" = \"{keybindings[b]}\"\n");
+                }
+
+                else
+                {
+                    common.Com_Printf($"\"{args[1]}\" is not bound\n");
+                }
+
+                return;
+            }
+
+            /* copy the rest of the command line */
+            var cmd = new StringBuilder(); /* start out with a null string */
+
+            for (int i = 2; i < args.Length; i++)
+            {
+                cmd.Append(args[i]);
+
+                if (i != (args.Length - 1))
+                {
+                    cmd.Append(" ");
+                }
+            }
+
+            keybindings[b] = cmd.ToString();
+        }
+
 
         public void Key_Init()
         {
@@ -543,7 +637,7 @@ namespace Quake2 {
             // cfg_unbindall = Cvar_Get("cfg_unbindall", "1", CVAR_ARCHIVE);
 
             // /* register our functions */
-            // Cmd_AddCommand("bind", Key_Bind_f);
+            common.Cmd_AddCommand("bind", Key_Bind_f);
             // Cmd_AddCommand("unbind", Key_Unbind_f);
             // Cmd_AddCommand("unbindall", Key_Unbindall_f);
             // Cmd_AddCommand("bindlist", Key_Bindlist_f);
@@ -559,7 +653,7 @@ namespace Quake2 {
             // char cmd[1024];
             // char *kb;
             // cvar_t *fullscreen;
-            // unsigned int time = Sys_Milliseconds();
+            int time = common.Sys_Milliseconds();
 
             // // evil hack for the joystick key altselector, which turns K_BTN_x into K_BTN_x_ALT
             // if(joy_altselector_pressed && key >= K_JOY_FIRST_REGULAR && key <= K_JOY_LAST_REGULAR)
@@ -719,10 +813,10 @@ namespace Quake2 {
             and try to forget. */
             if (down)
             {
-            //     if (key_repeats[key] == 1)
-            //     {
-            //         anykeydown++;
-            //     }
+                // if (key_repeats[key] == 1)
+                // {
+                //     anykeydown++;
+                // }
             }
             else
             {
@@ -741,40 +835,40 @@ namespace Quake2 {
             kenum as a parameter, so multiple downs can be matched with ups */
             if (!down)
             {
-            //     kb = keybindings[key];
+                var kb = keybindings[key];
 
-            //     if (kb && (kb[0] == '+'))
-            //     {
-            //         Com_sprintf(cmd, sizeof(cmd), "-%s %i %i\n", kb + 1, key, time);
-            //         Cbuf_AddText(cmd);
-            //     }
+                if (!String.IsNullOrEmpty(kb) && (kb[0] == '+'))
+                {
+                    var cmd= $"-{kb + 1} {key} {time}\n";
+                    common.Cbuf_AddText(cmd);
+                }
 
                 return;
             }
-            // else if (((cls.key_dest == key_menu) && menubound[key]) ||
-            //         ((cls.key_dest == key_console) && !consolekeys[key]) ||
-            //         ((cls.key_dest == key_game) && ((cls.state == ca_active) ||
-            //         !consolekeys[key])))
-            // {
-            //     kb = keybindings[key];
+            else if (((cls.key_dest == keydest_t.key_menu) && menubound[key]) ||
+                    ((cls.key_dest == keydest_t.key_console) && !consolekeys[key]) ||
+                    ((cls.key_dest == keydest_t.key_game) && ((cls.state == connstate_t.ca_active) ||
+                    !consolekeys[key])))
+            {
+                var kb = keybindings[key];
 
-            //     if (kb)
-            //     {
-            //         if (kb[0] == '+')
-            //         {
-            //             /* button commands add keynum and time as a parm */
-            //             Com_sprintf(cmd, sizeof(cmd), "%s %i %i\n", kb, key, time);
-            //             Cbuf_AddText(cmd);
-            //         }
-            //         else
-            //         {
-            //             Cbuf_AddText(kb);
-            //             Cbuf_AddText("\n");
-            //         }
-            //     }
+                if (!String.IsNullOrEmpty(kb))
+                {
+                    if (kb[0] == '+')
+                    {
+                        /* button commands add keynum and time as a parm */
+                        var cmd = $"{kb} {key} {time}\n";
+                        common.Cbuf_AddText(cmd);
+                    }
+                    else
+                    {
+                        common.Cbuf_AddText(kb);
+                        common.Cbuf_AddText("\n");
+                    }
+                }
 
-            //     return;
-            // }
+                return;
+            }
 
             /* All input subsystems handled after this point only
             care for key down events (=> if(!down) returns above). */

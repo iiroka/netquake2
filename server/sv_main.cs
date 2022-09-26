@@ -145,7 +145,7 @@ namespace Quake2 {
             /* don't run if paused */
             if (!(sv_paused?.Bool ?? false) || (maxclients!.Int > 1))
             {
-                // ge->RunFrame();
+                ge!.RunFrame();
 
                 /* never get more than one tic behind */
                 if (sv.time < svs.realtime)

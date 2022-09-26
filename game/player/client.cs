@@ -30,6 +30,41 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        /* ======================================================================= */
+
+        /*
+        * This is only called when the game first
+        * initializes in single player, but is called
+        * after each death and level change in deathmatch
+        */
+        private void InitClientPersistant(gclient_t client)
+        {
+            if (client == null)
+            {
+                return;
+            }
+
+            client.pers = new client_persistant_t();
+
+            var item = FindItem("Blaster");
+            client.pers.selected_item = item!.index;
+            // client.pers.inventory[client.pers.selected_item] = 1;
+
+            client.pers.weapon = item;
+
+            client.pers.health = 100;
+            client.pers.max_health = 100;
+
+            client.pers.max_bullets = 200;
+            client.pers.max_shells = 100;
+            client.pers.max_rockets = 50;
+            client.pers.max_grenades = 50;
+            client.pers.max_cells = 200;
+            client.pers.max_slugs = 50;
+
+            client.pers.connected = true;
+        }
+
         private void InitClientResp(gclient_t client)
         {
             if (client == null)
@@ -37,9 +72,9 @@ namespace Quake2 {
                 return;
             }
 
-            // memset(&client->resp, 0, sizeof(client->resp));
-            // client->resp.enterframe = level.framenum;
-            // client->resp.coop_respawn = client->pers;
+            client.resp = new client_respawn_t();
+            client.resp.enterframe = level.framenum;
+            client.resp.coop_respawn = client.pers;
         }
 
         /*
@@ -171,7 +206,7 @@ namespace Quake2 {
             // gclient_t *client;
             // int i;
             // client_persistant_t saved;
-            // client_respawn_t resp;
+            var resp = new client_respawn_t();
 
             /* find a spawn point do it before setting
                health back up, so farthest ranging
@@ -208,34 +243,34 @@ namespace Quake2 {
             //     memset(&resp, 0, sizeof(resp));
             // }
 
-            // memcpy(userinfo, client->pers.userinfo, sizeof(userinfo));
+            var userinfo = client.pers.userinfo;
             // ClientUserinfoChanged(ent, userinfo);
 
             /* clear everything but the persistant data */
             client.Clear();
 
-            // if (client->pers.health <= 0)
-            // {
-            //     InitClientPersistant(client);
-            // }
+            if (client.pers.health <= 0)
+            {
+                InitClientPersistant(client);
+            }
 
-            // client.resp = resp;
+            client.resp = resp;
 
             // /* copy some data from the client to the entity */
             // FetchClientEntData(ent);
 
             /* clear entity values */
-            // ent.groundentity = NULL;
+            ent.groundentity = null;
             ent.client = game.clients[index];
-            // ent.takedamage = DAMAGE_AIM;
+            ent.takedamage = (int)damage_t.DAMAGE_AIM;
             ent.movetype = movetype_t.MOVETYPE_WALK;
             ent.viewheight = 22;
             ent.inuse = true;
             ent.classname = "player";
             ent.mass = 200;
-            // ent->solid = SOLID_BBOX;
+            ent.solid = solid_t.SOLID_BBOX;
             // ent->deadflag = DEAD_NO;
-            // ent->air_finished = level.time + 12;
+            ent.air_finished = level.time + 12;
             // ent->clipmask = MASK_PLAYERSOLID;
             // ent->model = "players/male/tris.md2";
             // ent->pain = player_pain;
@@ -251,7 +286,10 @@ namespace Quake2 {
 
             /* clear playerstate values */
             ent.client.ps = new QShared.player_state_t();
-
+            ent.client.ps.pmove = new QShared.pmove_state_t();
+            ent.client.ps.pmove.origin = new short[3];
+            ent.client.ps.pmove.velocity = new short[3];
+            ent.client.ps.pmove.delta_angles = new short[3];
 
             client!.ps.pmove.origin = new short[3]{
                 (short)(spawn_origin.X * 8),
@@ -260,7 +298,7 @@ namespace Quake2 {
 
             // if (deathmatch->value && ((int)dmflags->value & DF_FIXED_FOV))
             // {
-            //     client->ps.fov = 90;
+                client.ps.fov = 90;
             // }
             // else
             // {
@@ -276,7 +314,7 @@ namespace Quake2 {
             //     }
             // }
 
-            // client->ps.gunindex = gi.modelindex(client->pers.weapon->view_model);
+            client.ps.gunindex = gi.modelindex(client.pers.weapon!.view_model);
 
             /* clear entity state values */
             ent.s.effects = 0;
@@ -292,18 +330,18 @@ namespace Quake2 {
             ent.s.origin.Z += 1;  /* make sure off ground */
             ent.s.old_origin = ent.s.origin;
 
-            // /* set the delta angle */
-            // for (i = 0; i < 3; i++)
+            /* set the delta angle */
+            // for (int i = 0; i < 3; i++)
             // {
-            //     client->ps.pmove.delta_angles[i] = ANGLE2SHORT(
-            //             spawn_angles[i] - client->resp.cmd_angles[i]);
+            //     client.ps.pmove.delta_angles[i] = QShared.ANGLE2SHORT(
+            //             spawn_angles[i] - client.resp.cmd_angles[i]);
             // }
 
             ent.s.angles.SetPitch(0);
             ent.s.angles.SetYaw(spawn_angles.Yaw());
             ent.s.angles.SetRoll(0);
             client.ps.viewangles = ent.s.angles;
-            // client.v_angle = ent.s.angles;
+            client.v_angle = ent.s.angles;
 
             /* spawn a spectator */
             // if (client->pers.spectator)
@@ -321,7 +359,7 @@ namespace Quake2 {
             // }
             // else
             // {
-                // client.resp.spectator = false;
+                client.resp.spectator = false;
             // }
 
             // if (!KillBox(ent))
@@ -331,8 +369,8 @@ namespace Quake2 {
 
             gi.linkentity(ent);
 
-            // /* force the current weapon up */
-            // client->newweapon = client->pers.weapon;
+            /* force the current weapon up */
+            client.newweapon = client.pers.weapon;
             // ChangeWeapon(ent);
         }
 
@@ -370,11 +408,9 @@ namespace Quake2 {
                 connecting to the server, which is different than the
                 state when the game is saved, so we need to compensate
                 with deltaangles */
-                // for (i = 0; i < 3; i++)
-                // {
-                //     ent->client->ps.pmove.delta_angles[i] = ANGLE2SHORT(
-                //             ent->client->ps.viewangles[i]);
-                // }
+                ent.client.ps.pmove.delta_angles[0] = QShared.ANGLE2SHORT(ent.client.ps.viewangles.X);
+                ent.client.ps.pmove.delta_angles[1] = QShared.ANGLE2SHORT(ent.client.ps.viewangles.Y);
+                ent.client.ps.pmove.delta_angles[2] = QShared.ANGLE2SHORT(ent.client.ps.viewangles.Z);
             }
             else
             {
@@ -407,7 +443,7 @@ namespace Quake2 {
             // }
 
             /* make sure all view stuff is valid */
-            // ClientEndServerFrame(ent);
+            ClientEndServerFrame(ent);
         }
 
         public bool ClientConnect(edict_s sent, string userinfo)
@@ -499,6 +535,259 @@ namespace Quake2 {
             ent.svflags = 0; /* make sure we start with known default */
             // ent->client->pers.connected = true;
             return true;
+        }
+
+        /* ============================================================== */
+
+        private edict_t? pm_passent;
+
+        /*
+        * pmove doesn't need to know
+        * about passent and contentmask
+        */
+        private QShared.trace_t PM_trace(in Vector3 start, in Vector3 mins, in Vector3 maxs, in Vector3 end)
+        {
+            if (pm_passent!.health > 0)
+            {
+                return gi.trace(start, mins, maxs, end, pm_passent, QShared.MASK_PLAYERSOLID);
+            }
+            else
+            {
+                return gi.trace(start, mins, maxs, end, pm_passent, QShared.MASK_DEADSOLID);
+            }
+        }
+
+        /*
+        * This will be called once for each client frame, which will
+        * usually be a couple times for each server frame.
+        */
+        public void ClientThink(edict_s sent, in QShared.usercmd_t ucmd)
+        {
+            // gclient_t *client;
+            // edict_t *other;
+            // int i, j;
+            // pmove_t pm;
+
+            if (sent == null || !(sent is edict_t))
+            {
+                return;
+            }
+            var ent = (edict_t)sent;
+
+            level.current_entity = ent;
+            var client = (gclient_t)ent.client!;
+
+            if (level.intermissiontime > 0)
+            {
+                client.ps.pmove.pm_type = QShared.pmtype_t.PM_FREEZE;
+
+                /* can exit intermission after five seconds */
+                if ((level.time > level.intermissiontime + 5.0) &&
+                    (ucmd.buttons & QShared.BUTTON_ANY) != 0)
+                {
+                    level.exitintermission = 1;
+                }
+
+                return;
+            }
+
+            pm_passent = ent;
+
+            if (client.chase_target != null)
+            {
+            //     client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
+            //     client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
+            //     client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
+            }
+            else
+            {
+                /* set up for pmove */
+                var pm = new QShared.pmove_t();
+
+            //     if (ent->movetype == MOVETYPE_NOCLIP)
+            //     {
+            //         client->ps.pmove.pm_type = PM_SPECTATOR;
+            //     }
+            //     else if (ent->s.modelindex != 255)
+            //     {
+            //         client->ps.pmove.pm_type = PM_GIB;
+            //     }
+            //     else if (ent->deadflag)
+            //     {
+            //         client->ps.pmove.pm_type = PM_DEAD;
+            //     }
+            //     else
+            //     {
+                    client.ps.pmove.pm_type = QShared.pmtype_t.PM_NORMAL;
+            //     }
+
+                client.ps.pmove.gravity = (short)sv_gravity!.Int;
+                pm.s = client.ps.pmove;
+
+                pm.s.origin[0] = (short)(ent.s.origin.X * 8);
+                pm.s.origin[1] = (short)(ent.s.origin.Y * 8);
+                pm.s.origin[2] = (short)(ent.s.origin.Z * 8);
+                pm.s.velocity[0] = (short)(ent.velocity.X * 8);
+                pm.s.velocity[1] = (short)(ent.velocity.Y * 8);
+                pm.s.velocity[2] = (short)(ent.velocity.Z * 8);
+
+            //     if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
+            //     {
+            //         pm.snapinitial = true;
+            //     }
+
+                pm.cmd = ucmd;
+
+                pm.trace = PM_trace; /* adds default parms */
+            //     pm.pointcontents = gi.pointcontents;
+
+                /* perform a pmove */
+                gi.Pmove(ref pm);
+
+                /* save results of pmove */
+                client.ps.pmove = pm.s;
+                client.old_pmove = pm.s;
+
+                ent.s.origin = new Vector3(pm.s.origin[0]*0125f, pm.s.origin[1]*0125f, pm.s.origin[2]*0125f);
+                ent.velocity = new Vector3(pm.s.velocity[0]*0125f, pm.s.velocity[1]*0125f, pm.s.velocity[2]*0125f);
+
+                ent.mins = pm.mins;
+                ent.maxs = pm.maxs;
+
+            //     client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
+            //     client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
+            //     client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
+
+            //     if (ent->groundentity && !pm.groundentity && (pm.cmd.upmove >= 10) &&
+            //         (pm.waterlevel == 0))
+            //     {
+            //         gi.sound(ent, CHAN_VOICE, gi.soundindex(
+            //                         "*jump1.wav"), 1, ATTN_NORM, 0);
+            //         PlayerNoise(ent, ent->s.origin, PNOISE_SELF);
+            //     }
+
+                ent.viewheight = (int)pm.viewheight;
+                ent.waterlevel = pm.waterlevel;
+                ent.watertype = pm.watertype;
+                ent.groundentity = (edict_t?)pm.groundentity;
+
+                if (pm.groundentity != null)
+                {
+                    // ent.groundentity_linkcount = pm.groundentity.linkcount;
+                }
+
+            //     if (ent->deadflag)
+            //     {
+            //         client->ps.viewangles[ROLL] = 40;
+            //         client->ps.viewangles[PITCH] = -15;
+            //         client->ps.viewangles[YAW] = client->killer_yaw;
+            //     }
+            //     else
+            //     {
+                client.v_angle = pm.viewangles;
+                client.ps.viewangles = pm.viewangles;
+            //     }
+
+                gi.linkentity(ent);
+
+            //     if (ent->movetype != MOVETYPE_NOCLIP)
+            //     {
+            //         G_TouchTriggers(ent);
+            //     }
+
+            //     /* touch other objects */
+            //     for (i = 0; i < pm.numtouch; i++)
+            //     {
+            //         other = pm.touchents[i];
+
+            //         for (j = 0; j < i; j++)
+            //         {
+            //             if (pm.touchents[j] == other)
+            //             {
+            //                 break;
+            //             }
+            //         }
+
+            //         if (j != i)
+            //         {
+            //             continue; /* duplicated */
+            //         }
+
+            //         if (!other->touch)
+            //         {
+            //             continue;
+            //         }
+
+            //         other->touch(other, ent, NULL, NULL);
+            //     }
+            }
+
+            client.oldbuttons = client.buttons;
+            client.buttons = ucmd.buttons;
+            // client->latched_buttons |= client->buttons & ~client->oldbuttons;
+
+            /* save light level the player is standing
+               on for monster sighting AI */
+            ent.light_level = ucmd.lightlevel;
+
+            // /* fire weapon from final position if needed */
+            // if (client->latched_buttons & BUTTON_ATTACK)
+            // {
+            //     if (client->resp.spectator)
+            //     {
+            //         client->latched_buttons = 0;
+
+            //         if (client->chase_target)
+            //         {
+            //             client->chase_target = NULL;
+            //             client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
+            //         }
+            //         else
+            //         {
+            //             GetChaseTarget(ent);
+            //         }
+            //     }
+            //     else if (!client->weapon_thunk)
+            //     {
+            //         client->weapon_thunk = true;
+            //         Think_Weapon(ent);
+            //     }
+            // }
+
+            // if (client->resp.spectator)
+            // {
+            //     if (ucmd->upmove >= 10)
+            //     {
+            //         if (!(client->ps.pmove.pm_flags & PMF_JUMP_HELD))
+            //         {
+            //             client->ps.pmove.pm_flags |= PMF_JUMP_HELD;
+
+            //             if (client->chase_target)
+            //             {
+            //                 ChaseNext(ent);
+            //             }
+            //             else
+            //             {
+            //                 GetChaseTarget(ent);
+            //             }
+            //         }
+            //     }
+            //     else
+            //     {
+            //         client->ps.pmove.pm_flags &= ~PMF_JUMP_HELD;
+            //     }
+            // }
+
+            // /* update chase cam if being followed */
+            // for (i = 1; i <= maxclients->value; i++)
+            // {
+            //     other = g_edicts + i;
+
+            //     if (other->inuse && (other->client->chase_target == ent))
+            //     {
+            //         UpdateChaseCam(other);
+            //     }
+            // }
         }
     }
 }

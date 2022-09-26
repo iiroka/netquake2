@@ -176,20 +176,20 @@ namespace Quake2 {
             }
 
             /* check item spawn functions */
-            // for (i = 0, item = itemlist; i < game.num_items; i++, item++)
-            // {
-            //     if (!item->classname)
-            //     {
-            //         continue;
-            //     }
+            for (int i = 0; i < itemlist.Length; i++)
+            {
+                if (String.IsNullOrEmpty(itemlist[i].classname))
+                {
+                    continue;
+                }
 
-            //     if (!strcmp(item->classname, ent->classname))
-            //     {
-            //         /* found it */
-            //         SpawnItem(ent, item);
-            //         return;
-            //     }
-            // }
+                if (itemlist[i].classname.Equals(ent.classname))
+                {
+                    /* found it */
+                    SpawnItem(ent, itemlist[i]);
+                    return;
+                }
+            }
 
             /* check normal spawn functions */
             if (spawns.ContainsKey(ent.classname))
@@ -394,13 +394,13 @@ namespace Quake2 {
 
             // gi.FreeTags(TAG_LEVEL);
 
-            // memset(&level, 0, sizeof(level));
+            level = new level_locals_t();
             for (int i = 0; i < g_edicts.Length; i++)
             {
                 g_edicts[i] = new edict_t() { index = i };
             }
 
-            // Q_strlcpy(level.mapname, mapname, sizeof(level.mapname));
+            level.mapname = mapname;
             game.spawnpoint = spawnpoint;
 
             /* set client fields on player ents */
@@ -657,21 +657,21 @@ namespace Quake2 {
             // /* set configstrings for items */
             // SetItemNames();
 
-            // if (st.nextmap)
-            // {
-            //     strcpy(level.nextmap, st.nextmap);
-            // }
+            if (!String.IsNullOrEmpty(g.st.nextmap))
+            {
+                g.level.nextmap = g.st.nextmap;
+            }
 
-            // /* make some data visible to the server */
-            // if (ent->message && ent->message[0])
-            // {
-            //     gi.configstring(CS_NAME, ent->message);
-            //     Q_strlcpy(level.level_name, ent->message, sizeof(level.level_name));
-            // }
-            // else
-            // {
-            //     Q_strlcpy(level.level_name, level.mapname, sizeof(level.level_name));
-            // }
+            /* make some data visible to the server */
+            if (!String.IsNullOrEmpty(ent.message))
+            {
+                g.gi.configstring(QShared.CS_NAME, ent.message);
+                g.level.level_name = ent.message;
+            }
+            else
+            {
+                g.level.level_name = g.level.mapname;
+            }
 
             if (!String.IsNullOrEmpty(g.st.sky))
             {
@@ -704,7 +704,7 @@ namespace Quake2 {
 
             /* help icon for statusbar */
             // gi.imageindex("i_help");
-            // level.pic_health = gi.imageindex("i_health");
+            // g.level.pic_health = g.gi.imageindex("i_health");
             // gi.imageindex("help");
             // gi.imageindex("field_3");
 
@@ -793,13 +793,13 @@ namespace Quake2 {
 
             // gi.soundindex("infantry/inflies1.wav");
 
-            // sm_meat_index = gi.modelindex("models/objects/gibs/sm_meat/tris.md2");
-            // gi.modelindex("models/objects/gibs/arm/tris.md2");
-            // gi.modelindex("models/objects/gibs/bone/tris.md2");
-            // gi.modelindex("models/objects/gibs/bone2/tris.md2");
-            // gi.modelindex("models/objects/gibs/chest/tris.md2");
-            // gi.modelindex("models/objects/gibs/skull/tris.md2");
-            // gi.modelindex("models/objects/gibs/head2/tris.md2");
+            g.sm_meat_index = g.gi.modelindex("models/objects/gibs/sm_meat/tris.md2");
+            g.gi.modelindex("models/objects/gibs/arm/tris.md2");
+            g.gi.modelindex("models/objects/gibs/bone/tris.md2");
+            g.gi.modelindex("models/objects/gibs/bone2/tris.md2");
+            g.gi.modelindex("models/objects/gibs/chest/tris.md2");
+            g.gi.modelindex("models/objects/gibs/skull/tris.md2");
+            g.gi.modelindex("models/objects/gibs/head2/tris.md2");
 
             /* Setup light animation tables. 'a'
             is total darkness, 'z' is doublebright. */

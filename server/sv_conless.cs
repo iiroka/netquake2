@@ -155,6 +155,16 @@ namespace Quake2 {
             is the only place a client_t is ever initialized */
             svs.clients[i] = new client_t() { index = i };
             svs.clients[i].netchan = new QCommon.netchan_t(common);
+            svs.clients[i].frames = new client_frame_t[QCommon.UPDATE_BACKUP];
+            for (int j = 0; j < svs.clients[i].frames.Length; j++) {
+                svs.clients[i].frames[j].ps = new QShared.player_state_t();
+                svs.clients[i].frames[j].ps.pmove = new QShared.pmove_state_t();
+                svs.clients[i].frames[j].ps.pmove.origin = new short[3];
+                svs.clients[i].frames[j].ps.pmove.velocity = new short[3];
+                svs.clients[i].frames[j].ps.pmove.delta_angles = new short[3];
+
+            }
+            svs.clients[i].datagram = new QWritebuf(QCommon.MAX_MSGLEN);
             var ent = ge!.getEdict(i + 1);
             svs.clients[i].edict = ent;
             svs.clients[i].challenge = challenge; /* save challenge for checksumming */

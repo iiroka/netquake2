@@ -108,7 +108,7 @@ namespace Quake2 {
             public QShared.usercmd_t	cmd;
             public QShared.usercmd_t[]	cmds; /* each mesage will send several old cmds */
             // public int			cmd_time[CMD_BACKUP]; /* time sent, for calculating pings */
-            // public short		predicted_origins[CMD_BACKUP][3]; /* for debug comparing against server */
+            public short[][]		predicted_origins; // [CMD_BACKUP][3]; /* for debug comparing against server */
 
             public float		predicted_step; /* for stair up smoothing */
             public uint	predicted_step_time;
@@ -242,6 +242,10 @@ namespace Quake2 {
         //     char	   downloadServerRetry[512]; /* retry count. */
         //     char	   downloadReferer[32]; /* referer string. */
         // #endif
+        }
+
+        public bool attractloop {
+            get { return cl.attractloop; }
         }
 
     }

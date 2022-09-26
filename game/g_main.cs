@@ -30,14 +30,14 @@ namespace Quake2 {
     {
 
         private game_locals_t game;
-        // level_locals_t level;
+        private level_locals_t level;
         private game_import_t gi;
         // game_export_t globals;
         private spawn_temp_t st;
 
-        // int sm_meat_index;
-        // int snd_fry;
-        // int meansOfDeath;
+        private int sm_meat_index;
+        private int snd_fry;
+        private int meansOfDeath;
 
         private edict_t[] g_edicts;
 
@@ -164,7 +164,7 @@ namespace Quake2 {
             g_machinegun_norecoil = gi.cvar("g_machinegun_norecoil", "0", cvar_t.CVAR_ARCHIVE);
 
             /* items */
-            // InitItems();
+            InitItems();
 
             game.helpmessage1 = "";
             game.helpmessage2 = "";
@@ -183,6 +183,97 @@ namespace Quake2 {
                 game.clients[i] = new gclient_t();
             }
             global_num_ecicts =  game.maxclients + 1;
+        }
+
+        /* ====================================================================== */
+
+        private void ClientEndServerFrames()
+        {
+            /* calc the player views now that all
+            pushing  and damage has been added */
+            for (int i = 0; i < maxclients!.Int; i++)
+            {
+                ref var ent = ref g_edicts[1 + i];
+
+                if (!ent.inuse || ent.client == null)
+                {
+                    continue;
+                }
+
+                ClientEndServerFrame(ent);
+            }
+        }
+
+        /*
+        * Advances the world by 0.1 seconds
+        */
+        public void RunFrame()
+        {
+            // int i;
+            // edict_t *ent;
+
+            level.framenum++;
+            level.time = level.framenum * FRAMETIME;
+
+            // gibsthisframe = 0;
+            // debristhisframe = 0;
+
+            // /* choose a client for monsters to target this frame */
+            // AI_SetSightClient();
+
+            // /* exit intermissions */
+            // if (level.exitintermission)
+            // {
+            //     ExitLevel();
+            //     return;
+            // }
+
+            /* treat each object in turn
+            even the world gets a chance
+            to think */
+
+            for (int i = 0; i < num_edicts; i++)
+            {
+                ref var ent = ref g_edicts[i];
+                if (!ent.inuse)
+                {
+                    continue;
+                }
+
+                level.current_entity = ent;
+
+                ent.s.old_origin = ent.s.origin;
+
+            //     /* if the ground entity moved, make sure we are still on it */
+            //     if ((ent->groundentity) &&
+            //         (ent->groundentity->linkcount != ent->groundentity_linkcount))
+            //     {
+            //         ent->groundentity = NULL;
+
+            //         if (!(ent->flags & (FL_SWIM | FL_FLY)) &&
+            //             (ent->svflags & SVF_MONSTER))
+            //         {
+            //             M_CheckGround(ent);
+            //         }
+            //     }
+
+                if ((i > 0) && (i <= maxclients!.Int))
+                {
+                    // ClientBeginServerFrame(ent);
+                    continue;
+                }
+
+                G_RunEntity(ent);
+            }
+
+            // /* see if it is time to end a deathmatch */
+            // CheckDMRules();
+
+            // /* see if needpass needs updated */
+            // CheckNeedPass();
+
+            /* build the playerstate_t structures for all players */
+            ClientEndServerFrames();
         }
     }
 }

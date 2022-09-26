@@ -25,6 +25,15 @@ namespace Quake2 {
         private const int SPAWNFLAG_NOT_DEATHMATCH = 0x00000800;
         private const int SPAWNFLAG_NOT_COOP = 0x00001000;
 
+        private const float FRAMETIME = 0.1f;
+
+        private enum damage_t
+        {
+            DAMAGE_NO,
+            DAMAGE_YES, /* will take damage if hit */
+            DAMAGE_AIM /* auto targeting recognizes this */
+        }
+
         /* edict->movetype values */
         private enum movetype_t
         {
@@ -48,6 +57,63 @@ namespace Quake2 {
             public float normal_protection;
             public float energy_protection;
             public int armor;
+        }
+
+        private const int IT_WEAPON = 1;  /* use makes active weapon */
+        private const int IT_AMMO = 2;
+        private const int IT_ARMOR = 4;
+        private const int IT_STAY_COOP = 8;
+        private const int IT_KEY = 16;
+        private const int IT_POWERUP = 32;
+        private const int IT_INSTANT_USE = 64; /* item is insta-used on pickup if dmflag is set */
+
+        /* gitem_t->weapmodel for weapons indicates model index */
+        private const int WEAP_BLASTER = 1;
+        private const int WEAP_SHOTGUN = 2;
+        private const int WEAP_SUPERSHOTGUN = 3;
+        private const int WEAP_MACHINEGUN = 4;
+        private const int WEAP_CHAINGUN = 5;
+        private const int WEAP_GRENADES = 6;
+        private const int WEAP_GRENADELAUNCHER = 7;
+        private const int WEAP_ROCKETLAUNCHER = 8;
+        private const int WEAP_HYPERBLASTER = 9;
+        private const int WEAP_RAILGUN = 10;
+        private const int WEAP_BFG = 11;
+
+        private class gitem_t : ICloneable
+        {
+            public int index;
+            public string classname { get; init; } /* spawning name */
+            // qboolean (*pickup)(struct edict_s *ent, struct edict_s *other);
+            // void (*use)(struct edict_s *ent, struct gitem_s *item);
+            // void (*drop)(struct edict_s *ent, struct gitem_s *item);
+            // void (*weaponthink)(struct edict_s *ent);
+            // char *pickup_sound;
+            // char *world_model;
+            // int world_model_flags;
+            public string view_model { get; init; }
+
+            // /* client side info */
+            // char *icon;
+            public string pickup_name { get; init; } /* for printing on pickup */
+            // int count_width; /* number of digits to display by icon */
+
+            // int quantity; /* for ammo how much, for weapons how much is used per shot */
+            // char *ammo; /* for weapons */
+            // int flags; /* IT_* flags */
+
+            // int weapmodel; /* weapon model index (for weapons) */
+
+            // void *info;
+            // int tag;
+
+            // char *precaches; /* string of all models, sounds, and images this item will use */
+
+            public object Clone()
+            {
+                return MemberwiseClone();
+            }
+
         }
 
         /* this structure is left intact through an entire game
@@ -78,6 +144,50 @@ namespace Quake2 {
             public int num_items;
 
             public bool autosaved;
+        }
+
+        /* this structure is cleared as each map is entered
+        it is read/written to the level.sav file for savegames */
+        private struct level_locals_t
+        {
+            public int framenum;
+            public float time;
+
+            public string level_name; /* the descriptive name (Outer Base, etc) */
+            public string mapname; /* the server name (base1, etc) */
+            public string nextmap; /* go here when fraglimit is hit */
+
+            /* intermission state */
+            public float intermissiontime; /* time the intermission was started */
+            public string changemap;
+            public int exitintermission;
+            public Vector3 intermission_origin;
+            public Vector3 intermission_angle;
+
+            public edict_t? sight_client; /* changed once each frame for coop games */
+
+            public edict_t? sight_entity;
+            public int sight_entity_framenum;
+            public edict_t? sound_entity;
+            public int sound_entity_framenum;
+            public edict_t? sound2_entity;
+            public int sound2_entity_framenum;
+
+            public int pic_health;
+
+            public int total_secrets;
+            public int found_secrets;
+
+            public int total_goals;
+            public int found_goals;
+
+            public int total_monsters;
+            public int killed_monsters;
+
+            public edict_t? current_entity; /* entity running from G_RunFrame */
+            public int body_que; /* dead bodies */
+
+            public int power_cubes; /* ugly necessity for coop */
         }
 
         /* spawn_temp_t is only used to hold entity field values that
@@ -175,8 +285,8 @@ namespace Quake2 {
             public int max_cells;
             public int max_slugs;
 
-            // gitem_t *weapon;
-            // gitem_t *lastweapon;
+            public gitem_t? weapon;
+            public gitem_t? lastweapon;
 
             public int power_cubes; /* used for tracking the cubes in coop games */
             public int score; /* for calculating total unit score in coop games */
@@ -187,14 +297,25 @@ namespace Quake2 {
             public bool spectator; /* client is a spectator */
         }
 
+        /* client data that stays across deathmatch respawns */
+        private struct client_respawn_t
+        {
+            public client_persistant_t coop_respawn; /* what to set client->pers to on a respawn */
+            public int enterframe; /* level.framenum the client entered the game */
+            public int score; /* frags, etc */
+            public Vector3 cmd_angles; /* angles sent over in the last command */
+
+            public bool spectator; /* client is a spectator */
+        }
+
         /* this structure is cleared on each PutClientInServer(),
         except for 'client->pers' */
         private class gclient_t : gclient_s
         {
             /* private to game */
             public client_persistant_t pers;
-            // client_respawn_t resp;
-            // pmove_state_t old_pmove; /* for detecting out-of-pmove changes */
+            public client_respawn_t resp;
+            public QShared.pmove_state_t old_pmove; /* for detecting out-of-pmove changes */
 
             public bool showscores; /* set layout stat */
             public bool showinventory; /* set layout stat */
@@ -209,7 +330,7 @@ namespace Quake2 {
 
             public bool weapon_thunk;
 
-            // gitem_t *newweapon;
+            public gitem_t? newweapon;
 
             /* sum up damage over an entire frame, so
             shotgun blasts give a single big kick */
@@ -217,22 +338,22 @@ namespace Quake2 {
             public int damage_parmor; /* damage absorbed by power armor */
             public int damage_blood; /* damage taken out of health */
             public int damage_knockback; /* impact damage */
-            // vec3_t damage_from; /* origin for vector calculation */
+            public Vector3 damage_from; /* origin for vector calculation */
 
             public float killer_yaw; /* when dead, look at killer */
 
             // weaponstate_t weaponstate;
-            // vec3_t kick_angles; /* weapon kicks */
-            // vec3_t kick_origin;
-            // float v_dmg_roll, v_dmg_pitch, v_dmg_time; /* damage kicks */
-            // float fall_time, fall_value; /* for view drop on fall */
-            // float damage_alpha;
-            // float bonus_alpha;
-            // vec3_t damage_blend;
-            // vec3_t v_angle; /* aiming direction */
-            // float bobtime; /* so off-ground doesn't change it */
-            // vec3_t oldviewangles;
-            // vec3_t oldvelocity;
+            public Vector3 kick_angles; /* weapon kicks */
+            public Vector3 kick_origin;
+            public float v_dmg_roll, v_dmg_pitch, v_dmg_time; /* damage kicks */
+            public float fall_time, fall_value; /* for view drop on fall */
+            public float damage_alpha;
+            public float bonus_alpha;
+            public Vector3 damage_blend;
+            public Vector3 v_angle; /* aiming direction */
+            public float bobtime; /* so off-ground doesn't change it */
+            public Vector3 oldviewangles;
+            public Vector3 oldvelocity;
 
             public float next_drown_time;
             public int old_waterlevel;
@@ -246,27 +367,27 @@ namespace Quake2 {
             public bool anim_duck;
             public bool anim_run;
 
-            // /* powerup timers */
-            // float quad_framenum;
-            // float invincible_framenum;
-            // float breather_framenum;
-            // float enviro_framenum;
+            /* powerup timers */
+            public float quad_framenum;
+            public float invincible_framenum;
+            public float breather_framenum;
+            public float enviro_framenum;
 
-            // qboolean grenade_blew_up;
-            // float grenade_time;
-            // int silencer_shots;
-            // int weapon_sound;
+            public bool grenade_blew_up;
+            public float grenade_time;
+            public int silencer_shots;
+            public int weapon_sound;
 
-            // float pickup_msg_time;
+            public float pickup_msg_time;
 
-            // float flood_locktill; /* locked from talking */
+            public float flood_locktill; /* locked from talking */
             // float flood_when[10]; /* when messages were said */
-            // int flood_whenhead; /* head pointer for when said */
+            public int flood_whenhead; /* head pointer for when said */
 
-            // float respawn_time; /* can respawn when time > this */
+            public float respawn_time; /* can respawn when time > this */
 
-            // edict_t *chase_target; /* player we are chasing */
-            // qboolean update_chase; /* need to update chase info? */
+            public edict_t? chase_target; /* player we are chasing */
+            public bool update_chase; /* need to update chase info? */
 
             public void Clear()
             {
@@ -281,25 +402,28 @@ namespace Quake2 {
                 oldbuttons = 0;
                 latched_buttons = 0;
                 weapon_thunk = false;
-                // gitem_t *newweapon;
+                newweapon = null;
                 damage_armor = 0;
-                damage_parmor = 0; /* damage absorbed by power armor */
-                damage_blood = 0; /* damage taken out of health */
-                damage_knockback = 0; /* impact damage */
-                // vec3_t damage_from; /* origin for vector calculation */
-                killer_yaw = 0; /* when dead, look at killer */
+                damage_parmor = 0;
+                damage_blood = 0;
+                damage_knockback = 0;
+                damage_from = new Vector3();
+                killer_yaw = 0;
                 // weaponstate_t weaponstate;
-                // vec3_t kick_angles; /* weapon kicks */
-                // vec3_t kick_origin;
-                // float v_dmg_roll, v_dmg_pitch, v_dmg_time; /* damage kicks */
-                // float fall_time, fall_value; /* for view drop on fall */
-                // float damage_alpha;
-                // float bonus_alpha;
-                // vec3_t damage_blend;
-                // vec3_t v_angle; /* aiming direction */
-                // float bobtime; /* so off-ground doesn't change it */
-                // vec3_t oldviewangles;
-                // vec3_t oldvelocity;
+                kick_angles = new Vector3();
+                kick_origin = new Vector3();
+                v_dmg_roll = 0;
+                v_dmg_pitch = 0;
+                v_dmg_time = 0;
+                fall_time = 0;
+                fall_value = 0;
+                damage_alpha = 0;
+                bonus_alpha = 0;
+                damage_blend = new Vector3();
+                v_angle = new Vector3();
+                bobtime = 0;
+                oldviewangles = new Vector3();
+                oldvelocity = new Vector3();
                 next_drown_time = 0;
                 old_waterlevel = 0;
                 breather_sound = 0;
@@ -308,27 +432,21 @@ namespace Quake2 {
                 anim_priority = 0;
                 anim_duck = false;
                 anim_run = false;
-                // /* powerup timers */
-                // float quad_framenum;
-                // float invincible_framenum;
-                // float breather_framenum;
-                // float enviro_framenum;
-
-                // qboolean grenade_blew_up;
-                // float grenade_time;
-                // int silencer_shots;
-                // int weapon_sound;
-
-                // float pickup_msg_time;
-
-                // float flood_locktill; /* locked from talking */
+                quad_framenum = 0;
+                invincible_framenum = 0;
+                breather_framenum = 0;
+                enviro_framenum = 0;
+                grenade_blew_up = false;
+                grenade_time = 0;
+                silencer_shots = 0;
+                weapon_sound = 0;
+                pickup_msg_time = 0;
+                flood_locktill = 0; /* locked from talking */
                 // float flood_when[10]; /* when messages were said */
-                // int flood_whenhead; /* head pointer for when said */
-
-                // float respawn_time; /* can respawn when time > this */
-
-                // edict_t *chase_target; /* player we are chasing */
-                // qboolean update_chase; /* need to update chase info? */                
+                flood_whenhead = 0; /* head pointer for when said */
+                respawn_time = 0; /* can respawn when time > this */
+                chase_target = null;
+                update_chase = false;
             }
         }
 
@@ -409,11 +527,11 @@ namespace Quake2 {
             public int sounds; /* now also used for player death sound aggregation */
             public int count;
 
-            // edict_t *chain;
-            // edict_t *enemy;
-            // edict_t *oldenemy;
-            // edict_t *activator;
-            // edict_t *groundentity;
+            public edict_t? chain;
+            public edict_t? enemy;
+            public edict_t? oldenemy;
+            public edict_t? activator;
+            public edict_t? groundentity;
             // int groundentity_linkcount;
             // edict_t *teamchain;
             // edict_t *teammaster;
@@ -444,7 +562,7 @@ namespace Quake2 {
 
             public int style; /* also used as areaportal number */
 
-            // gitem_t *item; /* for bonus items */
+            public gitem_t? item; /* for bonus items */
 
             // /* common data blocks */
             // moveinfo_t moveinfo;

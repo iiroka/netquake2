@@ -52,8 +52,7 @@ namespace Quake2 {
             public QShared.cmodel_t?[] models;
 
             public string[] configstrings;
-            // char configstrings[MAX_CONFIGSTRINGS][MAX_QPATH];
-            // entity_state_t baselines[MAX_EDICTS];
+            public QShared.entity_state_t[] baselines;
 
             /* the multicast buffer is used to send a message to a set of clients
             it is only used to marshall data until SV_Multicast is called */
@@ -74,6 +73,16 @@ namespace Quake2 {
             cs_spawned      /* client is fully in game */
         }
 
+        private struct client_frame_t
+        {
+            public int areabytes;
+            public byte[] areabits; // [MAX_MAP_AREAS / 8];       /* portalarea visibility bits */
+            public QShared.player_state_t ps;
+            public int num_entities;
+            public int first_entity;                       /* into the circular sv_packet_entities[] */
+            public int senttime;                           /* for ping calculations */
+        }
+
         private struct client_t
         {
             public int index { get; init; }
@@ -82,7 +91,7 @@ namespace Quake2 {
             public string userinfo;     /* name, etc */
 
             public int lastframe;                      /* for delta compression */
-            // usercmd_t lastcmd;                  /* for filling in big drops */
+            public QShared.usercmd_t lastcmd;                  /* for filling in big drops */
 
             public int commandMsec;                    /* every seconds this is reset, if user */
                                                 /* commands exhaust it, assume time cheating */
@@ -100,10 +109,11 @@ namespace Quake2 {
 
             /* The datagram is written to by sound calls, prints, 
             temp ents, etc. It can be harmlessly overflowed. */
+            public QWritebuf datagram;
             // sizebuf_t datagram;
             // byte datagram_buf[MAX_MSGLEN];
 
-            // client_frame_t frames[UPDATE_BACKUP];     /* updates can be delta'd from here */
+            public client_frame_t[] frames; //[UPDATE_BACKUP];     /* updates can be delta'd from here */
 
             // byte *download;                     /* file being downloaded */
             // int downloadsize;                   /* total bytes (can't use EOF because of paks) */
@@ -130,7 +140,7 @@ namespace Quake2 {
             public client_t[] clients;                  /* [maxclients->value]; */
             public int num_client_entities;            /* maxclients->value*UPDATE_BACKUP*MAX_PACKET_ENTITIES */
             public int next_client_entities;           /* next client_entity to use */
-            // entity_state_t *client_entities;    /* [num_client_entities] */
+            public QShared.entity_state_t[] client_entities;    /* [num_client_entities] */
 
             public int last_heartbeat;
 

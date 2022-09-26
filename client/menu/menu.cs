@@ -88,6 +88,15 @@ namespace Quake2 {
             cls.key_dest = keydest_t.key_menu;
         }
 
+        private void M_ForceMenuOff()
+        {
+            m_layers.Clear();
+            cls.key_dest = keydest_t.key_game;
+            // Key_MarkAllUp();
+            common.Cvar_Set("paused", "0");
+        }
+
+
         /*
         * Draws an animating cursor with the point at
         * x,y. The pic will extend to the left of x,
@@ -340,7 +349,7 @@ namespace Quake2 {
 
                 /* disable updates and start the cinematic going */
                 client.cl.servercount = -1;
-                // M_ForceMenuOff();
+                client.M_ForceMenuOff();
                 client.common.Cvar_Set("deathmatch", "0");
                 client.common.Cvar_Set("coop", "0");
 

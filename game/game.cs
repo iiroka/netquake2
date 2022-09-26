@@ -37,6 +37,24 @@ using System.Numerics;
 
 namespace Quake2 {
 
+    internal struct QGameFlags
+    {
+        internal const int SVF_NOCLIENT = 0x00000001; /* don't send entity to clients, even if it has effects */
+        internal const int SVF_DEADMONSTER = 0x00000002; /* treat as CONTENTS_DEADMONSTER for collision */
+        internal const int SVF_MONSTER = 0x00000004; /* treat as CONTENTS_MONSTER for collision */
+
+        internal const int MAX_ENT_CLUSTERS = 16;
+    }
+
+    internal enum solid_t
+    {
+        SOLID_NOT, /* no interaction with other objects */
+        SOLID_TRIGGER, /* only touch when inside, after moving */
+        SOLID_BBOX, /* touch on edge */
+        SOLID_BSP /* bsp clip, touch on edge */
+    }
+
+
     internal abstract class gclient_s
     {
         public QShared.player_state_t ps = new QShared.player_state_t();      /* communicated by server to clients */
@@ -47,6 +65,8 @@ namespace Quake2 {
 
     internal abstract class edict_s
     {
+        public const int MAX_ENT_CLUSTERS = 16;
+        
         public edict_s? next;
         public edict_s? prev;
 
@@ -55,9 +75,11 @@ namespace Quake2 {
         public bool inuse;
         public int linkcount;
 
+        // public LinkedList<edict_s> area = new LinkedList<edict_s>();    /* linked to a division node or leaf */
         // link_t area;                    /* linked to a division node or leaf */
 
         public int num_clusters;               /* if -1, use headnode instead */
+        public int[] clusternums = new int [MAX_ENT_CLUSTERS];
         // int clusternums[MAX_ENT_CLUSTERS];
         public int headnode;                   /* unused if num_clusters != -1 */
         public int areanum, areanum2;
@@ -65,13 +87,13 @@ namespace Quake2 {
         public int svflags;                    /* SVF_NOCLIENT, SVF_DEADMONSTER, SVF_MONSTER, etc */
         public Vector3 mins, maxs;
         public Vector3 absmin, absmax, size;
-        // solid_t solid;
+        public solid_t solid;
         public int clipmask;
         public edict_s? owner;
 
         /* the game dll can add anything it wants
         after this point in the structure */
-    };    
+    }
 
     /* functions provided by the main engine */
     internal interface game_import_t
@@ -94,17 +116,17 @@ namespace Quake2 {
 
         void error(string msg);
 
-        // /* the *index functions create configstrings
-        // and some internal server state */
-        // int (*modelindex)(char *name);
+        /* the *index functions create configstrings
+           and some internal server state */
+        int modelindex(string name);
         // int (*soundindex)(char *name);
         // int (*imageindex)(char *name);
 
         // void (*setmodel)(edict_t *ent, char *name);
 
-        // /* collision detection */
-        // trace_t (*trace)(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end,
-        //         edict_t *passent, int contentmask);
+        /* collision detection */
+        QShared.trace_t trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
+                edict_s passent, int contentmask);
         // int (*pointcontents)(vec3_t point);
         // qboolean (*inPVS)(vec3_t p1, vec3_t p2);
         // qboolean (*inPHS)(vec3_t p1, vec3_t p2);
@@ -118,7 +140,7 @@ namespace Quake2 {
         // void (*unlinkentity)(edict_t *ent); /* call before removing an interactive edict */
         // int (*BoxEdicts)(vec3_t mins, vec3_t maxs, edict_t **list, int maxcount,
         //         int areatype);
-        // void (*Pmove)(pmove_t *pmove); /* player movement code common with client prediction */
+        void Pmove(ref QShared.pmove_t pmove); /* player movement code common with client prediction */
 
         // /* network messaging */
         // void (*multicast)(vec3_t origin, multicast_t to);
@@ -187,9 +209,9 @@ namespace Quake2 {
         // void (*ClientUserinfoChanged)(edict_t *ent, char *userinfo);
         // void (*ClientDisconnect)(edict_t *ent);
         // void (*ClientCommand)(edict_t *ent);
-        // void (*ClientThink)(edict_t *ent, usercmd_t *cmd);
+        void ClientThink(edict_s ent, in QShared.usercmd_t cmd);
 
-        // void (*RunFrame)(void);
+        void RunFrame();
 
         // /* ServerCommand will be called when an "sv <command>"
         // command is issued on the  server console. The game can

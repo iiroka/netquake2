@@ -351,7 +351,7 @@ namespace Quake2 {
                         common.Com_Error(QShared.ERR_DROP, "Pic >= MAX_IMAGES");
                     }
 
-                    if (cl.configstrings[QShared.CS_IMAGES + value][0] != '\0')
+                    if (!String.IsNullOrEmpty(cl.configstrings[QShared.CS_IMAGES + value]))
                     {
                         SCR_AddDirtyPoint(x, y);
                         SCR_AddDirtyPoint(x + (int)(23*scale), y + (int)(23*scale));

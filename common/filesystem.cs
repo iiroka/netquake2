@@ -1336,16 +1336,30 @@ namespace Quake2 {
 
         public record struct dbrushside_t
         {
-        //     unsigned short planenum; /* facing out of the leaf */
-        //     short texinfo;
+            public ushort planenum { get; } /* facing out of the leaf */
+            public short texinfo { get; }
+
+            public dbrushside_t(byte[] buffer, int offset)
+            {
+                this.planenum = BitConverter.ToUInt16(buffer, offset + 0 * 2);
+                this.texinfo = BitConverter.ToInt16(buffer, offset + 1 * 2);
+            }
+
             public const int size = 2 * 2;
         }
 
         public record struct dbrush_t
         {
-        //     int firstside;
-        //     int numsides;
-        //     int contents;
+            public int firstside { get; }
+            public int numsides { get; }
+            public int contents { get; }
+            public dbrush_t(byte[] buffer, int offset)
+            {
+                this.firstside = BitConverter.ToInt32(buffer, offset + 0 * 4);
+                this.numsides = BitConverter.ToInt32(buffer, offset + 1 * 4);
+                this.contents = BitConverter.ToInt32(buffer, offset + 2 * 4);
+            }
+
             public const int size = 3 * 4;
         }
 
@@ -1381,15 +1395,27 @@ namespace Quake2 {
         // * hearable even if the vis info says that it should be */
         public record struct dareaportal_t
         {
-        //     int portalnum;
-        //     int otherarea;
+            public int portalnum { get; }
+            public int otherarea { get; }
+            public dareaportal_t(byte[] buffer, int offset)
+            {
+                this.portalnum = BitConverter.ToInt32(buffer, offset + 0 * 4);
+                this.otherarea = BitConverter.ToInt32(buffer, offset + 1 * 4);
+            }
+
             public const int size = 2 * 4;
         }
 
         public record struct darea_t
         {
-        //     int numareaportals;
-        //     int firstareaportal;
+            public int numareaportals { get; }
+            public int firstareaportal { get; }
+            public darea_t(byte[] buffer, int offset)
+            {
+                this.numareaportals = BitConverter.ToInt32(buffer, offset + 0 * 4);
+                this.firstareaportal = BitConverter.ToInt32(buffer, offset + 1 * 4);
+            }
+
             public const int size = 2 * 4;
         }
 

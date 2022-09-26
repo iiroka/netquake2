@@ -748,12 +748,12 @@ namespace Quake2 {
             //     /* fire entity events */
             //     CL_FireEntityEvents(&cl.frame);
 
-            //     if (!(!cl_predict->value ||
-            //         (cl.frame.playerstate.pmove.pm_flags &
-            //         PMF_NO_PREDICTION)))
-            //     {
-            //         CL_CheckPredictionError();
-            //     }
+                if (!(!(cl_predict?.Bool ?? false) ||
+                    ((cl.frame.playerstate.pmove.pm_flags &
+                    QShared.PMF_NO_PREDICTION)) != 0))
+                {
+                    CL_CheckPredictionError();
+                }
             }
         }
 
@@ -826,14 +826,6 @@ namespace Quake2 {
 
         private void CL_LoadClientinfo(ref clientinfo_t ci, in string str)
         {
-            // int i;
-            // char *t;
-            // char model_name[MAX_QPATH];
-            // char skin_name[MAX_QPATH];
-            // char model_filename[MAX_QPATH];
-            // char skin_filename[MAX_QPATH];
-            // char weapon_filename[MAX_QPATH];
-
             var s = str;
             ci.cinfo = str;
 

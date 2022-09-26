@@ -23,6 +23,7 @@
  *
  * =======================================================================
  */
+using System.Numerics;
 
 namespace Quake2 {
 
@@ -59,6 +60,11 @@ namespace Quake2 {
                 server.SV_LinkEdict(ent);
             }
 
+            public void Pmove(ref QShared.pmove_t pmove)
+            {
+                server.common.Pmove(ref pmove);
+            }
+
             public void configstring(int index, string str)
             {
                 if ((index < 0) || (index >= QShared.MAX_CONFIGSTRINGS))
@@ -74,17 +80,29 @@ namespace Quake2 {
                 /* change the string in sv */
                 server.sv.configstrings[index] = str;
 
-                // if (sv.state != ss_loading)
-                // {
-                //     /* send the update to everyone */
-                //     SZ_Clear(&sv.multicast);
-                //     MSG_WriteChar(&sv.multicast, svc_configstring);
-                //     MSG_WriteShort(&sv.multicast, index);
-                //     MSG_WriteString(&sv.multicast, val);
+                if (server.sv.state != server_state_t.ss_loading)
+                {
+                    /* send the update to everyone */
+                    server.sv.multicast.Clear();
+                    server.sv.multicast.WriteChar((int)QCommon.svc_ops_e.svc_configstring);
+                    server.sv.multicast.WriteShort(index);
+                    server.sv.multicast.WriteString(str);
 
-                //     SV_Multicast(vec3_origin, MULTICAST_ALL_R);
-                // }                
+                    server.SV_Multicast(Vector3.Zero, QShared.multicast_t.MULTICAST_ALL_R);
+                }                
             }
+
+            public int modelindex(string name)
+            {
+                return server.SV_FindIndex(name, QShared.CS_MODELS, QShared.MAX_MODELS, true);
+            }
+
+            public QShared.trace_t trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
+                            edict_s passent, int contentmask)
+            {
+                return server.SV_Trace(start, mins, maxs, end, passent, contentmask);
+            }
+
         }
 
         /*
@@ -169,7 +187,7 @@ namespace Quake2 {
         // #endif
 
         //     import.SetAreaPortalState = CM_SetAreaPortalState;
-        //     import.AreasConnected = CM_AreasConnected;
+            // import.AreasConnected = CM_AreasConnected;
 
         //     ge = (game_export_t *)Sys_GetGameAPI(&import);
             ge = new QuakeGame(new GameExports(this));

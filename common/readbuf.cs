@@ -179,6 +179,62 @@ namespace Quake2 {
             return QShared.bytedirs[b];
         }
 
+        public void ReadDeltaUsercmd(in QShared.usercmd_t from, out QShared.usercmd_t move)
+        {
+            move = from;
+
+            var bits = ReadByte();
+
+            /* read current angles */
+            if ((bits & QCommon.CM_ANGLE1) != 0)
+            {
+                move.angles[0] = (short)ReadShort();
+            }
+
+            if ((bits & QCommon.CM_ANGLE2) != 0)
+            {
+                move.angles[1] = (short)ReadShort();
+            }
+
+            if ((bits & QCommon.CM_ANGLE3) != 0)
+            {
+                move.angles[2] = (short)ReadShort();
+            }
+
+            /* read movement */
+            if ((bits & QCommon.CM_FORWARD) != 0)
+            {
+                move.forwardmove = (short)ReadShort();
+            }
+
+            if ((bits & QCommon.CM_SIDE) != 0)
+            {
+                move.sidemove = (short)ReadShort();
+            }
+
+            if ((bits & QCommon.CM_UP) != 0)
+            {
+                move.upmove = (short)ReadShort();
+            }
+
+            /* read buttons */
+            if ((bits & QCommon.CM_BUTTONS) != 0)
+            {
+                move.buttons = (byte)ReadByte();
+            }
+
+            if ((bits & QCommon.CM_IMPULSE) != 0)
+            {
+                move.impulse = (byte)ReadByte();
+            }
+
+            /* read time to run command */
+            move.msec = (byte)ReadByte();
+
+            /* read the light level */
+            move.lightlevel = (byte)ReadByte();
+        }
+
 
         public byte[] ReadData(int len)
         {

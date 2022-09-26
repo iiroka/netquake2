@@ -39,6 +39,8 @@ namespace Quake2 {
             public int axis; /* -1 = leaf node */
             public float dist;
             public areanode_t?[] children = new areanode_t?[2];
+            public LinkedList<edict_s> trigger_edicts = new LinkedList<edict_s>();
+            public LinkedList<edict_s> solid_edicts = new LinkedList<edict_s>();
             // link_t trigger_edicts;
             // link_t solid_edicts;
         }
@@ -57,8 +59,8 @@ namespace Quake2 {
             var anode = new areanode_t();
             sv_areanodes.Append(anode);
 
-            // ClearLink(&anode->trigger_edicts);
-            // ClearLink(&anode->solid_edicts);
+            anode.trigger_edicts.Clear();
+            anode.solid_edicts.Clear();
 
             if (depth == AREA_DEPTH)
             {
@@ -121,10 +123,10 @@ namespace Quake2 {
             //     SV_UnlinkEdict(ent); /* unlink from old position */
             // }
 
-            // if (ent == ge.edicts)
-            // {
-            //     return; /* don't add the world */
-            // }
+            if (ent == ge!.getEdict(0))
+            {
+                return; /* don't add the world */
+            }
 
             if (!ent.inuse)
             {
@@ -135,63 +137,62 @@ namespace Quake2 {
             ent.size = ent.maxs - ent.mins;
 
             /* encode the size into the entity_state for client prediction */
-            // if ((ent->solid == SOLID_BBOX) && !(ent->svflags & SVF_DEADMONSTER))
-            // {
-            //     /* assume that x/y are equal and symetric */
-            //     i = (int)ent->maxs[0] / 8;
+            if ((ent.solid == solid_t.SOLID_BBOX) && (ent.svflags & QGameFlags.SVF_DEADMONSTER) == 0)
+            {
+                /* assume that x/y are equal and symetric */
+                int i = (int)ent.maxs.X / 8;
 
-            //     if (i < 1)
-            //     {
-            //         i = 1;
-            //     }
+                if (i < 1)
+                {
+                    i = 1;
+                }
 
-            //     if (i > 31)
-            //     {
-            //         i = 31;
-            //     }
+                if (i > 31)
+                {
+                    i = 31;
+                }
 
-            //     /* z is not symetric */
-            //     j = (int)(-ent->mins[2]) / 8;
+                /* z is not symetric */
+                int j = (int)(-ent.mins.Z) / 8;
 
-            //     if (j < 1)
-            //     {
-            //         j = 1;
-            //     }
+                if (j < 1)
+                {
+                    j = 1;
+                }
 
-            //     if (j > 31)
-            //     {
-            //         j = 31;
-            //     }
+                if (j > 31)
+                {
+                    j = 31;
+                }
 
-            //     /* and z maxs can be negative... */
-            //     k = (int)(ent->maxs[2] + 32) / 8;
+                /* and z maxs can be negative... */
+                int k = (int)(ent.maxs.Z + 32) / 8;
 
-            //     if (k < 1)
-            //     {
-            //         k = 1;
-            //     }
+                if (k < 1)
+                {
+                    k = 1;
+                }
 
-            //     if (k > 63)
-            //     {
-            //         k = 63;
-            //     }
+                if (k > 63)
+                {
+                    k = 63;
+                }
 
-            //     ent->s.solid = (k << 10) | (j << 5) | i;
-            // }
-            // else if (ent->solid == SOLID_BSP)
-            // {
-            //     ent->s.solid = 31; /* a solid_bbox will never create this value */
-            // }
-            // else
-            // {
-            //     ent->s.solid = 0;
-            // }
+                ent.s.solid = (k << 10) | (j << 5) | i;
+            }
+            else if (ent.solid == solid_t.SOLID_BSP)
+            {
+                ent.s.solid = 31; /* a solid_bbox will never create this value */
+            }
+            else
+            {
+                ent.s.solid = 0;
+            }
 
-            // /* set the abs box */
-            // if ((ent->solid == SOLID_BSP) &&
-            //     (ent->s.angles[0] || ent->s.angles[1] ||
-            //     ent->s.angles[2]))
-            // {
+            /* set the abs box */
+            if ((ent.solid == solid_t.SOLID_BSP) &&
+                (ent.s.angles.X != 0 || ent.s.angles.Y != 0 || ent.s.angles.Z != 0))
+            {
             //     /* expand for rotation */
             //     float max, v;
             //     int i;
@@ -220,13 +221,13 @@ namespace Quake2 {
             //         ent->absmin[i] = ent->s.origin[i] - max;
             //         ent->absmax[i] = ent->s.origin[i] + max;
             //     }
-            // }
-            // else
-            // {
-            //     /* normal */
-            //     VectorAdd(ent->s.origin, ent->mins, ent->absmin);
-            //     VectorAdd(ent->s.origin, ent->maxs, ent->absmax);
-            // }
+            }
+            else
+            {
+                /* normal */
+                ent.absmin = ent.s.origin + ent.mins;
+                ent.absmax = ent.s.origin + ent.maxs;
+            }
 
             /* because movement is clipped an epsilon away from an actual edge,
             we must fully check even when bounding boxes don't quite touch */
@@ -242,22 +243,22 @@ namespace Quake2 {
             ent.areanum = 0;
             ent.areanum2 = 0;
 
-            // /* get all leafs, including solids */
-            // num_leafs = CM_BoxLeafnums(ent->absmin, ent->absmax,
-            //         leafs, MAX_TOTAL_ENT_LEAFS, &topnode);
+            /* get all leafs, including solids */
+            int num_leafs = common.CM_BoxLeafnums(ent.absmin, ent.absmax, out var leafs, out var topnode);
 
-            // /* set areas */
-            // for (i = 0; i < num_leafs; i++)
-            // {
-            //     clusters[i] = CM_LeafCluster(leafs[i]);
-            //     area = CM_LeafArea(leafs[i]);
+            /* set areas */
+            var clusters = new int[num_leafs];
+            for (int i = 0; i < num_leafs; i++)
+            {
+                clusters[i] = common.CM_LeafCluster(leafs[i]);
+                int area = common.CM_LeafArea(leafs[i]);
 
-            //     if (area)
-            //     {
-            //         /* doors may legally straggle two areas,
-            //         but nothing should evern need more than that */
-            //         if (ent->areanum && (ent->areanum != area))
-            //         {
+                if (area != 0)
+                {
+                    /* doors may legally straggle two areas,
+                    but nothing should evern need more than that */
+                    if (ent.areanum != 0 && (ent.areanum != area))
+                    {
             //             if (ent->areanum2 && (ent->areanum2 != area) &&
             //                 (sv.state == ss_loading))
             //             {
@@ -265,102 +266,181 @@ namespace Quake2 {
             //                         ent->absmin[0], ent->absmin[1], ent->absmin[2]);
             //             }
 
-            //             ent->areanum2 = area;
-            //         }
-            //         else
-            //         {
-            //             ent->areanum = area;
-            //         }
-            //     }
-            // }
+                        ent.areanum2 = area;
+                    }
+                    else
+                    {
+                        ent.areanum = area;
+                    }
+                }
+            }
 
-            // if (num_leafs >= MAX_TOTAL_ENT_LEAFS)
-            // {
-            //     /* assume we missed some leafs, and mark by headnode */
-            //     ent->num_clusters = -1;
-            //     ent->headnode = topnode;
-            // }
-            // else
-            // {
-            //     ent->num_clusters = 0;
+            if (num_leafs >= MAX_TOTAL_ENT_LEAFS)
+            {
+                /* assume we missed some leafs, and mark by headnode */
+                ent.num_clusters = -1;
+                ent.headnode = topnode;
+            }
+            else
+            {
+                ent.num_clusters = 0;
 
-            //     for (i = 0; i < num_leafs; i++)
-            //     {
-            //         if (clusters[i] == -1)
-            //         {
-            //             continue; /* not a visible leaf */
-            //         }
+                for (int i = 0; i < num_leafs; i++)
+                {
+                    if (clusters[i] == -1)
+                    {
+                        continue; /* not a visible leaf */
+                    }
 
-            //         for (j = 0; j < i; j++)
-            //         {
-            //             if (clusters[j] == clusters[i])
-            //             {
-            //                 break;
-            //             }
-            //         }
+                    int j;
+                    for (j = 0; j < i; j++)
+                    {
+                        if (clusters[j] == clusters[i])
+                        {
+                            break;
+                        }
+                    }
 
-            //         if (j == i)
-            //         {
-            //             if (ent->num_clusters == MAX_ENT_CLUSTERS)
-            //             {
-            //                 /* assume we missed some leafs, and mark by headnode */
-            //                 ent->num_clusters = -1;
-            //                 ent->headnode = topnode;
-            //                 break;
-            //             }
+                    if (j == i)
+                    {
+                        if (ent.num_clusters == QGameFlags.MAX_ENT_CLUSTERS)
+                        {
+                            /* assume we missed some leafs, and mark by headnode */
+                            ent.num_clusters = -1;
+                            ent.headnode = topnode;
+                            break;
+                        }
 
-            //             ent->clusternums[ent->num_clusters++] = clusters[i];
-            //         }
-            //     }
-            // }
+                        ent.clusternums[ent.num_clusters++] = clusters[i];
+                    }
+                }
+            }
 
-            // /* if first time, make sure old_origin is valid */
-            // if (!ent->linkcount)
-            // {
-            //     VectorCopy(ent->s.origin, ent->s.old_origin);
-            // }
+            /* if first time, make sure old_origin is valid */
+            if (ent.linkcount == 0)
+            {
+                ent.s.old_origin = ent.s.origin;
+            }
 
-            // ent->linkcount++;
+            ent.linkcount++;
 
-            // if (ent->solid == SOLID_NOT)
-            // {
-            //     return;
-            // }
+            if (ent.solid == solid_t.SOLID_NOT)
+            {
+                return;
+            }
 
-            // /* find the first node that the ent's box crosses */
-            // node = sv_areanodes;
+            /* find the first node that the ent's box crosses */
+            ref var node = ref sv_areanodes[0];
 
-            // while (1)
-            // {
-            //     if (node->axis == -1)
-            //     {
-            //         break;
-            //     }
+            while (true)
+            {
+                if (node!.axis == -1)
+                {
+                    break;
+                } 
+                float max, min;
+                if  (node.axis == 0)
+                {
+                    min = ent.absmin.X;
+                    max = ent.absmax.X;
+                } else if  (node.axis == 1)
+                {
+                    min = ent.absmin.Y;
+                    max = ent.absmax.Y;
+                } else
+                {
+                    min = ent.absmin.Z;
+                    max = ent.absmax.Z;
+                }
+                if (min > node.dist)
+                {
+                    node = node.children[0];
+                }
+                else if (max < node.dist)
+                {
+                    node = node.children[1];
+                }
+                else
+                {
+                    break; /* crosses the node */
+                }
+            }
 
-            //     if (ent->absmin[node->axis] > node->dist)
-            //     {
-            //         node = node->children[0];
-            //     }
-            //     else if (ent->absmax[node->axis] < node->dist)
-            //     {
-            //         node = node->children[1];
-            //     }
-            //     else
-            //     {
-            //         break; /* crosses the node */
-            //     }
-            // }
-
-            // /* link it in */
-            // if (ent->solid == SOLID_TRIGGER)
-            // {
+            /* link it in */
+            if (ent.solid == solid_t.SOLID_TRIGGER)
+            {
             //     InsertLinkBefore(&ent->area, &node->trigger_edicts);
-            // }
-            // else
-            // {
+            }
+            else
+            {
             //     InsertLinkBefore(&ent->area, &node->solid_edicts);
-            // }
+            }
         }
+
+        private struct moveclip_t
+        {
+            public Vector3 boxmins, boxmaxs; /* enclose the test object along entire move */
+            public Vector3 mins, maxs; /* size of the moving object */
+            public Vector3 mins2, maxs2; /* size when clipping against mosnters */
+            public Vector3 start, end;
+            public QShared.trace_t trace;
+            public edict_s passedict;
+            public int contentmask;
+        }
+
+        /*
+        * Moves the given mins/maxs volume through the world from start to end.
+        * Passedict and edicts owned by passedict are explicitly not checked.
+        */
+        private QShared.trace_t SV_Trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
+                edict_s passedict, int contentmask)
+        {
+            moveclip_t clip;
+
+
+            // if (!mins)
+            // {
+            //     mins = vec3_origin;
+            // }
+
+            // if (!maxs)
+            // {
+            //     maxs = vec3_origin;
+            // }
+
+            clip = new moveclip_t();
+            clip.trace = new QShared.trace_t();
+
+            /* clip to world */
+            // clip.trace = CM_BoxTrace(start, end, mins, maxs, 0, contentmask);
+            // clip.trace.ent = ge->edicts;
+
+            // if (clip.trace.fraction == 0)
+            // {
+            //     return clip.trace; /* blocked by the world */
+            // }
+
+            clip.contentmask = contentmask;
+            clip.start = start;
+            clip.end = end;
+            clip.mins = mins ?? Vector3.Zero;
+            clip.maxs = maxs ?? Vector3.Zero;
+            clip.passedict = passedict;
+
+            clip.mins2 = mins ?? Vector3.Zero;
+            clip.maxs2 = mins ?? Vector3.Zero;
+
+            /* create the bounding box of the entire move */
+            // SV_TraceBounds(start, clip.mins2, clip.maxs2,
+            //         end, clip.boxmins, clip.boxmaxs);
+
+            // /* clip to other solid entities */
+            // SV_ClipMoveToEntities(&clip);
+
+            return clip.trace;
+        }
+
+
 
     }
 }

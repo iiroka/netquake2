@@ -726,13 +726,6 @@ namespace Quake2 {
                 var psOrigin = new Vector3(ps.pmove.origin[0] * 0.125f, ps.pmove.origin[1] * 0.125f, ps.pmove.origin[2] * 0.125f);
                 var opsOrigin = new Vector3(ops.pmove.origin[0] * 0.125f, ops.pmove.origin[1] * 0.125f, ops.pmove.origin[2] * 0.125f);
                 cl.refdef.vieworg = opsOrigin + ops.viewoffset + lerp * (psOrigin + ps.viewoffset - (opsOrigin + ops.viewoffset));
-            //     for (i = 0; i < 3; i++)
-            //     {
-            //         cl.refdef.vieworg[i] = ops->pmove.origin[i] * 0.125 +
-            //             ops->viewoffset[i] + lerp * (ps->pmove.origin[i] * 0.125 +
-            //                     ps->viewoffset[i] - (ops->pmove.origin[i] * 0.125 +
-            //                         ops->viewoffset[i]));
-            //     }
             }
 
             /* if not running a demo or on a locked frame, add the local angle movement */

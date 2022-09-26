@@ -38,7 +38,7 @@ namespace Quake2 {
             {
                 sv.multicast.WriteByte((int)QCommon.svc_ops_e.svc_stufftext);
                 sv.multicast.WriteString(msg);
-                SV_Multicast(null, QShared.multicast_t.MULTICAST_ALL_R);
+                SV_Multicast(Vector3.Zero, QShared.multicast_t.MULTICAST_ALL_R);
             }
         }
 
@@ -50,7 +50,7 @@ namespace Quake2 {
         * MULTICAST_PVS	send to clients potentially visible from org
         * MULTICAST_PHS	send to clients potentially hearable from org
         */
-        private void SV_Multicast(in Vector3? origin, QShared.multicast_t to)
+        private void SV_Multicast(in Vector3 origin, QShared.multicast_t to)
         {
             // client_t *client;
             // byte *mask;
@@ -61,14 +61,12 @@ namespace Quake2 {
 
             var reliable = false;
 
+            int leafnum = 0;
+            int area1 = 0;
             if ((to != QShared.multicast_t.MULTICAST_ALL_R) && (to != QShared.multicast_t.MULTICAST_ALL))
             {
-                // leafnum = CM_PointLeafnum(origin);
-                // area1 = CM_LeafArea(leafnum);
-            }
-            else
-            {
-                // area1 = 0;
+                leafnum = common.CM_PointLeafnum(origin);
+                area1 = common.CM_LeafArea(leafnum);
             }
 
             /* if doing a serverrecord, store everything */
@@ -77,33 +75,37 @@ namespace Quake2 {
             //     SZ_Write(&svs.demo_multicast, sv.multicast.data, sv.multicast.cursize);
             // }
 
+            byte[]? mask= null;
+            int cluster = 0;
             switch (to)
             {
                 case QShared.multicast_t.MULTICAST_ALL_R:
                     reliable = true; /* intentional fallthrough */
                     goto case QShared.multicast_t.MULTICAST_ALL;
                 case QShared.multicast_t.MULTICAST_ALL:
-                    // mask = NULL;
+                    mask = null;
                     break;
 
-                // case MULTICAST_PHS_R:
-                //     reliable = true; /* intentional fallthrough */
-                // case MULTICAST_PHS:
-                //     leafnum = CM_PointLeafnum(origin);
-                //     cluster = CM_LeafCluster(leafnum);
-                //     mask = CM_ClusterPHS(cluster);
-                //     break;
+                case QShared.multicast_t.MULTICAST_PHS_R:
+                    reliable = true; /* intentional fallthrough */
+                    goto case QShared.multicast_t.MULTICAST_PHS;
+                case QShared.multicast_t.MULTICAST_PHS:
+                    leafnum = common.CM_PointLeafnum(origin);
+                    cluster = common.CM_LeafCluster(leafnum);
+                    mask = common.CM_ClusterPHS(cluster);
+                    break;
 
-                // case MULTICAST_PVS_R:
-                //     reliable = true; /* intentional fallthrough */
-                // case MULTICAST_PVS:
-                //     leafnum = CM_PointLeafnum(origin);
-                //     cluster = CM_LeafCluster(leafnum);
-                //     mask = CM_ClusterPVS(cluster);
-                //     break;
+                case QShared.multicast_t.MULTICAST_PVS_R:
+                    reliable = true; /* intentional fallthrough */
+                    goto case QShared.multicast_t.MULTICAST_PVS_R;
+                case QShared.multicast_t.MULTICAST_PVS:
+                    leafnum = common.CM_PointLeafnum(origin);
+                    cluster = common.CM_LeafCluster(leafnum);
+                    mask = common.CM_ClusterPVS(cluster);
+                    break;
 
                 default:
-                    // mask = NULL;
+                    mask = null;
                     common.Com_Error(QShared.ERR_FATAL, "SV_Multicast: bad to:" + to);
                     break;
             }
@@ -121,22 +123,22 @@ namespace Quake2 {
                     continue;
                 }
 
-                // if (mask)
-                // {
-                //     leafnum = CM_PointLeafnum(client->edict->s.origin);
-                //     cluster = CM_LeafCluster(leafnum);
-                //     area2 = CM_LeafArea(leafnum);
+                if (mask != null)
+                {
+                    leafnum = common.CM_PointLeafnum(svs.clients[j].edict!.s.origin);
+                    cluster = common.CM_LeafCluster(leafnum);
+                    int area2 = common.CM_LeafArea(leafnum);
 
-                //     if (!CM_AreasConnected(area1, area2))
-                //     {
-                //         continue;
-                //     }
+                    if (!common.CM_AreasConnected(area1, area2))
+                    {
+                        continue;
+                    }
 
-                //     if (!(mask[cluster >> 3] & (1 << (cluster & 7))))
-                //     {
-                //         continue;
-                //     }
-                // }
+                    if ((mask[cluster >> 3] & (1 << (cluster & 7))) == 0)
+                    {
+                        continue;
+                    }
+                }
 
                 if (reliable)
                 {
@@ -144,7 +146,7 @@ namespace Quake2 {
                 }
                 else
                 {
-                    // svs.clients[j].datagram.Write(sv.multicast.Data);
+                    svs.clients[j].datagram.Write(sv.multicast.Data);
                 }
             }
 
@@ -155,28 +157,28 @@ namespace Quake2 {
         {
             var msg = new QWritebuf(QCommon.MAX_MSGLEN);
 
-            // SV_BuildClientFrame(client);
+            SV_BuildClientFrame(ref client);
 
             msg.allowoverflow = true;
 
             /* send over all the relevant entity_state_t
             and the player_state_t */
-            // SV_WriteFrameToClient(client, &msg);
+            SV_WriteFrameToClient(ref client, ref msg);
 
-            // /* copy the accumulated multicast datagram
-            // for this client out to the message
-            // it is necessary for this to be after the WriteEntities
-            // so that entity references will be current */
-            // if (client->datagram.overflowed)
-            // {
-            //     Com_Printf("WARNING: datagram overflowed for %s\n", client->name);
-            // }
-            // else
-            // {
-            //     SZ_Write(&msg, client->datagram.data, client->datagram.cursize);
-            // }
+            /* copy the accumulated multicast datagram
+            for this client out to the message
+            it is necessary for this to be after the WriteEntities
+            so that entity references will be current */
+            if (client.datagram.overflowed)
+            {
+                common.Com_Printf($"WARNING: datagram overflowed for {client.name}\n");
+            }
+            else
+            {
+                msg.Write(client.datagram.Data);
+            }
 
-            // SZ_Clear(&client->datagram);
+            client.datagram.Clear();
 
             if (msg.overflowed)
             {
@@ -262,9 +264,9 @@ namespace Quake2 {
                 if (svs.clients[i].netchan.message.overflowed)
                 {
                     svs.clients[i].netchan.message.Clear();
-                    // SZ_Clear(&c->datagram);
+                    svs.clients[i].datagram.Clear();
                     // SV_BroadcastPrintf(PRINT_HIGH, "%s overflowed\n", c->name);
-                    // SV_DropClient(c);
+                    // SV_DropClient(svs.clients[i]);
                 }
 
                 if ((sv.state == server_state_t.ss_cinematic) ||

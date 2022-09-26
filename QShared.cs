@@ -119,15 +119,20 @@ namespace Quake2 {
 
     internal class QShared {
 
+        /* angle indexes */
+        public const int PITCH = 0;                     /* up / down */
+        public const int YAW = 1;                       /* left / right */
+        public const int ROLL = 2;                      /* fall over */
+
         /* per-level limits */
-        public static int MAX_CLIENTS = 256;             /* absolute limit */
-        public static int MAX_EDICTS = 1024;             /* must change protocol to increase more */
-        public static int MAX_LIGHTSTYLES = 256;
-        public static int MAX_MODELS = 256;              /* these are sent over the net as bytes */
-        public static int MAX_SOUNDS = 256;              /* so they cannot be blindly increased */
-        public static int MAX_IMAGES = 256;
-        public static int MAX_ITEMS = 256;
-        public static int MAX_GENERAL = (MAX_CLIENTS * 2);       /* general config strings */
+        public const int MAX_CLIENTS = 256;             /* absolute limit */
+        public const int MAX_EDICTS = 1024;             /* must change protocol to increase more */
+        public const int MAX_LIGHTSTYLES = 256;
+        public const int MAX_MODELS = 256;              /* these are sent over the net as bytes */
+        public const int MAX_SOUNDS = 256;              /* so they cannot be blindly increased */
+        public const int MAX_IMAGES = 256;
+        public const int MAX_ITEMS = 256;
+        public const int MAX_GENERAL = (MAX_CLIENTS * 2);       /* general config strings */
 
         /* game print flags */
         public const int PRINT_LOW = 0;                 /* pickup messages */
@@ -154,6 +159,27 @@ namespace Quake2 {
             MULTICAST_PVS_R
         }
 
+        /* content masks */
+        internal const int MASK_ALL = -1;
+        internal const int MASK_SOLID = QCommon.CONTENTS_SOLID | QCommon.CONTENTS_WINDOW;
+        internal const int MASK_PLAYERSOLID =
+            (QCommon.CONTENTS_SOLID | QCommon.CONTENTS_PLAYERCLIP |
+            QCommon.CONTENTS_WINDOW | QCommon.CONTENTS_MONSTER);
+        internal const int MASK_DEADSOLID = (QCommon.CONTENTS_SOLID | QCommon.CONTENTS_PLAYERCLIP | QCommon.CONTENTS_WINDOW);
+        internal const int MASK_MONSTERSOLID =
+            (QCommon.CONTENTS_SOLID | QCommon.CONTENTS_MONSTERCLIP |
+            QCommon.CONTENTS_WINDOW | QCommon.CONTENTS_MONSTER);
+        internal const int MASK_WATER = (QCommon.CONTENTS_WATER | QCommon.CONTENTS_LAVA | QCommon.CONTENTS_SLIME);
+        internal const int MASK_OPAQUE = (QCommon.CONTENTS_SOLID | QCommon.CONTENTS_SLIME | QCommon.CONTENTS_LAVA);
+        internal const int MASK_SHOT =
+            (QCommon.CONTENTS_SOLID | QCommon.CONTENTS_MONSTER | QCommon.CONTENTS_WINDOW |
+            QCommon.CONTENTS_DEADMONSTER);
+        internal const int MASK_CURRENT =
+            (QCommon.CONTENTS_CURRENT_0 | QCommon.CONTENTS_CURRENT_90 |
+            QCommon.CONTENTS_CURRENT_180 | QCommon.CONTENTS_CURRENT_270 |
+            QCommon.CONTENTS_CURRENT_UP |
+            QCommon.CONTENTS_CURRENT_DOWN);
+
         /* plane_t structure */
         public class cplane_t
         {
@@ -171,6 +197,31 @@ namespace Quake2 {
             public int headnode;
         }
 
+        public struct csurface_t
+        {
+            public string name;
+            public int flags; /* SURF_* */
+            public int value; /* unused */
+        }
+
+        public class mapsurface_t  /* used internally due to name len probs */
+        {
+            public csurface_t c;
+            public string rname;
+        }
+
+        /* a trace is returned when a box is swept through the world */
+        public struct trace_t
+        {
+            public bool allsolid;      /* if true, plane is not valid */
+            public bool startsolid;    /* if true, the initial point was in a solid area */
+            public float fraction;         /* time completed, 1.0 = didn't hit anything */
+            public Vector3 endpos;          /* final position */
+            public cplane_t plane;         /* surface normal at impact */
+            public csurface_t? surface;    /* surface hit */
+            public int contents;           /* contents on other side of surface hit */
+            public edict_s? ent;    /* not set by CM_*() functions */
+        } ;
 
         /* pmove_state_t is the information necessary for client side movement */
         /* prediction */
@@ -212,6 +263,10 @@ namespace Quake2 {
                                         * changed by spawns, rotating objects, and teleporters */
         }
 
+        /* button bits */
+        public const byte BUTTON_ATTACK = 1;
+        public const byte BUTTON_USE = 2;
+        public const byte BUTTON_ANY = 128; /* any key whatsoever */
 
         /* usercmd_t is sent to the server each client frame */
         public struct usercmd_t
@@ -222,6 +277,49 @@ namespace Quake2 {
             public short forwardmove, sidemove, upmove;
             public byte impulse;           /* remove? */
             public byte lightlevel;        /* light level the player is standing on */
+
+            public void Clear()
+            {
+                msec = 0;
+                buttons = 0;
+                angles = new short[3]{ 0, 0, 0};
+                forwardmove = 0;
+                sidemove = 0;
+                upmove = 0;
+                impulse = 0;
+                lightlevel = 0;
+            }
+        }
+
+        public const int MAXTOUCH = 32;
+
+        internal delegate trace_t trace_delegate(in Vector3 start, in Vector3 mins, in Vector3 maxs, in Vector3 end);
+
+        internal struct pmove_t
+        {
+            /* state (in / out) */
+            public pmove_state_t s;
+
+            /* command (in) */
+            public usercmd_t cmd;
+            public  bool snapinitial;           /* if s has been changed outside pmove */
+
+            /* results (out) */
+            public int numtouch;
+            public  edict_s?[] touchents; // [MAXTOUCH];
+
+            public Vector3 viewangles;              /* clamped */
+            public float viewheight;
+
+            public Vector3 mins, maxs;              /* bounding box size */
+
+            public edict_s? groundentity;
+            public int watertype;
+            public int waterlevel;
+
+            /* callbacks to test the world */
+            public trace_delegate? trace;
+            // int (*pointcontents)(vec3_t point);
         }
 
         /* entity_state_t->effects
@@ -691,7 +789,7 @@ namespace Quake2 {
         * ==========================================================
         */
 
-        // #define ANGLE2SHORT(x) ((int)((x) * 65536 / 360) & 65535)
+        public static short ANGLE2SHORT(float x)  => (short)((int)((x) * 65536.0f / 360) & 65535);
         public static float SHORT2ANGLE(int x) => (float)((x) * (360.0 / 65536));
 
         /* config strings are a general means of communication from

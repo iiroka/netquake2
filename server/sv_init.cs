@@ -23,6 +23,7 @@
  *
  * =======================================================================
  */
+using System.Numerics;
 
 namespace Quake2 {
 
@@ -34,8 +35,48 @@ namespace Quake2 {
 
         private server_static_t svs = new server_static_t(); /* persistant server info */
         private server_t sv = new server_t(); /* local server */
+        
+        private int SV_FindIndex(string name, int start, int max, bool create)
+        {
+            if (String.IsNullOrEmpty(name))
+            {
+                return 0;
+            }
 
-        /*
+            int i;
+            for (i = 1; i < max && !String.IsNullOrEmpty(sv.configstrings[start + i]); i++)
+            {
+                if (sv.configstrings[start + i].Equals(name))
+                {
+                    return i;
+                }
+            }
+
+            if (!create)
+            {
+                return 0;
+            }
+
+            if (i == max)
+            {
+                common.Com_Error(QShared.ERR_DROP, "*Index: overflow");
+            }
+
+            sv.configstrings[start + i] = name;
+
+            if (sv.state != server_state_t.ss_loading)
+            {
+                /* send the update to everyone */
+                sv.multicast.WriteChar((int)QCommon.svc_ops_e.svc_configstring);
+                sv.multicast.WriteShort(start + i);
+                sv.multicast.WriteString(name);
+                SV_Multicast(Vector3.Zero, QShared.multicast_t.MULTICAST_ALL_R);
+            }
+
+            return i;
+        }        
+
+       /*
         * Change the server to a new map, taking all connected
         * clients along with it.
         */
@@ -67,6 +108,9 @@ namespace Quake2 {
             sv.configstrings = new string[QShared.MAX_CONFIGSTRINGS];
             sv.models = new QShared.cmodel_t?[QShared.MAX_MODELS];
             sv.multicast = new QWritebuf(QCommon.MAX_MSGLEN);
+            sv.baselines = new QShared.entity_state_t[QShared.MAX_EDICTS];
+            for (int i = 0; i < sv.baselines.Length; i++)
+                sv.baselines[i] = new QShared.entity_state_t();
 
             /* save name for levels that don't set message */
             sv.configstrings[QShared.CS_NAME] = server;
@@ -128,8 +172,8 @@ namespace Quake2 {
             ge!.SpawnEntities(sv.name, common.CM_EntityString(), spawnpoint);
 
             /* run two frames to allow everything to settle */
-            // ge->RunFrame();
-            // ge->RunFrame();
+            ge.RunFrame();
+            ge.RunFrame();
 
             // /* verify game didn't clobber important stuff */
             // if ((int)checksum !=
@@ -275,9 +319,11 @@ namespace Quake2 {
             svs.spawncount = QShared.rand.Next();
             svs.clients = new client_t[maxclients!.Int];
             svs.num_client_entities = maxclients!.Int * QCommon.UPDATE_BACKUP * 64;
-        //     svs.client_entities = Z_Malloc( sizeof(entity_state_t) * svs.num_client_entities);
+            svs.client_entities = new QShared.entity_state_t[svs.num_client_entities];
+            for (int i = 0; i < svs.num_client_entities; i++)
+                svs.client_entities[i] = new QShared.entity_state_t();
 
-        //     /* init network stuff */
+            /* init network stuff */
         //     if (dedicated->value)
         //     {
         //         if (gamemode == GAMEMODE_SP)
