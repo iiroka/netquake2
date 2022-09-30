@@ -142,6 +142,10 @@ namespace Quake2 {
                     return (int)QClient.QKEYS.K_UPARROW;
                 case Key.Down:
                     return (int)QClient.QKEYS.K_DOWNARROW;
+                case Key.Left:
+                    return (int)QClient.QKEYS.K_LEFTARROW;
+                case Key.Right:
+                    return (int)QClient.QKEYS.K_RIGHTARROW;
             }
             return 0;
         }

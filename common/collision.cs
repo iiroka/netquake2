@@ -437,6 +437,29 @@ namespace Quake2 {
         }
 
         /*
+        * To keep everything totally uniform, bounding boxes are turned into
+        * small BSP trees instead of being compared directly.
+        */
+        public int CM_HeadnodeForBox(in Vector3 mins, in Vector3 maxs)
+        {
+            map_planes[numplanes+0].dist = maxs.X;
+            map_planes[numplanes+1].dist = -maxs.X;
+            map_planes[numplanes+2].dist = mins.X;
+            map_planes[numplanes+3].dist = -mins.X;
+            map_planes[numplanes+4].dist = maxs.Y;
+            map_planes[numplanes+5].dist = -maxs.Y;
+            map_planes[numplanes+6].dist = mins.Y;
+            map_planes[numplanes+7].dist = -mins.Y;
+            map_planes[numplanes+8].dist = maxs.Z;
+            map_planes[numplanes+9].dist = -maxs.Z;
+            map_planes[numplanes+10].dist = mins.Z;
+            map_planes[numplanes+11].dist = -mins.Z;
+
+            return box_headnode;
+        }
+
+
+        /*
         * Fills in a list of all the leafs touched
         */
 
@@ -512,16 +535,6 @@ namespace Quake2 {
         private void CM_ClipBoxToBrush(in Vector3 mins, in Vector3 maxs, in Vector3 p1,
                 in Vector3 p2, ref QShared.trace_t trace, cbrush_t brush)
         {
-            // int i, j;
-            // cplane_t *plane, *clipplane;
-            // float dist;
-            // float enterfrac, leavefrac;
-            // vec3_t ofs;
-            // float d1, d2;
-            // qboolean getout, startout;
-            // float f;
-            // cbrushside_t *side, *leadside;
-
             float enterfrac = -1;
             float leavefrac = 1;
             QShared.cplane_t? clipplane = null;
@@ -656,13 +669,6 @@ namespace Quake2 {
         private void CM_TestBoxInBrush(in Vector3 mins, in Vector3 maxs, in Vector3 p1,
                 ref QShared.trace_t trace, cbrush_t brush)
         {
-            // int i, j;
-            // cplane_t *plane;
-            // float dist;
-            // vec3_t ofs;
-            // float d1;
-            // cbrushside_t *side;
-
             if (brush.numsides == 0)
             {
                 return;
@@ -703,11 +709,6 @@ namespace Quake2 {
 
         private void CM_TraceToLeaf(int leafnum)
         {
-            // int k;
-            // int brushnum;
-            // cleaf_t *leaf;
-            // cbrush_t *b;
-
             ref var leaf = ref map_leafs[leafnum];
 
             if ((leaf.contents & trace_contents) == 0)
@@ -744,11 +745,6 @@ namespace Quake2 {
 
         private void CM_TestInLeaf(int leafnum)
         {
-            // int k;
-            // int brushnum;
-            // cleaf_t *leaf;
-            // cbrush_t *b;
-
             ref var leaf = ref map_leafs[leafnum];
 
             if ((leaf.contents & trace_contents) == 0)
@@ -785,134 +781,120 @@ namespace Quake2 {
 
         private void CM_RecursiveHullCheck(int num, float p1f, float p2f, in Vector3 p1, in Vector3 p2)
         {
-            // cnode_t *node;
-            // cplane_t *plane;
-            // float t1, t2, offset;
-            // float frac, frac2;
-            // float idist;
-            // int i;
-            // vec3_t mid;
-            // int side;
-            // float midf;
+            if (trace_trace.fraction <= p1f)
+            {
+                return; /* already hit something nearer */
+            }
 
-            // if (trace_trace.fraction <= p1f)
-            // {
-            //     return; /* already hit something nearer */
-            // }
+            /* if < 0, we are in a leaf node */
+            if (num < 0)
+            {
+                CM_TraceToLeaf(-1 - num);
+                return;
+            }
 
-            // /* if < 0, we are in a leaf node */
-            // if (num < 0)
-            // {
-            //     CM_TraceToLeaf(-1 - num);
-            //     return;
-            // }
+            /* find the point distances to the seperating plane
+            and the offset for the size of the box */
+            ref var node = ref map_nodes[num];
+            var plane = node.plane;
 
-            // /* find the point distances to the seperating plane
-            // and the offset for the size of the box */
-            // node = map_nodes + num;
-            // plane = node->plane;
+            float t1, t2, offset;
+            if (plane.type < 3)
+            {
+                t1 = p1.Get(plane.type) - plane.dist;
+                t2 = p2.Get(plane.type) - plane.dist;
+                offset = trace_extents.Get(plane.type);
+            }
+            else
+            {
+                t1 = Vector3.Dot(plane.normal, p1) - plane.dist;
+                t2 = Vector3.Dot(plane.normal, p2) - plane.dist;
 
-            // if (plane->type < 3)
-            // {
-            //     t1 = p1[plane->type] - plane->dist;
-            //     t2 = p2[plane->type] - plane->dist;
-            //     offset = trace_extents[plane->type];
-            // }
+                if (trace_ispoint)
+                {
+                    offset = 0;
+                }
 
-            // else
-            // {
-            //     t1 = DotProduct(plane->normal, p1) - plane->dist;
-            //     t2 = DotProduct(plane->normal, p2) - plane->dist;
+                else
+                {
+                    offset = MathF.Abs(trace_extents.X * plane.normal.X) +
+                            MathF.Abs(trace_extents.Y * plane.normal.Y) +
+                            MathF.Abs(trace_extents.Z * plane.normal.Z);
+                }
+            }
 
-            //     if (trace_ispoint)
-            //     {
-            //         offset = 0;
-            //     }
+            /* see which sides we need to consider */
+            if ((t1 >= offset) && (t2 >= offset))
+            {
+                CM_RecursiveHullCheck(node.children[0], p1f, p2f, p1, p2);
+                return;
+            }
 
-            //     else
-            //     {
-            //         offset = (float)fabs(trace_extents[0] * plane->normal[0]) +
-            //                 (float)fabs(trace_extents[1] * plane->normal[1]) +
-            //                 (float)fabs(trace_extents[2] * plane->normal[2]);
-            //     }
-            // }
+            if ((t1 < -offset) && (t2 < -offset))
+            {
+                CM_RecursiveHullCheck(node.children[1], p1f, p2f, p1, p2);
+                return;
+            }
 
-            // /* see which sides we need to consider */
-            // if ((t1 >= offset) && (t2 >= offset))
-            // {
-            //     CM_RecursiveHullCheck(node->children[0], p1f, p2f, p1, p2);
-            //     return;
-            // }
+            /* put the crosspoint DIST_EPSILON pixels on the near side */
+            float frac, frac2;
+            int side;
+            if (t1 < t2)
+            {
+                var idist = 1.0f / (t1 - t2);
+                side = 1;
+                frac2 = (t1 + offset + DIST_EPSILON) * idist;
+                frac = (t1 - offset + DIST_EPSILON) * idist;
+            }
 
-            // if ((t1 < -offset) && (t2 < -offset))
-            // {
-            //     CM_RecursiveHullCheck(node->children[1], p1f, p2f, p1, p2);
-            //     return;
-            // }
+            else if (t1 > t2)
+            {
+                var idist = 1.0f / (t1 - t2);
+                side = 0;
+                frac2 = (t1 - offset - DIST_EPSILON) * idist;
+                frac = (t1 + offset + DIST_EPSILON) * idist;
+            }
 
-            // /* put the crosspoint DIST_EPSILON pixels on the near side */
-            // if (t1 < t2)
-            // {
-            //     idist = 1.0f / (t1 - t2);
-            //     side = 1;
-            //     frac2 = (t1 + offset + DIST_EPSILON) * idist;
-            //     frac = (t1 - offset + DIST_EPSILON) * idist;
-            // }
+            else
+            {
+                side = 0;
+                frac = 1;
+                frac2 = 0;
+            }
 
-            // else if (t1 > t2)
-            // {
-            //     idist = 1.0 / (t1 - t2);
-            //     side = 0;
-            //     frac2 = (t1 - offset - DIST_EPSILON) * idist;
-            //     frac = (t1 + offset + DIST_EPSILON) * idist;
-            // }
+            /* move up to the node */
+            if (frac < 0)
+            {
+                frac = 0;
+            }
 
-            // else
-            // {
-            //     side = 0;
-            //     frac = 1;
-            //     frac2 = 0;
-            // }
+            if (frac > 1)
+            {
+                frac = 1;
+            }
 
-            // /* move up to the node */
-            // if (frac < 0)
-            // {
-            //     frac = 0;
-            // }
+            var midf = p1f + (p2f - p1f) * frac;
 
-            // if (frac > 1)
-            // {
-            //     frac = 1;
-            // }
+            var mid = p1 + frac * (p2 - p1);
 
-            // midf = p1f + (p2f - p1f) * frac;
+            CM_RecursiveHullCheck(node.children[side], p1f, midf, p1, mid);
 
-            // for (i = 0; i < 3; i++)
-            // {
-            //     mid[i] = p1[i] + frac * (p2[i] - p1[i]);
-            // }
+            /* go past the node */
+            if (frac2 < 0)
+            {
+                frac2 = 0;
+            }
 
-            // CM_RecursiveHullCheck(node->children[side], p1f, midf, p1, mid);
+            if (frac2 > 1)
+            {
+                frac2 = 1;
+            }
 
-            // /* go past the node */
-            // if (frac2 < 0)
-            // {
-            //     frac2 = 0;
-            // }
+            midf = p1f + (p2f - p1f) * frac2;
 
-            // if (frac2 > 1)
-            // {
-            //     frac2 = 1;
-            // }
+            mid = p1 + frac2 * (p2 - p1);
 
-            // midf = p1f + (p2f - p1f) * frac2;
-
-            // for (i = 0; i < 3; i++)
-            // {
-            //     mid[i] = p1[i] + frac2 * (p2[i] - p1[i]);
-            // }
-
-            // CM_RecursiveHullCheck(node->children[side ^ 1], midf, p2f, mid, p2);
+            CM_RecursiveHullCheck(node.children[side ^ 1], midf, p2f, mid, p2);
         }
 
         public QShared.trace_t CM_BoxTrace(in Vector3 start, in Vector3 end, in Vector3 mins, in Vector3 maxs,
@@ -928,6 +910,7 @@ namespace Quake2 {
 
             /* fill in a default trace */
             trace_trace = new QShared.trace_t();
+            trace_trace.plane = new QShared.cplane_t();
             trace_trace.fraction = 1;
             trace_trace.surface = nullsurface.c;
 
@@ -956,7 +939,7 @@ namespace Quake2 {
                 c1 -= new Vector3(1);
                 c2 += new Vector3(1);
 
-                numleafs = CM_BoxLeafnums_headnode(c1, c2, out var leafs, headnode, out var topnode);
+                int numleafs = CM_BoxLeafnums_headnode(c1, c2, out var leafs, headnode, out var topnode);
 
                 for (int i = 0; i < numleafs; i++)
                 {
@@ -1004,6 +987,65 @@ namespace Quake2 {
             return trace_trace;
         }
 
+
+        /*
+        * Handles offseting and rotation of the end points for moving and
+        * rotating entities
+        */
+        public QShared.trace_t CM_TransformedBoxTrace(in Vector3 start, in Vector3 end, in Vector3 mins, in Vector3 maxs,
+                int headnode, int brushmask, in Vector3 origin, in Vector3 angles)
+        {
+            /* subtract origin offset */
+            var start_l = start - origin;
+            var end_l = end - origin;
+
+            /* rotate start and end into the models frame of reference */
+            bool rotated;
+            if ((headnode != box_headnode) &&
+                (angles.X != 0 || angles.Y != 0 || angles.Z != 0))
+            {
+                rotated = true;
+            }
+
+            else
+            {
+                rotated = false;
+            }
+
+            Vector3 forward = new Vector3(), right = new Vector3(), up = new Vector3();
+            if (rotated)
+            {
+                QShared.AngleVectors(angles, ref forward, ref right, ref up);
+
+                var temp = start_l;
+                start_l.X = Vector3.Dot(temp, forward);
+                start_l.Y = -Vector3.Dot(temp, right);
+                start_l.Z = Vector3.Dot(temp, up);
+
+                temp = end_l;
+                end_l.X = Vector3.Dot(temp, forward);
+                end_l.Y = -Vector3.Dot(temp, right);
+                end_l.Z = Vector3.Dot(temp, up);
+            }
+
+            /* sweep the box through the model */
+            var trace = CM_BoxTrace(start_l, end_l, mins, maxs, headnode, brushmask);
+
+            if (rotated && (trace.fraction != 1.0))
+            {
+                var a = Vector3.Negate(angles);
+                QShared.AngleVectors(a, ref forward, ref right, ref up);
+
+                var temp = trace.plane.normal;
+                trace.plane.normal.X = Vector3.Dot(temp, forward);
+                trace.plane.normal.Y = -Vector3.Dot(temp, right);
+                trace.plane.normal.Z = Vector3.Dot(temp, up);
+            }
+
+            trace.endpos = start + trace.fraction * (end - start);
+
+            return trace;
+        }
 
         private void CMod_LoadSubmodels(byte[] buf, in lump_t l)
         {
@@ -1154,6 +1196,7 @@ namespace Quake2 {
 
             numleafs = count;
             numclusters = 0;
+            Console.WriteLine($"numleafs = {numleafs}");
 
             for (int i = 0; i < count; i++)
             {
@@ -1536,7 +1579,7 @@ namespace Quake2 {
         {
             if ((leafnum < 0) || (leafnum >= numleafs))
             {
-                Com_Error(QShared.ERR_DROP, "CM_LeafCluster: bad number");
+                Com_Error(QShared.ERR_DROP, $"CM_LeafCluster: bad number {leafnum} {numleafs}");
             }
 
             return map_leafs[leafnum].cluster;

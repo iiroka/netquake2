@@ -25,6 +25,22 @@ namespace Quake2 {
         private const int SPAWNFLAG_NOT_DEATHMATCH = 0x00000800;
         private const int SPAWNFLAG_NOT_COOP = 0x00001000;
 
+        private const uint FL_FLY = 0x00000001;
+        private const uint FL_SWIM = 0x00000002; /* implied immunity to drowining */
+        private const uint FL_IMMUNE_LASER = 0x00000004;
+        private const uint FL_INWATER = 0x00000008;
+        private const uint FL_GODMODE = 0x00000010;
+        private const uint FL_NOTARGET = 0x00000020;
+        private const uint FL_IMMUNE_SLIME = 0x00000040;
+        private const uint FL_IMMUNE_LAVA = 0x00000080;
+        private const uint FL_PARTIALGROUND = 0x00000100; /* not all corners are valid */
+        private const uint FL_WATERJUMP = 0x00000200; /* player jumping out of water */
+        private const uint FL_TEAMSLAVE = 0x00000400; /* not the first on the team */
+        private const uint FL_NO_KNOCKBACK = 0x00000800;
+        private const uint FL_POWER_ARMOR = 0x00001000; /* power armor (if any) is active */
+        private const uint FL_COOP_TAKEN = 0x00002000; /* Another client has already taken it */
+        private const uint FL_RESPAWN = 0x80000000; /* used for item respawning */
+
         private const float FRAMETIME = 0.1f;
 
         private enum damage_t
@@ -80,6 +96,8 @@ namespace Quake2 {
         private const int WEAP_RAILGUN = 10;
         private const int WEAP_BFG = 11;
 
+        private delegate void edict_delegate(edict_t ent);
+
         private class gitem_t : ICloneable
         {
             public int index;
@@ -87,7 +105,7 @@ namespace Quake2 {
             // qboolean (*pickup)(struct edict_s *ent, struct edict_s *other);
             // void (*use)(struct edict_s *ent, struct gitem_s *item);
             // void (*drop)(struct edict_s *ent, struct gitem_s *item);
-            // void (*weaponthink)(struct edict_s *ent);
+            public edict_delegate? weaponthink  { get; init; }
             // char *pickup_sound;
             // char *world_model;
             // int world_model_flags;
@@ -493,8 +511,8 @@ namespace Quake2 {
             public float ideal_yaw;
 
             public float nextthink;
-            // void (*prethink)(edict_t *ent);
-            // void (*think)(edict_t *self);
+            public edict_delegate? prethink;
+            public edict_delegate? think;
             // void (*blocked)(edict_t *self, edict_t *other);
             // void (*touch)(edict_t *self, edict_t *other, cplane_t *plane,
             //         csurface_t *surf);
@@ -532,12 +550,12 @@ namespace Quake2 {
             public edict_t? oldenemy;
             public edict_t? activator;
             public edict_t? groundentity;
-            // int groundentity_linkcount;
-            // edict_t *teamchain;
-            // edict_t *teammaster;
+            public int groundentity_linkcount;
+            public edict_t? teamchain;
+            public edict_t? teammaster;
 
-            // edict_t *mynoise; /* can go in client only */
-            // edict_t *mynoise2;
+            public edict_t? mynoise; /* can go in client only */
+            public edict_t? mynoise2;
 
             public int noise_index;
             public int noise_index2;
@@ -554,8 +572,8 @@ namespace Quake2 {
             public int watertype;
             public int waterlevel;
 
-            // vec3_t move_origin;
-            // vec3_t move_angles;
+            public Vector3 move_origin;
+            public Vector3 move_angles;
 
             /* move this to clientinfo? */
             public int light_level;

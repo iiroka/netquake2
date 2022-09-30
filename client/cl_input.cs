@@ -73,11 +73,10 @@ namespace Quake2 {
         private void KeyDown(ref kbutton_t b, string[] args)
         {
             int k;
-            if (args.Length < 2 || String.IsNullOrEmpty(args[1]))
+            if (args.Length >= 2 && !String.IsNullOrEmpty(args[1]))
             {
                 k = Int32.Parse(args[1]);
             }
-
             else
             {
                 k = -1; /* typed manually at the console for continuous down */
@@ -129,7 +128,7 @@ namespace Quake2 {
         private void KeyUp(ref kbutton_t b, string[] args)
         {
             int k;
-            if (args.Length < 2 || String.IsNullOrEmpty(args[1]))
+            if (args.Length >= 2 && !String.IsNullOrEmpty(args[1]))
             {
                 k = Int32.Parse(args[1]);
             }
@@ -212,6 +211,23 @@ namespace Quake2 {
             KeyUp(ref in_right, args);
         }
 
+        private void IN_ForwardDown(string[] args)
+        {
+            KeyDown(ref in_forward, args);
+        }
+        private void IN_ForwardUp(string[] args)
+        {
+            KeyUp(ref in_forward, args);
+        }
+        private void IN_BackDown(string[] args)
+        {
+            KeyDown(ref in_back, args);
+        }
+        private void IN_BackUp(string[] args)
+        {
+            KeyUp(ref in_back, args);
+        }
+
         /*
         * Returns the fraction of the
         * frame that the key was down
@@ -271,6 +287,8 @@ namespace Quake2 {
                 speed = cls.nframetime;
             }
 
+            var debug = (in_right.msec != 0 || in_left.msec != 0);
+
             if ((in_strafe.state & 1) == 0)
             {
                 cl.viewangles.SetYaw(cl.viewangles.Yaw() - speed * cl_yawspeed!.Float * CL_KeyState(ref in_right));
@@ -288,6 +306,7 @@ namespace Quake2 {
 
             cl.viewangles.SetPitch(cl.viewangles.Pitch() - speed * cl_pitchspeed!.Float * up);
             cl.viewangles.SetPitch(cl.viewangles.Pitch() + speed * cl_pitchspeed!.Float * down);
+
         }
 
         /*
@@ -315,8 +334,8 @@ namespace Quake2 {
 
             if ((in_klook.state & 1) == 0)
             {
-            //     cmd->forwardmove += cl_forwardspeed->value * CL_KeyState(&in_forward);
-            //     cmd->forwardmove -= cl_forwardspeed->value * CL_KeyState(&in_back);
+                cmd.forwardmove += (short)(cl_forwardspeed!.Float * CL_KeyState(ref in_forward));
+                cmd.forwardmove -= (short)(cl_forwardspeed!.Float * CL_KeyState(ref in_back));
             }
 
             /* adjust for speed key / running */
@@ -419,10 +438,10 @@ namespace Quake2 {
             common.Cmd_AddCommand("-left", IN_LeftUp);
             common.Cmd_AddCommand("+right", IN_RightDown);
             common.Cmd_AddCommand("-right", IN_RightUp);
-            // Cmd_AddCommand("+forward", IN_ForwardDown);
-            // Cmd_AddCommand("-forward", IN_ForwardUp);
-            // Cmd_AddCommand("+back", IN_BackDown);
-            // Cmd_AddCommand("-back", IN_BackUp);
+            common.Cmd_AddCommand("+forward", IN_ForwardDown);
+            common.Cmd_AddCommand("-forward", IN_ForwardUp);
+            common.Cmd_AddCommand("+back", IN_BackDown);
+            common.Cmd_AddCommand("-back", IN_BackUp);
             // Cmd_AddCommand("+lookup", IN_LookupDown);
             // Cmd_AddCommand("-lookup", IN_LookupUp);
             // Cmd_AddCommand("+lookdown", IN_LookdownDown);
@@ -533,14 +552,14 @@ namespace Quake2 {
             //     cmd->buttons |= BUTTON_ATTACK;
             // }
 
-            // in_attack.state &= ~2;
+            in_attack.state &= ~2;
 
             // if (in_use.state & 3)
             // {
             //     cmd->buttons |= BUTTON_USE;
             // }
 
-            // in_use.state &= ~2;
+            in_use.state &= ~2;
 
             // // Keyboard events
             // if (anykeydown && cls.key_dest == key_game)
@@ -548,8 +567,8 @@ namespace Quake2 {
             //     cmd->buttons |= BUTTON_ANY;
             // }
 
-            // cmd->impulse = in_impulse;
-            // in_impulse = 0;
+            cmd.impulse = (byte)in_impulse;
+            in_impulse = 0;
 
             // Set light level for muzzle flash
             cmd.lightlevel = (byte)cl_lightlevel!.Int;

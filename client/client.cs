@@ -158,6 +158,7 @@ namespace Quake2 {
 
             public model_s?[] model_draw;
 
+            public QShared.cmodel_t?[] model_clip;
             // public struct cmodel_s	*model_clip[MAX_MODELS];
 
             // public struct sfx_s	*sound_precache[MAX_SOUNDS];

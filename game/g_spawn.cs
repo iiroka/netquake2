@@ -159,10 +159,6 @@ namespace Quake2 {
         */
         private void ED_CallSpawn(ref edict_t ent)
         {
-            // spawn_t *s;
-            // gitem_t *item;
-            // int i;
-
             if (ent == null)
             {
                 return;
@@ -208,11 +204,6 @@ namespace Quake2 {
         */
         private void ED_ParseField(in string key, in string value, ref edict_t ent)
         {
-            // field_t *f;
-            // byte *b;
-            // float v;
-            // vec3_t vec;
-
             if (key == null || value == null)
             {
                 return;
@@ -298,10 +289,6 @@ namespace Quake2 {
         */
         private void ED_ParseEdict(string data, ref int index, ref edict_t ent)
         {
-            // qboolean init;
-            // char keyname[256];
-            // const char *com_token;
-
             if (ent == null)
             {
                 index = -1;
@@ -309,7 +296,7 @@ namespace Quake2 {
             }
 
             var init = false;
-            // memset(&st, 0, sizeof(st));
+            st = new spawn_temp_t();
 
             /* go through all the dictionary pairs */
             while (true)
@@ -397,7 +384,7 @@ namespace Quake2 {
             level = new level_locals_t();
             for (int i = 0; i < g_edicts.Length; i++)
             {
-                g_edicts[i] = new edict_t() { index = i };
+                g_edicts[i] = new edict_t() { index = i, area = new link_t() { ent = g_edicts[i] } };
             }
 
             level.mapname = mapname;
@@ -644,7 +631,7 @@ namespace Quake2 {
             }
 
             ent.movetype = movetype_t.MOVETYPE_PUSH;
-            // ent.solid = SOLID_BSP;
+            ent.solid = solid_t.SOLID_BSP;
             ent.inuse = true; /* since the world doesn't use G_Spawn() */
             ent.s.modelindex = 1; /* world model is always index 1 */
 

@@ -54,6 +54,15 @@ namespace Quake2 {
         SOLID_BSP /* bsp clip, touch on edge */
     }
 
+    /* =============================================================== */
+
+    /* link_t is only used for entity area links now */
+    internal class link_t
+    {
+        public link_t? prev, next;
+        public edict_s ent;
+    }
+
 
     internal abstract class gclient_s
     {
@@ -76,7 +85,7 @@ namespace Quake2 {
         public int linkcount;
 
         // public LinkedList<edict_s> area = new LinkedList<edict_s>();    /* linked to a division node or leaf */
-        // link_t area;                    /* linked to a division node or leaf */
+        public link_t area;                    /* linked to a division node or leaf */
 
         public int num_clusters;               /* if -1, use headnode instead */
         public int[] clusternums = new int [MAX_ENT_CLUSTERS];

@@ -250,7 +250,7 @@ namespace Quake2 {
         * prediction stays in sync, so no floats are used.
         * if any part of the game code modifies this struct, it
         * will result in a prediction error of some degree. */
-        public struct pmove_state_t
+        public struct pmove_state_t : IEquatable<pmove_state_t>
         {
             public pmtype_t pm_type;
 
@@ -261,7 +261,41 @@ namespace Quake2 {
             public short gravity;
             public short[] delta_angles;      /* add to command angles to get view direction
                                         * changed by spawns, rotating objects, and teleporters */
+
+            public bool Equals(pmove_state_t other)
+            {         
+                if (this.origin != null ^ other.origin != null)
+                    return false;
+                if (this.velocity != null ^ other.velocity != null)
+                    return false;
+                if (this.delta_angles != null ^ other.delta_angles != null)
+                    return false;
+                return this.pm_type == other.pm_type &&
+                        ((this.origin == null || other.origin == null) ||
+                         (this.origin.Length == other.origin.Length &&
+                          this.origin[0] == other.origin[0] &&
+                          this.origin[1] == other.origin[1] &&
+                          this.origin[2] == other.origin[2])) &&
+                        ((this.velocity == null || other.velocity == null) ||
+                         (this.velocity.Length == other.velocity.Length &&
+                          this.velocity[0] == other.velocity[0] &&
+                          this.velocity[1] == other.velocity[1] &&
+                          this.velocity[2] == other.velocity[2])) &&
+                       this.pm_flags == other.pm_flags &&
+                       this.pm_time == other.pm_time &&
+                       this.gravity == other.gravity &&
+                        ((this.delta_angles == null || other.delta_angles == null) ||
+                         (this.delta_angles.Length == other.delta_angles.Length &&
+                          this.delta_angles[0] == other.delta_angles[0] &&
+                          this.delta_angles[1] == other.delta_angles[1] &&
+                          this.delta_angles[2] == other.delta_angles[2]));
+            }
         }
+
+        /* gi.BoxEdicts() can return a list of either solid or trigger entities */
+        public const int AREA_SOLID = 1;
+        public const int AREA_TRIGGERS = 2;
+
 
         /* button bits */
         public const byte BUTTON_ATTACK = 1;
@@ -1589,17 +1623,41 @@ namespace Quake2 {
         {
             return v.Z;
         }
-        public static void SetPitch(this Vector3 v, float value)
+        public static void SetPitch(this ref Vector3 v, float value)
         {
             v.X = value;
         }
-        public static void SetYaw(this Vector3 v, float value)
+        public static void SetYaw(this ref Vector3 v, float value)
         {
             v.Y = value;
         }
-        public static void SetRoll(this Vector3 v, float value)
+        public static void SetRoll(this ref Vector3 v, float value)
         {
             v.Z = value;
+        }
+
+        public static void Set(this ref Vector3 v, int index, float value)
+        {
+            if (index == 0)
+                v.X = value;
+            else if (index == 1)
+                v.Y = value;
+            else if (index == 2)
+                v.Z = value;
+            else
+                throw new IndexOutOfRangeException();
+        }
+
+        public static float Get(this Vector3 v, int index)
+        {
+            if (index == 0)
+                return v.X;
+            else if (index == 1)
+                return v.Y;
+            else if (index == 2)
+                return v.Z;
+            else
+                throw new IndexOutOfRangeException();
         }
 
     }        

@@ -55,6 +55,82 @@ namespace Quake2 {
             return null;
         }
 
+        /* ====================================================================== */
+
+        private void droptofloor(edict_t ent)
+        {
+            // trace_t tr;
+            // vec3_t dest;
+            // float *v;
+
+            if (ent == null)
+            {
+                return;
+            }
+
+            ent.mins = new Vector3(-15, -15, -15);
+            ent.maxs = new Vector3(15, 15, 15);
+
+            // if (ent.model)
+            // {
+            //     gi.setmodel(ent, ent.model);
+            // }
+            // else
+            // {
+            //     gi.setmodel(ent, ent.item.world_model);
+            // }
+
+            ent.solid = solid_t.SOLID_TRIGGER;
+            ent.movetype = movetype_t.MOVETYPE_TOSS;
+            // ent->touch = Touch_Item;
+
+            var dest = ent.s.origin + new Vector3(0,0,-128);
+
+            var tr = gi.trace(ent.s.origin, ent.mins, ent.maxs, dest, ent, QShared.MASK_SOLID);
+
+            if (tr.startsolid)
+            {
+                gi.dprintf($"droptofloor: {ent.classname} startsolid at {ent.s.origin}\n");
+                G_FreeEdict(ent);
+                return;
+            }
+
+            ent.s.origin = tr.endpos;
+
+            // if (ent->team)
+            // {
+            //     ent->flags &= ~FL_TEAMSLAVE;
+            //     ent->chain = ent->teamchain;
+            //     ent->teamchain = NULL;
+
+            //     ent->svflags |= SVF_NOCLIENT;
+            //     ent->solid = SOLID_NOT;
+
+            //     if (ent == ent->teammaster)
+            //     {
+            //         ent->nextthink = level.time + FRAMETIME;
+            //         ent->think = DoRespawn;
+            //     }
+            // }
+
+            // if (ent->spawnflags & ITEM_NO_TOUCH)
+            // {
+            //     ent->solid = SOLID_BBOX;
+            //     ent->touch = NULL;
+            //     ent->s.effects &= ~EF_ROTATE;
+            //     ent->s.renderfx &= ~RF_GLOW;
+            // }
+
+            // if (ent->spawnflags & ITEM_TRIGGER_SPAWN)
+            // {
+            //     ent->svflags |= SVF_NOCLIENT;
+            //     ent->solid = SOLID_NOT;
+            //     ent->use = Use_Item;
+            // }
+
+            gi.linkentity(ent);
+        }
+
         /*
         * ============
         * Sets the clipping size and
@@ -142,7 +218,7 @@ namespace Quake2 {
 
             ent.item = item;
             ent.nextthink = level.time + 2 * FRAMETIME; /* items start after other solids */
-            // ent->think = droptofloor;
+            ent.think = droptofloor;
             // ent->s.effects = item->world_model_flags;
             // ent->s.renderfx = RF_GLOW;
 
@@ -164,7 +240,7 @@ namespace Quake2 {
                 // Pickup_Armor,
                 // NULL,
                 // NULL,
-                // NULL,
+                weaponthink = null,
                 // "misc/ar1_pkup.wav",
                 // "models/items/armor/body/tris.md2", EF_ROTATE,
                 // NULL,
@@ -186,7 +262,7 @@ namespace Quake2 {
                 // Pickup_Armor,
                 // NULL,
                 // NULL,
-                // NULL,
+                weaponthink = null,
                 // "misc/ar1_pkup.wav",
                 // "models/items/armor/combat/tris.md2", EF_ROTATE,
                 // NULL,
@@ -208,7 +284,7 @@ namespace Quake2 {
                 // Pickup_Armor,
                 // NULL,
                 // NULL,
-                // NULL,
+                weaponthink = null,
                 // "misc/ar1_pkup.wav",
                 // "models/items/armor/jacket/tris.md2", EF_ROTATE,
                 // NULL,
@@ -230,7 +306,7 @@ namespace Quake2 {
                 // Pickup_Armor,
                 // NULL,
                 // NULL,
-                // NULL,
+                weaponthink = null,
                 // "misc/ar2_pkup.wav",
                 // "models/items/armor/shard/tris.md2", EF_ROTATE,
                 // NULL,
@@ -252,7 +328,7 @@ namespace Quake2 {
                 // Pickup_PowerArmor,
                 // Use_PowerArmor,
                 // Drop_PowerArmor,
-                // NULL,
+                weaponthink = null,
                 // "misc/ar3_pkup.wav",
                 // "models/items/armor/screen/tris.md2", EF_ROTATE,
                 // NULL,
@@ -274,7 +350,7 @@ namespace Quake2 {
                 // Pickup_PowerArmor,
                 // Use_PowerArmor,
                 // Drop_PowerArmor,
-                // NULL,
+                weaponthink = null,
                 // "misc/ar3_pkup.wav",
                 // "models/items/armor/shield/tris.md2", EF_ROTATE,
                 // NULL,

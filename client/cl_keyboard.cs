@@ -839,7 +839,7 @@ namespace Quake2 {
 
                 if (!String.IsNullOrEmpty(kb) && (kb[0] == '+'))
                 {
-                    var cmd= $"-{kb + 1} {key} {time}\n";
+                    var cmd= $"-{kb.Substring(1)} {key} {time}\n";
                     common.Cbuf_AddText(cmd);
                 }
 

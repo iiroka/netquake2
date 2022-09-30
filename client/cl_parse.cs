@@ -998,12 +998,12 @@ namespace Quake2 {
 
                     if (cl.configstrings[i][0] == '*')
                     {
-                        // cl.model_clip[i - QShared.CS_MODELS] = CM_InlineModel(cl.configstrings[i]);
+                        cl.model_clip[i - QShared.CS_MODELS] = common.CM_InlineModel(cl.configstrings[i]);
                     }
 
                     else
                     {
-                        // cl.model_clip[i - CS_MODELS] = NULL;
+                        cl.model_clip[i - QShared.CS_MODELS] = null;
                     }
                 }
             }

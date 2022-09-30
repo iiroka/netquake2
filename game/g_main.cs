@@ -174,6 +174,7 @@ namespace Quake2 {
             g_edicts = new edict_t[game.maxentities];
             for (int i = 0; i < g_edicts.Length; i++) {
                 g_edicts[i] = new edict_t() { index = i };
+                g_edicts[i].area = new link_t() { ent = g_edicts[i] };
             }
 
             /* initialize all clients for this game */
@@ -259,7 +260,7 @@ namespace Quake2 {
 
                 if ((i > 0) && (i <= maxclients!.Int))
                 {
-                    // ClientBeginServerFrame(ent);
+                    ClientBeginServerFrame(ent);
                     continue;
                 }
 

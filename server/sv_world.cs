@@ -39,28 +39,43 @@ namespace Quake2 {
             public int axis; /* -1 = leaf node */
             public float dist;
             public areanode_t?[] children = new areanode_t?[2];
-            public LinkedList<edict_s> trigger_edicts = new LinkedList<edict_s>();
-            public LinkedList<edict_s> solid_edicts = new LinkedList<edict_s>();
-            // link_t trigger_edicts;
-            // link_t solid_edicts;
+            public link_t trigger_edicts = new link_t();
+            public link_t solid_edicts = new link_t();
         }
 
-        private areanode_t[] sv_areanodes = {};
+        private areanode_t[] sv_areanodes = new areanode_t[AREA_NODES];
+        private int sv_numareanodes = 0;
+
+        private Vector3 area_mins, area_maxs;
+        private edict_s[] area_list;
+        private int area_count;
+        private int area_type;
+
+        /* ClearLink is used for new headnodes */
+        private void ClearLink(link_t l)
+        {
+            l.prev = l.next = l;
+        }
+
+        private void InsertLinkBefore(link_t l, link_t before)
+        {
+            l.next = before;
+            l.prev = before.prev!;
+            l.prev.next = l;
+            l.next.prev = l;
+        }
+
 
         /*
         * Builds a uniformly subdivided tree for the given world size
         */
         private areanode_t SV_CreateAreaNode(int depth, in Vector3 mins, in Vector3 maxs)
         {
-            // areanode_t *anode;
-            // vec3_t size;
-            // vec3_t mins1, maxs1, mins2, maxs2;
+	        var anode = sv_areanodes[sv_numareanodes];
+	        sv_numareanodes++;
 
-            var anode = new areanode_t();
-            sv_areanodes.Append(anode);
-
-            anode.trigger_edicts.Clear();
-            anode.solid_edicts.Clear();
+        	ClearLink(anode.trigger_edicts);
+	        ClearLink(anode.solid_edicts);
 
             if (depth == AREA_DEPTH)
             {
@@ -104,7 +119,12 @@ namespace Quake2 {
 
         private void SV_ClearWorld()
         {
-            sv_areanodes = new areanode_t[0];
+	        for (int i = 0; i < sv_areanodes.Length; i++) {
+                sv_areanodes[i] = new areanode_t();
+                sv_areanodes[i].solid_edicts = new link_t();
+                sv_areanodes[i].trigger_edicts = new link_t();
+            }
+	        sv_numareanodes = 0;
             SV_CreateAreaNode(0, sv.models[1]!.mins, sv.models[1]!.maxs);
         }
 
@@ -122,7 +142,6 @@ namespace Quake2 {
             // {
             //     SV_UnlinkEdict(ent); /* unlink from old position */
             // }
-
             if (ent == ge!.getEdict(0))
             {
                 return; /* don't add the world */
@@ -369,12 +388,94 @@ namespace Quake2 {
             /* link it in */
             if (ent.solid == solid_t.SOLID_TRIGGER)
             {
-            //     InsertLinkBefore(&ent->area, &node->trigger_edicts);
+                InsertLinkBefore(ent.area, node.trigger_edicts);
             }
             else
             {
-            //     InsertLinkBefore(&ent->area, &node->solid_edicts);
+                InsertLinkBefore(ent.area, node.solid_edicts);
             }
+        }
+
+        private void SV_AreaEdicts_r(in areanode_t node)
+        {
+            // link_t *l, *next, *start;
+            // edict_t *check;
+
+            /* touch linked edicts */
+            link_t start;
+            if (area_type == QShared.AREA_SOLID)
+            {
+                start = node.solid_edicts;
+            }
+            else
+            {
+                start = node.trigger_edicts;
+            }
+
+            link_t next;
+            for (var l = start.next!; l != start; l = next)
+            {
+                next = l.next!;
+                var check = l.ent;
+
+                if (check.solid == solid_t.SOLID_NOT)
+                {
+                    continue; /* deactivated */
+                }
+
+                if ((check.absmin.X > area_maxs.X) ||
+                    (check.absmin.Y > area_maxs.Y) ||
+                    (check.absmin.Z > area_maxs.Z) ||
+                    (check.absmax.X < area_mins.X) ||
+                    (check.absmax.Y < area_mins.Y) ||
+                    (check.absmax.Z < area_mins.Z))
+                {
+                    continue; /* not touching */
+                }
+
+                if (area_count == area_list.Length)
+                {
+                    common.Com_Printf("SV_AreaEdicts: MAXCOUNT\n");
+                    return;
+                }
+
+                area_list[area_count] = check;
+                area_count++;
+            }
+
+            if (node.axis == -1)
+            {
+                return; /* terminal node */
+            }
+
+            /* recurse down both sides */
+            if (area_maxs.Get(node.axis) > node.dist)
+            {
+                SV_AreaEdicts_r(node.children[0]!);
+            }
+
+            if (area_mins.Get(node.axis) < node.dist)
+            {
+                SV_AreaEdicts_r(node.children[1]!);
+            }
+        }
+
+        private int SV_AreaEdicts(in Vector3 mins, in Vector3 maxs, edict_s[] list, int areatype)
+        {
+            area_mins = mins;
+            area_maxs = maxs;
+            area_list = list;
+            area_type = areatype;
+            area_count = 0;
+
+            SV_AreaEdicts_r(sv_areanodes[0]);
+
+            area_mins = Vector3.Zero;
+            area_maxs = Vector3.Zero;
+            area_list = new edict_s[0];
+            area_type = 0;
+
+            return area_count;
         }
 
         private struct moveclip_t
@@ -389,6 +490,143 @@ namespace Quake2 {
         }
 
         /*
+        * Returns a headnode that can be used for testing or clipping an
+        * object of mins/maxs size. Offset is filled in to contain the
+        * adjustment that must be added to the testing object's origin
+        * to get a point to use with the returned hull.
+        */
+        private int SV_HullForEntity(edict_s ent)
+        {
+            /* decide which clipping hull to use, based on the size */
+            if (ent.solid == solid_t.SOLID_BSP)
+            {
+                /* explicit hulls in the BSP model */
+                var model = sv.models[ent.s.modelindex];
+
+                if (model == null)
+                {
+                    common.Com_Error(QShared.ERR_FATAL, "MOVETYPE_PUSH with a non bsp model");
+                }
+
+                return model!.headnode;
+            }
+
+            /* create a temp hull from bounding box sizes */
+            return common.CM_HeadnodeForBox(ent.mins, ent.maxs);
+        }
+
+        private void SV_ClipMoveToEntities(ref moveclip_t clip)
+        {
+            // int i, num;
+            // edict_t *touchlist[MAX_EDICTS], *touch;
+            // trace_t trace;
+            // int headnode;
+            // float *angles;
+
+            var touchlist = new edict_s[QShared.MAX_EDICTS];
+            int num = SV_AreaEdicts(clip.boxmins, clip.boxmaxs, touchlist, QShared.AREA_SOLID);
+
+            /* be careful, it is possible to have an entity in this
+            list removed before we get to it (killtriggered) */
+            for (int i = 0; i < num; i++)
+            {
+                var touch = touchlist[i];
+
+                if (touch.solid == solid_t.SOLID_NOT)
+                {
+                    continue;
+                }
+
+                if (touch == clip.passedict)
+                {
+                    continue;
+                }
+
+                if (clip.trace.allsolid)
+                {
+                    return;
+                }
+
+                if (clip.passedict != null)
+                {
+                    if (touch.owner == clip.passedict)
+                    {
+                        continue; /* don't clip against own missiles */
+                    }
+
+                    if (clip.passedict.owner == touch)
+                    {
+                        continue; /* don't clip against owner */
+                    }
+                }
+
+                if ((clip.contentmask & QCommon.CONTENTS_DEADMONSTER) == 0 &&
+                    (touch.svflags & QGameFlags.SVF_DEADMONSTER) != 0)
+                {
+                    continue;
+                }
+
+                /* might intersect, so do an exact clip */
+                var headnode = SV_HullForEntity(touch);
+                var angles = touch.s.angles;
+
+                if (touch.solid != solid_t.SOLID_BSP)
+                {
+                    angles = Vector3.Zero; /* boxes don't rotate */
+                }
+
+                QShared.trace_t trace;
+                if ((touch.svflags & QGameFlags.SVF_MONSTER) != 0)
+                {
+                    trace = common.CM_TransformedBoxTrace(clip.start, clip.end,
+                            clip.mins2, clip.maxs2, headnode, clip.contentmask,
+                            touch.s.origin, angles);
+                }
+                else
+                {
+                    trace = common.CM_TransformedBoxTrace(clip.start, clip.end,
+                            clip.mins, clip.maxs, headnode, clip.contentmask,
+                            touch.s.origin, angles);
+                }
+
+                if (trace.allsolid || trace.startsolid ||
+                    (trace.fraction < clip.trace.fraction))
+                {
+                    trace.ent = touch;
+
+                    if (clip.trace.startsolid)
+                    {
+                        clip.trace = trace;
+                        clip.trace.startsolid = true;
+                    }
+                    else
+                    {
+                        clip.trace = trace;
+                    }
+                }
+            }
+        }
+
+        private void SV_TraceBounds(in Vector3 start, in Vector3 mins, in Vector3 maxs,
+                in Vector3 end, ref Vector3 boxmins, ref Vector3 boxmaxs)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                if (end.Get(i) > start.Get(i))
+                {
+                    boxmins.Set(i, start.Get(i) + mins.Get(i) - 1);
+                    boxmaxs.Set(i, end.Get(i) + maxs.Get(i) + 1);
+                }
+                else
+                {
+                    boxmins.Set(i, end.Get(i) + mins.Get(i) - 1);
+                    boxmaxs.Set(i, start.Get(i) + maxs.Get(i) + 1);
+                }
+            }
+        }
+
+
+        /*
         * Moves the given mins/maxs volume through the world from start to end.
         * Passedict and edicts owned by passedict are explicitly not checked.
         */
@@ -397,28 +635,17 @@ namespace Quake2 {
         {
             moveclip_t clip;
 
-
-            // if (!mins)
-            // {
-            //     mins = vec3_origin;
-            // }
-
-            // if (!maxs)
-            // {
-            //     maxs = vec3_origin;
-            // }
-
             clip = new moveclip_t();
             clip.trace = new QShared.trace_t();
 
             /* clip to world */
-            // clip.trace = CM_BoxTrace(start, end, mins, maxs, 0, contentmask);
-            // clip.trace.ent = ge->edicts;
+            clip.trace = common.CM_BoxTrace(start, end, mins ?? Vector3.Zero, maxs ?? Vector3.Zero, 0, contentmask);
+            clip.trace.ent = ge!.getEdict(0);
 
-            // if (clip.trace.fraction == 0)
-            // {
-            //     return clip.trace; /* blocked by the world */
-            // }
+            if (clip.trace.fraction == 0)
+            {
+                return clip.trace; /* blocked by the world */
+            }
 
             clip.contentmask = contentmask;
             clip.start = start;
@@ -431,8 +658,7 @@ namespace Quake2 {
             clip.maxs2 = mins ?? Vector3.Zero;
 
             /* create the bounding box of the entire move */
-            // SV_TraceBounds(start, clip.mins2, clip.maxs2,
-            //         end, clip.boxmins, clip.boxmaxs);
+            SV_TraceBounds(start, clip.mins2, clip.maxs2, end, ref clip.boxmins, ref clip.boxmaxs);
 
             // /* clip to other solid entities */
             // SV_ClipMoveToEntities(&clip);

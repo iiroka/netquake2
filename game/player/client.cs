@@ -244,7 +244,7 @@ namespace Quake2 {
             // }
 
             var userinfo = client.pers.userinfo;
-            // ClientUserinfoChanged(ent, userinfo);
+            ClientUserinfoChanged(ent, userinfo);
 
             /* clear everything but the persistant data */
             client.Clear();
@@ -446,6 +446,86 @@ namespace Quake2 {
             ClientEndServerFrame(ent);
         }
 
+        /*
+        * Called whenever the player updates a userinfo variable.
+        * The game can override any of the settings in place
+        * (forcing skins or names, etc) before copying it off.
+        */
+        private void ClientUserinfoChanged(edict_t ent, string userinfo)
+        {
+            // char *s;
+            // int playernum;
+
+            if (ent == null || String.IsNullOrEmpty(userinfo))
+            {
+                return;
+            }
+
+            /* check for malformed or illegal info strings */
+            if (!QShared.Info_Validate(userinfo))
+            {
+                userinfo = "\\name\\badinfo\\skin\\male/grunt";
+            }
+
+            var client = (gclient_t)ent.client!;
+
+            /* set name */
+            var s = QShared.Info_ValueForKey(userinfo, "name");
+            client.pers.netname = s;
+
+            /* set spectator */
+            s = QShared.Info_ValueForKey(userinfo, "spectator");
+
+            /* spectators are only supported in deathmatch */
+            // if (deathmatch->value && *s && strcmp(s, "0"))
+            // {
+            //     ent->client->pers.spectator = true;
+            // }
+            // else
+            // {
+                client.pers.spectator = false;
+            // }
+
+            /* set skin */
+            s = QShared.Info_ValueForKey(userinfo, "skin");
+
+            var playernum = ent.index - 1;
+
+            /* combine name and skin into a configstring */
+            gi.configstring(QShared.CS_PLAYERSKINS + playernum, $"{client.pers.netname}\\{s}");
+
+            /* fov */
+            // if (deathmatch->value && ((int)dmflags->value & DF_FIXED_FOV))
+            // {
+            //     ((gclient_t)(ent.client!)).ps.fov = 90;
+            // }
+            // else
+            {
+                client.ps.fov = Int32.Parse(QShared.Info_ValueForKey(userinfo, "fov"));
+
+                if (client.ps.fov < 1)
+                {
+                    client.ps.fov = 90;
+                }
+                else if (client.ps.fov > 160)
+                {
+                    client.ps.fov = 160;
+                }
+            }
+
+            /* handedness */
+            s = QShared.Info_ValueForKey(userinfo, "hand");
+
+            if (s.Length > 0)
+            {
+                client.pers.hand = Int32.Parse(s);
+            }
+
+            /* save off the userinfo in case we want to check something later */
+            client.pers.userinfo = userinfo;
+        }
+
+
         public bool ClientConnect(edict_s sent, string userinfo)
         {
             if (sent == null || userinfo == null || !(sent is edict_t))
@@ -516,8 +596,8 @@ namespace Quake2 {
             just take it, otherwise spawn one from scratch */
             if (ent.inuse == false)
             {
-            //     /* clear the respawning variables */
-            //     InitClientResp(ent->client);
+                /* clear the respawning variables */
+                InitClientResp((gclient_t)ent.client);
 
             //     if (!game.autosaved || !ent->client->pers.weapon)
             //     {
@@ -525,7 +605,7 @@ namespace Quake2 {
             //     }
             }
 
-            // ClientUserinfoChanged(ent, userinfo);
+            ClientUserinfoChanged(ent, userinfo);
 
             // if (game.maxclients > 1)
             // {
@@ -533,7 +613,7 @@ namespace Quake2 {
             // }
 
             ent.svflags = 0; /* make sure we start with known default */
-            // ent->client->pers.connected = true;
+            game.clients[ent.index - 1].pers.connected = true;
             return true;
         }
 
@@ -603,6 +683,7 @@ namespace Quake2 {
             {
                 /* set up for pmove */
                 var pm = new QShared.pmove_t();
+                pm.touchents = new edict_s?[QShared.MAXTOUCH];
 
             //     if (ent->movetype == MOVETYPE_NOCLIP)
             //     {
@@ -631,10 +712,10 @@ namespace Quake2 {
                 pm.s.velocity[1] = (short)(ent.velocity.Y * 8);
                 pm.s.velocity[2] = (short)(ent.velocity.Z * 8);
 
-            //     if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
-            //     {
-            //         pm.snapinitial = true;
-            //     }
+                if (!client.old_pmove.Equals(pm.s))
+                {
+                    pm.snapinitial = true;
+                }
 
                 pm.cmd = ucmd;
 
@@ -654,9 +735,9 @@ namespace Quake2 {
                 ent.mins = pm.mins;
                 ent.maxs = pm.maxs;
 
-            //     client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
-            //     client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
-            //     client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
+                client.resp.cmd_angles.X = QShared.SHORT2ANGLE(ucmd.angles[0]);
+                client.resp.cmd_angles.Y = QShared.SHORT2ANGLE(ucmd.angles[1]);
+                client.resp.cmd_angles.Z = QShared.SHORT2ANGLE(ucmd.angles[2]);
 
             //     if (ent->groundentity && !pm.groundentity && (pm.cmd.upmove >= 10) &&
             //         (pm.waterlevel == 0))
@@ -673,7 +754,7 @@ namespace Quake2 {
 
                 if (pm.groundentity != null)
                 {
-                    // ent.groundentity_linkcount = pm.groundentity.linkcount;
+                    ent.groundentity_linkcount = pm.groundentity.linkcount;
                 }
 
             //     if (ent->deadflag)
@@ -724,7 +805,7 @@ namespace Quake2 {
 
             client.oldbuttons = client.buttons;
             client.buttons = ucmd.buttons;
-            // client->latched_buttons |= client->buttons & ~client->oldbuttons;
+            client.latched_buttons |= client.buttons & ~client.oldbuttons;
 
             /* save light level the player is standing
                on for monster sighting AI */
@@ -789,5 +870,81 @@ namespace Quake2 {
             //     }
             // }
         }
+
+        /*
+        * This will be called once for each server
+        * frame, before running any other entities
+        * in the world.
+        */
+        private void ClientBeginServerFrame(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            if (level.intermissiontime > 0)
+            {
+                return;
+            }
+
+            var client = (gclient_t)ent.client!;
+
+            if (deathmatch!.Bool &&
+                (client.pers.spectator != client.resp.spectator) &&
+                ((level.time - client.respawn_time) >= 5))
+            {
+                // spectator_respawn(ent);
+                return;
+            }
+
+            /* run weapon animations if it hasn't been done by a ucmd_t */
+            if (!client.weapon_thunk && !client.resp.spectator)
+            {
+                // Think_Weapon(ent);
+            }
+            else
+            {
+                client.weapon_thunk = false;
+            }
+
+            if (ent.deadflag != 0)
+            {
+                /* wait for any button just going down */
+                // if (level.time > client.respawn_time)
+                // {
+                //     /* in deathmatch, only wait for attack button */
+                //     if (deathmatch!.Bool)
+                //     {
+                //         buttonMask = BUTTON_ATTACK;
+                //     }
+                //     else
+                //     {
+                //         buttonMask = -1;
+                //     }
+
+                //     if ((client.latched_buttons & buttonMask) != 0 ||
+                //         (deathmatch!.Bool && (dmflags!.Int & DF_FORCE_RESPAWN) != 0))
+                //     {
+                //         // respawn(ent);
+                //         client.latched_buttons = 0;
+                //     }
+                // }
+
+                return;
+            }
+
+            /* add player trail so monsters can follow */
+            if (!deathmatch!.Bool)
+            {
+                // if (!visible(ent, PlayerTrail_LastSpot()))
+                // {
+                //     PlayerTrail_Add(ent->s.old_origin);
+                // }
+            }
+
+            client.latched_buttons = 0;
+        }
+
     }
 }

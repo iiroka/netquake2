@@ -74,6 +74,106 @@ namespace Quake2 {
             }
         }
 
+        private class dummy_edict : edict_s {}
+        private class state_edict : edict_s {
+            public readonly QShared.entity_state_t state;
+            public state_edict(QShared.entity_state_t state)
+            {
+                this.state = state;
+            }
+        }
+
+        private void CL_ClipMoveToEntities(in Vector3 start, in Vector3 mins, in Vector3 maxs,
+                in Vector3 end, ref QShared.trace_t tr)
+        {
+            int headnode;
+            Vector3 angles;
+
+            for (int i = 0; i < cl.frame.num_entities; i++)
+            {
+                int num = (cl.frame.parse_entities + i) & (MAX_PARSE_ENTITIES - 1);
+                ref var ent = ref cl_parse_entities[num];
+
+                if (ent.solid == 0)
+                {
+                    continue;
+                }
+
+                if (ent.number == cl.playernum + 1)
+                {
+                    continue;
+                }
+
+                if (ent.solid == 31)
+                {
+                    /* special value for bmodel */
+                    var cmodel = cl.model_clip[ent.modelindex];
+
+                    if (cmodel == null)
+                    {
+                        continue;
+                    }
+
+                    headnode = cmodel.headnode;
+                    angles = ent.angles;
+                }
+                else
+                {
+                    /* encoded bbox */
+                    int x = 8 * (ent.solid & 31);
+                    int zd = 8 * ((ent.solid >> 5) & 31);
+                    int zu = 8 * ((ent.solid >> 10) & 63) - 32;
+
+                    var bmins = new Vector3(-x, -x, -zd);
+                    var bmaxs = new Vector3(x, x, zu);
+
+                    headnode = common.CM_HeadnodeForBox(bmins, bmaxs);
+                    angles = Vector3.Zero; /* boxes don't rotate */
+                }
+
+                if (tr.allsolid)
+                {
+                    return;
+                }
+
+                var trace = common.CM_TransformedBoxTrace(start, end, mins, maxs, headnode, QShared.MASK_PLAYERSOLID, ent.origin, angles);
+
+                if (trace.allsolid || trace.startsolid ||
+                    (trace.fraction < tr.fraction))
+                {
+                    trace.ent = new state_edict(ent);
+
+                    if (tr.startsolid)
+                    {
+                        tr = trace;
+                        tr.startsolid = true;
+                    }
+                    else
+                    {
+                        tr = trace;
+                    }
+                }
+            }
+        }
+
+
+        private QShared.trace_t CL_PMTrace(in Vector3 start, in Vector3 mins, in Vector3 maxs, in Vector3 end)
+        {
+            /* check against world */
+            var t = common.CM_BoxTrace(start, end, mins, maxs, 0, QShared.MASK_PLAYERSOLID);
+
+            if (t.fraction < 1.0)
+            {
+                t.ent = new dummy_edict();
+            }
+
+            /* check all other solid models */
+            CL_ClipMoveToEntities(start, mins, maxs, end, ref t);
+
+            return t;
+        }
+
+
         /*
         * Sets cl.predicted_origin and cl.predicted_angles
         */
@@ -126,7 +226,8 @@ namespace Quake2 {
 
             /* copy current state to pmove */
             var pm = new QShared.pmove_t();
-            // pm.trace = CL_PMTrace;
+            pm.touchents = new edict_s?[QShared.MAXTOUCH];
+            pm.trace = CL_PMTrace;
             // pm.pointcontents = CL_PMpointcontents;
             // pm_airaccelerate = atof(cl.configstrings[CS_AIRACCEL]);
             pm.s = cl.frame.playerstate.pmove;

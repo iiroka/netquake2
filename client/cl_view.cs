@@ -155,12 +155,12 @@ namespace Quake2 {
 
                     if (name[0] == '*')
                     {
-            //             cl.model_clip[i] = CM_InlineModel(cl.configstrings[CS_MODELS + i]);
+                        cl.model_clip[i] = common.CM_InlineModel(cl.configstrings[QShared.CS_MODELS + i]);
                     }
 
                     else
                     {
-                        // cl.model_clip[i] = null;
+                        cl.model_clip[i] = null;
                     }
                 }
 

@@ -121,6 +121,7 @@ namespace Quake2 {
             cl = new client_state_t();
             cl.configstrings = new string[QShared.MAX_CONFIGSTRINGS];
             cl.model_draw = new model_s?[QShared.MAX_MODELS];
+            cl.model_clip = new QShared.cmodel_t?[QShared.MAX_MODELS];
             cl.frame = new frame_t();
             cl.frame.playerstate.pmove.origin = new short[3];
             cl.frame.playerstate.pmove.velocity = new short[3];
