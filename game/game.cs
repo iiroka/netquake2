@@ -131,7 +131,7 @@ namespace Quake2 {
         // int (*soundindex)(char *name);
         // int (*imageindex)(char *name);
 
-        // void (*setmodel)(edict_t *ent, char *name);
+        void setmodel(edict_s ent, string name);
 
         /* collision detection */
         QShared.trace_t trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
@@ -146,7 +146,7 @@ namespace Quake2 {
         // if it is not passed to linkentity. If the size, position, or
         // solidity changes, it must be relinked. */
         void linkentity(edict_s ent);
-        // void (*unlinkentity)(edict_t *ent); /* call before removing an interactive edict */
+        void unlinkentity(edict_s ent); /* call before removing an interactive edict */
         // int (*BoxEdicts)(vec3_t mins, vec3_t maxs, edict_t **list, int maxcount,
         //         int areatype);
         void Pmove(ref QShared.pmove_t pmove); /* player movement code common with client prediction */

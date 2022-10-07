@@ -132,7 +132,7 @@ namespace Quake2 {
         */
         private void G_FreeEdict(edict_t ed)
         {
-            // gi.unlinkentity(ed); /* unlink from world */
+            gi.unlinkentity(ed); /* unlink from world */
 
             if (deathmatch!.Bool || coop!.Bool)
             {
@@ -143,15 +143,15 @@ namespace Quake2 {
             }
             else
             {
-                // if ((ed - g_edicts) <= maxclients->value)
-                // {
-                //     return;
-                // }
+                if (ed.index <= maxclients!.Int)
+                {
+                    return;
+                }
             }
 
             // memset(ed, 0, sizeof(*ed));
             ed.classname = "freed";
-            // ed.freetime = level.time;
+            ed.freetime = level.time;
             ed.inuse = false;
         }
 

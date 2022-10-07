@@ -30,6 +30,181 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+
+        /*
+        * Some maps have no unnamed (e.g. generic)
+        * info_player_start. This is no problem in
+        * normal gameplay, but if the map is loaded
+        * via console there is a huge chance that
+        * the player will spawn in the wrong point.
+        * Therefore create an unnamed info_player_start
+        * at the correct point.
+        */
+        private void SP_CreateUnnamedSpawn(edict_t self)
+        {
+            var spot = G_Spawn();
+
+            if (self == null)
+            {
+                return;
+            }
+
+            /* mine1 */
+            // if (Q_stricmp(level.mapname, "mine1") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "mintro") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* mine2 */
+            // if (Q_stricmp(level.mapname, "mine2") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "mine1") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* mine3 */
+            // if (Q_stricmp(level.mapname, "mine3") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "mine2a") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* mine4 */
+            // if (Q_stricmp(level.mapname, "mine4") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "mine3") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* power2 */
+            // if (Q_stricmp(level.mapname, "power2") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "power1") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* waste1 */
+            // if (Q_stricmp(level.mapname, "waste1") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "power2") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* waste2 */
+            // if (Q_stricmp(level.mapname, "waste2") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "waste1") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+
+            // /* city3 */
+            // if (Q_stricmp(level.mapname, "city2") == 0)
+            // {
+            //     if (Q_stricmp(self->targetname, "city2NL") == 0)
+            //     {
+            //         spot->classname = self->classname;
+            //         spot->s.origin[0] = self->s.origin[0];
+            //         spot->s.origin[1] = self->s.origin[1];
+            //         spot->s.origin[2] = self->s.origin[2];
+            //         spot->s.angles[1] = self->s.angles[1];
+            //         spot->targetname = NULL;
+
+            //         return;
+            //     }
+            // }
+        }
+
+        /*
+        * QUAKED info_player_start (1 0 0) (-16 -16 -24) (16 16 32)
+        * The normal starting point for a level.
+        */
+        private static void SP_info_player_start(QuakeGame g, edict_t self)
+        {
+            if (g == null || self == null)
+            {
+                return;
+            }
+
+            /* Call function to hack unnamed spawn points */
+            self.think = g.SP_CreateUnnamedSpawn;
+            self.nextthink = g.level.time + FRAMETIME;
+
+            if (!g.coop!.Bool)
+            {
+                return;
+            }
+
+            if (g.level.mapname.CompareTo("security") == 0)
+            {
+                /* invoke one of our gross, ugly, disgusting hacks */
+                // self.think = SP_CreateCoopSpots;
+                // self.nextthink = g.level.time + FRAMETIME;
+            }
+        }        
         /* ======================================================================= */
 
         /*
@@ -269,15 +444,15 @@ namespace Quake2 {
             ent.classname = "player";
             ent.mass = 200;
             ent.solid = solid_t.SOLID_BBOX;
-            // ent->deadflag = DEAD_NO;
+            ent.deadflag = DEAD_NO;
             ent.air_finished = level.time + 12;
-            // ent->clipmask = MASK_PLAYERSOLID;
-            // ent->model = "players/male/tris.md2";
+            ent.clipmask = QShared.MASK_PLAYERSOLID;
+            ent.model = "players/male/tris.md2";
             // ent->pain = player_pain;
             // ent->die = player_die;
             ent.waterlevel = 0;
             ent.watertype = 0;
-            // ent->flags &= ~FL_NO_KNOCKBACK;
+            ent.flags &= ~FL_NO_KNOCKBACK;
             ent.svflags = 0;
 
             ent.mins = mins;
@@ -331,11 +506,11 @@ namespace Quake2 {
             ent.s.old_origin = ent.s.origin;
 
             /* set the delta angle */
-            // for (int i = 0; i < 3; i++)
-            // {
-            //     client.ps.pmove.delta_angles[i] = QShared.ANGLE2SHORT(
-            //             spawn_angles[i] - client.resp.cmd_angles[i]);
-            // }
+            for (int i = 0; i < 3; i++)
+            {
+                client.ps.pmove.delta_angles[i] = QShared.ANGLE2SHORT(
+                        spawn_angles.Get(i) - client.resp.cmd_angles.Get(i));
+            }
 
             ent.s.angles.SetPitch(0);
             ent.s.angles.SetYaw(spawn_angles.Yaw());
@@ -371,7 +546,7 @@ namespace Quake2 {
 
             /* force the current weapon up */
             client.newweapon = client.pers.weapon;
-            // ChangeWeapon(ent);
+            ChangeWeapon(ent);
         }
 
         /*
@@ -599,10 +774,10 @@ namespace Quake2 {
                 /* clear the respawning variables */
                 InitClientResp((gclient_t)ent.client);
 
-            //     if (!game.autosaved || !ent->client->pers.weapon)
-            //     {
-            //         InitClientPersistant(ent->client);
-            //     }
+                if (!game.autosaved || game.clients[ent.index - 1].pers.weapon == null)
+                {
+                    InitClientPersistant(game.clients[ent.index - 1]);
+                }
             }
 
             ClientUserinfoChanged(ent, userinfo);

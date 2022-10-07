@@ -38,7 +38,7 @@ namespace Quake2 {
             // {"item_health_large", SP_item_health_large},
             // {"item_health_mega", SP_item_health_mega},
 
-            // {"info_player_start", SP_info_player_start},
+            {"info_player_start", SP_info_player_start},
             // {"info_player_deathmatch", SP_info_player_deathmatch},
             // {"info_player_coop", SP_info_player_coop},
             // {"info_player_intermission", SP_info_player_intermission},

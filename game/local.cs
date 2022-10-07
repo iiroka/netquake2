@@ -50,6 +50,12 @@ namespace Quake2 {
             DAMAGE_AIM /* auto targeting recognizes this */
         }
 
+        /* deadflag */
+        private const int DEAD_NO = 0;
+        private const int DEAD_DYING = 1;
+        private const int DEAD_DEAD = 2;
+        private const int DEAD_RESPAWNABLE = 3;
+
         /* edict->movetype values */
         private enum movetype_t
         {
@@ -107,7 +113,7 @@ namespace Quake2 {
             // void (*drop)(struct edict_s *ent, struct gitem_s *item);
             public edict_delegate? weaponthink  { get; init; }
             // char *pickup_sound;
-            // char *world_model;
+            public string world_model;
             // int world_model_flags;
             public string view_model { get; init; }
 
@@ -472,7 +478,7 @@ namespace Quake2 {
         {
             public int index { get; init; }
             public movetype_t movetype;
-            public int flags;
+            public uint flags;
 
             public string model;
             public float freetime; /* sv.time when the object was freed */

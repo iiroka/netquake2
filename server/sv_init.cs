@@ -122,8 +122,8 @@ namespace Quake2 {
             // }
             // else
             // {
-            //     strcpy(sv.configstrings[CS_AIRACCEL], "0");
-            //     pm_airaccelerate = 0;
+                sv.configstrings[QShared.CS_AIRACCEL] = "0";
+                common.pm_airaccelerate = 0;
             // }
 
             sv.name = server;

@@ -59,7 +59,7 @@ namespace Quake2 {
         private float pm_maxspeed = 300;
         private float pm_duckspeed = 100;
         private float pm_accelerate = 10;
-        private float pm_airaccelerate = 0;
+        public float pm_airaccelerate = 0;
         private float pm_wateraccelerate = 10;
         private float pm_friction = 6;
         private float pm_waterfriction = 1;
@@ -123,12 +123,12 @@ namespace Quake2 {
                     break; /* moved the entire distance */
                 }
 
-            //     /* save entity for contact */
-            //     if ((pm->numtouch < MAXTOUCH) && trace.ent)
-            //     {
-            //         pm->touchents[pm->numtouch] = trace.ent;
-            //         pm->numtouch++;
-            //     }
+                /* save entity for contact */
+                if ((pm.numtouch < QShared.MAXTOUCH) && trace.ent != null)
+                {
+                    pm.touchents[pm.numtouch] = trace.ent;
+                    pm.numtouch++;
+                }
 
                 time_left -= time_left * trace.fraction;
 
@@ -243,18 +243,18 @@ namespace Quake2 {
 
             up = pml.origin;
 
-            // /* decide which one went farther */
-            // down_dist = (down_o[0] - start_o[0]) * (down_o[0] - start_o[0])
-            //             + (down_o[1] - start_o[1]) * (down_o[1] - start_o[1]);
-            // up_dist = (up[0] - start_o[0]) * (up[0] - start_o[0])
-            //         + (up[1] - start_o[1]) * (up[1] - start_o[1]);
+            /* decide which one went farther */
+            float down_dist = (down_o.X - start_o.X) * (down_o.X - start_o.X)
+                        + (down_o.Y - start_o.Y) * (down_o.Z - start_o.Z);
+            float up_dist = (up.X - start_o.X) * (up.X - start_o.X)
+                    + (up.Y - start_o.Y) * (up.Y - start_o.Y);
 
-            // if ((down_dist > up_dist) || (trace.plane.normal[2] < MIN_STEP_NORMAL))
-            // {
-            //     VectorCopy(down_o, pml.origin);
-            //     VectorCopy(down_v, pml.velocity);
-            //     return;
-            // }
+            if ((down_dist > up_dist) || (trace.plane.normal.Z < MIN_STEP_NORMAL))
+            {
+                pml.origin = down_o;
+                pml.velocity = down_v;
+                return;
+            }
 
             pml.velocity.Z = down_v.Z;
         }
@@ -267,12 +267,39 @@ namespace Quake2 {
             float currentspeed = Vector3.Dot(pml.velocity, wishdir);
             float addspeed = wishspeed - currentspeed;
 
-            if (addspeed <= 0)
+            if (addspeed <= 0 || float.IsNaN(addspeed))
             {
                 return;
             }
 
             float accelspeed = accel * pml.frametime * wishspeed;
+
+            if (accelspeed > addspeed)
+            {
+                accelspeed = addspeed;
+            }
+
+            pml.velocity += accelspeed * wishdir;
+        }
+
+        private void PM_AirAccelerate(in Vector3 wishdir, float wishspeed, float accel)
+        {
+            float wishspd = wishspeed;
+
+            if (wishspd > 30)
+            {
+                wishspd = 30;
+            }
+
+            float currentspeed = Vector3.Dot(pml.velocity, wishdir);
+            float addspeed = wishspd - currentspeed;
+
+            if (addspeed <= 0)
+            {
+                return;
+            }
+
+            float accelspeed = accel * wishspeed * pml.frametime;
 
             if (accelspeed > addspeed)
             {
@@ -319,27 +346,27 @@ namespace Quake2 {
             {
                 PM_Accelerate(wishdir, wishspeed, pm_accelerate);
 
-            //     if (!wishvel[2])
-            //     {
-            //         if (pml.velocity[2] > 0)
-            //         {
-            //             pml.velocity[2] -= pm->s.gravity * pml.frametime;
+                if (wishvel.Z == 0)
+                {
+                    if (pml.velocity.Z > 0)
+                    {
+                        pml.velocity.Z -= pm.s.gravity * pml.frametime;
 
-            //             if (pml.velocity[2] < 0)
-            //             {
-            //                 pml.velocity[2] = 0;
-            //             }
-            //         }
-            //         else
-            //         {
-            //             pml.velocity[2] += pm->s.gravity * pml.frametime;
+                        if (pml.velocity.Z < 0)
+                        {
+                            pml.velocity.Z = 0;
+                        }
+                    }
+                    else
+                    {
+                        pml.velocity.Z += pm.s.gravity * pml.frametime;
 
-            //             if (pml.velocity[2] > 0)
-            //             {
-            //                 pml.velocity[2] = 0;
-            //             }
-            //         }
-            //     }
+                        if (pml.velocity.Z > 0)
+                        {
+                            pml.velocity.Z = 0;
+                        }
+                    }
+                }
 
                 PM_StepSlideMove(ref pm);
             }
@@ -349,14 +376,14 @@ namespace Quake2 {
                 pml.velocity.Z = 0;
                 PM_Accelerate(wishdir, wishspeed, pm_accelerate);
 
-            //     if (pm->s.gravity > 0)
-            //     {
-            //         pml.velocity[2] = 0;
-            //     }
-            //     else
-            //     {
-            //         pml.velocity[2] -= pm->s.gravity * pml.frametime;
-            //     }
+                if (pm.s.gravity > 0)
+                {
+                    pml.velocity.Z = 0;
+                }
+                else
+                {
+                    pml.velocity.Z -= pm.s.gravity * pml.frametime;
+                }
 
                 if (pml.velocity.X == 0 && pml.velocity.Y == 0)
                 {
@@ -368,11 +395,11 @@ namespace Quake2 {
             else
             {
                 /* not on ground, so little effect on velocity */
-                // if (pm_airaccelerate)
-                // {
-                //     PM_AirAccelerate(wishdir, wishspeed, pm_accelerate);
-                // }
-                // else
+                if (pm_airaccelerate != 0)
+                {
+                    PM_AirAccelerate(wishdir, wishspeed, pm_accelerate);
+                }
+                else
                 {
                     PM_Accelerate(wishdir, wishspeed, 1);
                 }
@@ -501,6 +528,73 @@ namespace Quake2 {
             var trace = pm.trace!(origin, pm.mins, pm.maxs, end);
 
             return !trace.allsolid;
+        }
+
+        /*
+        * On exit, the origin will have a value that is pre-quantized to the 0.125
+        * precision of the network channel and in a valid position.
+        */
+        private void PM_SnapPosition(ref QShared.pmove_t pm)
+        {
+            // int sign[3];
+            // int i, j, bits;
+            // short base[3];
+            /* try all single bits first */
+            int[] jitterbits = {0, 4, 1, 2, 3, 5, 6, 7};
+
+            /* snap velocity to eigths */
+            for (int i = 0; i < 3; i++)
+            {
+                pm.s.velocity[i] = (short)(pml.velocity.Get(i) * 8);
+            }
+
+            short[] sign = new short[3];
+            for (int i = 0; i < 3; i++)
+            {
+                if (pml.origin.Get(i) >= 0)
+                {
+                    sign[i] = 1;
+                }
+                else
+                {
+                    sign[i] = -1;
+                }
+
+                pm.s.origin[i] = (short)(pml.origin.Get(i) * 8);
+
+                if (pm.s.origin[i] * 0.125f == pml.origin.Get(i))
+                {
+                    sign[i] = 0;
+                }
+            }
+
+            // VectorCopy(pm->s.origin, base);
+            var b = pm.s.origin;
+
+            /* try all combinations */
+            for (int j = 0; j < 8; j++)
+            {
+                int bits = jitterbits[j];
+                pm.s.origin = b;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    if ((bits & (1 << i)) != 0)
+                    {
+                        pm.s.origin[i] += sign[i];
+                    }
+                }
+
+                if (PM_GoodPosition(pm))
+                {
+                    return;
+                }
+            }
+
+            /* go back to the last position */
+            pm.s.origin[0] = (short)pml.previous_origin.X;
+            pm.s.origin[1] = (short)pml.previous_origin.Y;
+            pm.s.origin[2] = (short)pml.previous_origin.Z;
         }
 
 
@@ -734,7 +828,7 @@ namespace Quake2 {
             // PM_UpdateUnderwaterSfx();
         // #endif
 
-            // PM_SnapPosition();
+            PM_SnapPosition(ref pm);
         }
 
 

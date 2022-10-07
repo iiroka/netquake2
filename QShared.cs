@@ -1245,6 +1245,11 @@ namespace Quake2 {
             }
         }
 
+        public static void VectorMA(in Vector3 veca, float scale, in Vector3 vecb, out Vector3 vecc)
+        {
+            vecc = veca + scale * vecb;
+        }
+
         /*
         * Parse a token out of a string
         */

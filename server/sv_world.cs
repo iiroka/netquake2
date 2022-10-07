@@ -57,6 +57,12 @@ namespace Quake2 {
             l.prev = l.next = l;
         }
 
+        private void RemoveLink(link_t l)
+        {
+            l.next!.prev = l.prev;
+            l.prev!.next = l.next;
+        }
+
         private void InsertLinkBefore(link_t l, link_t before)
         {
             l.next = before;
@@ -128,6 +134,19 @@ namespace Quake2 {
             SV_CreateAreaNode(0, sv.models[1]!.mins, sv.models[1]!.maxs);
         }
 
+        private void SV_UnlinkEdict(edict_s ent)
+        {
+            if (ent.area.prev == null)
+            {
+                return; /* not linked in anywhere */
+            }
+
+            RemoveLink(ent.area);
+            ent.area.prev = null;
+            ent.area.next = null;
+        }
+
+
         private void SV_LinkEdict(edict_s ent)
         {
             // areanode_t *node;
@@ -138,10 +157,10 @@ namespace Quake2 {
             // int area;
             // int topnode;
 
-            // if (ent.area.prev)
-            // {
-            //     SV_UnlinkEdict(ent); /* unlink from old position */
-            // }
+            if (ent.area.prev != null)
+            {
+                SV_UnlinkEdict(ent); /* unlink from old position */
+            }
             if (ent == ge!.getEdict(0))
             {
                 return; /* don't add the world */
@@ -212,34 +231,28 @@ namespace Quake2 {
             if ((ent.solid == solid_t.SOLID_BSP) &&
                 (ent.s.angles.X != 0 || ent.s.angles.Y != 0 || ent.s.angles.Z != 0))
             {
-            //     /* expand for rotation */
-            //     float max, v;
-            //     int i;
+                /* expand for rotation */
+                float max = 0;
 
-            //     max = 0;
+                for (int i = 0; i < 3; i++)
+                {
+                    float v = MathF.Abs(ent.mins.Get(i));
 
-            //     for (i = 0; i < 3; i++)
-            //     {
-            //         v = (float)fabs(ent->mins[i]);
+                    if (v > max)
+                    {
+                        max = v;
+                    }
 
-            //         if (v > max)
-            //         {
-            //             max = v;
-            //         }
+                    v = MathF.Abs(ent.maxs.Get(i));
 
-            //         v = (float)fabs(ent->maxs[i]);
+                    if (v > max)
+                    {
+                        max = v;
+                    }
+                }
 
-            //         if (v > max)
-            //         {
-            //             max = v;
-            //         }
-            //     }
-
-            //     for (i = 0; i < 3; i++)
-            //     {
-            //         ent->absmin[i] = ent->s.origin[i] - max;
-            //         ent->absmax[i] = ent->s.origin[i] + max;
-            //     }
+                ent.absmin = ent.s.origin - new Vector3(max);
+                ent.absmax = ent.s.origin + new Vector3(max);
             }
             else
             {
@@ -278,12 +291,11 @@ namespace Quake2 {
                     but nothing should evern need more than that */
                     if (ent.areanum != 0 && (ent.areanum != area))
                     {
-            //             if (ent->areanum2 && (ent->areanum2 != area) &&
-            //                 (sv.state == ss_loading))
-            //             {
-            //                 Com_DPrintf("Object touching 3 areas at %f %f %f\n",
-            //                         ent->absmin[0], ent->absmin[1], ent->absmin[2]);
-            //             }
+                        if (ent.areanum2 != 0 && (ent.areanum2 != area) &&
+                            (sv.state == server_state_t.ss_loading))
+                        {
+                            common.Com_DPrintf($"Object touching 3 areas at {ent.absmin}\n");
+                        }
 
                         ent.areanum2 = area;
                     }
@@ -660,8 +672,8 @@ namespace Quake2 {
             /* create the bounding box of the entire move */
             SV_TraceBounds(start, clip.mins2, clip.maxs2, end, ref clip.boxmins, ref clip.boxmaxs);
 
-            // /* clip to other solid entities */
-            // SV_ClipMoveToEntities(&clip);
+            /* clip to other solid entities */
+            SV_ClipMoveToEntities(ref clip);
 
             return clip.trace;
         }

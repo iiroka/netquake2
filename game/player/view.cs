@@ -40,6 +40,157 @@ namespace Quake2 {
         private float bobfracsin; /* sin(bobfrac*M_PI) */
 
         /*
+        * fall from 128: 400 = 160000
+        * fall from 256: 580 = 336400
+        * fall from 384: 720 = 518400
+        * fall from 512: 800 = 640000
+        * fall from 640: 960 =
+        *
+        * damage = deltavelocity*deltavelocity  * 0.0001
+        */
+        private void SV_CalcViewOffset(edict_t ent)
+        {
+            // float *angles;
+            // float bob;
+            float ratio;
+            // float delta;
+            // vec3_t v;
+
+            /* base angles */
+            ref var angles = ref ent.client!.ps.kick_angles;
+            var client = (gclient_t)ent.client!;
+
+            /* if dead, fix the angle and don't add any kick */
+            if (ent.deadflag != 0)
+            {
+                angles = Vector3.Zero;
+
+                ent.client.ps.viewangles.SetRoll(40);
+                ent.client.ps.viewangles.SetPitch(-15);
+                ent.client.ps.viewangles.SetYaw(client.killer_yaw);
+            }
+            else
+            {
+                /* add angles based on weapon kick */
+                angles = client.kick_angles;
+
+                /* add angles based on damage kick */
+                ratio = (client.v_dmg_time - level.time) / DAMAGE_TIME;
+
+                if (ratio < 0)
+                {
+                    ratio = 0;
+                    client.v_dmg_pitch = 0;
+                    client.v_dmg_roll = 0;
+                }
+
+                angles.SetPitch( angles.Pitch() + ratio * client.v_dmg_pitch);
+                angles.SetRoll(angles.Roll() + ratio * client.v_dmg_roll);
+
+                /* add pitch based on fall kick */
+                ratio = (client.fall_time - level.time) / FALL_TIME;
+
+                if (ratio < 0)
+                {
+                    ratio = 0;
+                }
+
+                angles.SetPitch(angles.Pitch() + ratio * client.fall_value);
+
+                /* add angles based on velocity */
+                var delta = Vector3.Dot(ent.velocity, forward);
+                angles.SetPitch(angles.Pitch() + delta * run_pitch!.Float);
+
+                delta = Vector3.Dot(ent.velocity, right);
+                angles.SetRoll(angles.Roll() + delta * run_roll!.Float);
+
+                /* add angles based on bob */
+                delta = bobfracsin * bob_pitch!.Float * xyspeed;
+
+                if ((ent.client.ps.pmove.pm_flags & QShared.PMF_DUCKED) != 0)
+                {
+                    delta *= 6; /* crouching */
+                }
+
+                angles.SetPitch(angles.Pitch() + delta);
+                delta = bobfracsin * bob_roll!.Float * xyspeed;
+
+                if ((ent.client.ps.pmove.pm_flags & QShared.PMF_DUCKED) != 0)
+                {
+                    delta *= 6; /* crouching */
+                }
+
+                if ((bobcycle & 1) != 0)
+                {
+                    delta = -delta;
+                }
+
+                angles.SetRoll(angles.Roll() + delta);
+            }
+
+            /* base origin */
+            var v = Vector3.Zero;
+
+            /* add view height */
+            v.Z += ent.viewheight;
+
+            /* add fall height */
+            ratio = (client.fall_time - level.time) / FALL_TIME;
+
+            if (ratio < 0)
+            {
+                ratio = 0;
+            }
+
+            v.Z -= ratio * client.fall_value * 0.4f;
+
+            /* add bob height */
+            var bob = bobfracsin * xyspeed * bob_up!.Float;
+
+            if (bob > 6)
+            {
+                bob = 6;
+            }
+
+            v.Z += bob;
+
+            /* add kick offset */
+            v = v + client.kick_origin;
+
+            /* absolutely bound offsets
+            so the view can never be
+            outside the player box */
+            if (v.X < -14)
+            {
+                v.X = -14;
+            }
+            else if (v.X > 14)
+            {
+                v.X = 14;
+            }
+
+            if (v.Y < -14)
+            {
+                v.Y = -14;
+            }
+            else if (v.Y > 14)
+            {
+                v.Y = 14;
+            }
+
+            if (v.Z < -22)
+            {
+                v.Z = -22;
+            }
+            else if (v.Z > 30)
+            {
+                v.Z = 30;
+            }
+
+            ent.client.ps.viewoffset = v;
+        }
+
+        /*
         * Called for each player at the end of
         * the server frame and right after spawning
         */
@@ -141,7 +292,7 @@ namespace Quake2 {
             // P_DamageFeedback(ent);
 
             /* determine the view offsets */
-            // SV_CalcViewOffset(ent);
+            SV_CalcViewOffset(ent);
 
             /* determine the gun offsets */
             // SV_CalcGunOffset(ent);

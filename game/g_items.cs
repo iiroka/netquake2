@@ -71,14 +71,14 @@ namespace Quake2 {
             ent.mins = new Vector3(-15, -15, -15);
             ent.maxs = new Vector3(15, 15, 15);
 
-            // if (ent.model)
-            // {
-            //     gi.setmodel(ent, ent.model);
-            // }
-            // else
-            // {
-            //     gi.setmodel(ent, ent.item.world_model);
-            // }
+            if (!String.IsNullOrEmpty(ent.model))
+            {
+                gi.setmodel(ent, ent.model);
+            }
+            else
+            {
+                gi.setmodel(ent, ent.item!.world_model);
+            }
 
             ent.solid = solid_t.SOLID_TRIGGER;
             ent.movetype = movetype_t.MOVETYPE_TOSS;
@@ -242,7 +242,8 @@ namespace Quake2 {
                 // NULL,
                 weaponthink = null,
                 // "misc/ar1_pkup.wav",
-                // "models/items/armor/body/tris.md2", EF_ROTATE,
+                world_model = "models/items/armor/body/tris.md2", 
+                // EF_ROTATE,
                 // NULL,
                 // "i_bodyarmor",
                 pickup_name = "Body Armor",
@@ -264,7 +265,8 @@ namespace Quake2 {
                 // NULL,
                 weaponthink = null,
                 // "misc/ar1_pkup.wav",
-                // "models/items/armor/combat/tris.md2", EF_ROTATE,
+                world_model = "models/items/armor/combat/tris.md2", 
+                // EF_ROTATE,
                 // NULL,
                 // "i_combatarmor",
                 pickup_name = "Combat Armor",
@@ -286,7 +288,8 @@ namespace Quake2 {
                 // NULL,
                 weaponthink = null,
                 // "misc/ar1_pkup.wav",
-                // "models/items/armor/jacket/tris.md2", EF_ROTATE,
+                world_model = "models/items/armor/jacket/tris.md2", 
+                // EF_ROTATE,
                 // NULL,
                 // "i_jacketarmor",
                 pickup_name = "Jacket Armor",
@@ -308,7 +311,8 @@ namespace Quake2 {
                 // NULL,
                 weaponthink = null,
                 // "misc/ar2_pkup.wav",
-                // "models/items/armor/shard/tris.md2", EF_ROTATE,
+                world_model = "models/items/armor/shard/tris.md2", 
+                // EF_ROTATE,
                 // NULL,
                 // "i_jacketarmor",
                 pickup_name = "Armor Shard",
@@ -330,7 +334,8 @@ namespace Quake2 {
                 // Drop_PowerArmor,
                 weaponthink = null,
                 // "misc/ar3_pkup.wav",
-                // "models/items/armor/screen/tris.md2", EF_ROTATE,
+                world_model = "models/items/armor/screen/tris.md2", 
+                // EF_ROTATE,
                 // NULL,
                 // "i_powerscreen",
                 pickup_name = "Power Screen",
@@ -352,7 +357,8 @@ namespace Quake2 {
                 // Drop_PowerArmor,
                 weaponthink = null,
                 // "misc/ar3_pkup.wav",
-                // "models/items/armor/shield/tris.md2", EF_ROTATE,
+                world_model = "models/items/armor/shield/tris.md2", 
+                // EF_ROTATE,
                 // NULL,
                 // "i_powershield",
                 pickup_name = "Power Shield",
@@ -397,7 +403,8 @@ namespace Quake2 {
                 // Drop_Weapon,
                 // Weapon_Shotgun,
                 // "misc/w_pkup.wav",
-                // "models/weapons/g_shotg/tris.md2", EF_ROTATE,
+                world_model = "models/weapons/g_shotg/tris.md2", 
+                // EF_ROTATE,
                 view_model = "models/weapons/v_shotg/tris.md2",
                 // "w_shotgun",
                 pickup_name = "Shotgun",
@@ -419,7 +426,8 @@ namespace Quake2 {
                 // Drop_Weapon,
                 // Weapon_SuperShotgun,
                 // "misc/w_pkup.wav",
-                // "models/weapons/g_shotg2/tris.md2", EF_ROTATE,
+                world_model = "models/weapons/g_shotg2/tris.md2", 
+                // EF_ROTATE,
                 view_model = "models/weapons/v_shotg2/tris.md2",
                 // "w_sshotgun",
                 pickup_name = "Super Shotgun",
@@ -441,7 +449,8 @@ namespace Quake2 {
                 // Drop_Weapon,
                 // Weapon_Machinegun,
                 // "misc/w_pkup.wav",
-                // "models/weapons/g_machn/tris.md2", EF_ROTATE,
+                world_model = "models/weapons/g_machn/tris.md2", 
+                // EF_ROTATE,
                 view_model = "models/weapons/v_machn/tris.md2",
                 // "w_machinegun",
                 pickup_name = "Machinegun",
@@ -463,7 +472,8 @@ namespace Quake2 {
                 // Drop_Weapon,
                 // Weapon_Chaingun,
                 // "misc/w_pkup.wav",
-                // "models/weapons/g_chain/tris.md2", EF_ROTATE,
+                world_model = "models/weapons/g_chain/tris.md2", 
+                // EF_ROTATE,
                 view_model = "models/weapons/v_chain/tris.md2",
                 // "w_chaingun",
                 pickup_name = "Chaingun",
@@ -485,7 +495,8 @@ namespace Quake2 {
                 // Drop_Ammo,
                 // Weapon_Grenade,
                 // "misc/am_pkup.wav",
-                // "models/items/ammo/grenades/medium/tris.md2", 0,
+                world_model = "models/items/ammo/grenades/medium/tris.md2", 
+                // 0,
                 view_model = "models/weapons/v_handgr/tris.md2",
                 // "a_grenades",
                 pickup_name = "Grenades",
@@ -507,7 +518,8 @@ namespace Quake2 {
                 // Drop_Weapon,
                 // Weapon_GrenadeLauncher,
                 // "misc/w_pkup.wav",
-                // "models/weapons/g_launch/tris.md2", EF_ROTATE,
+                world_model = "models/weapons/g_launch/tris.md2", 
+                // EF_ROTATE,
                 view_model = "models/weapons/v_launch/tris.md2",
                 // "w_glauncher",
                 pickup_name = "Grenade Launcher",
@@ -529,7 +541,8 @@ namespace Quake2 {
                 // Drop_Weapon,
                 // Weapon_RocketLauncher,
                 // "misc/w_pkup.wav",
-                // "models/weapons/g_rocket/tris.md2", EF_ROTATE,
+                world_model = "models/weapons/g_rocket/tris.md2", 
+                // EF_ROTATE,
                 // "models/weapons/v_rocket/tris.md2",
                 // "w_rlauncher",
                 pickup_name = "Rocket Launcher",

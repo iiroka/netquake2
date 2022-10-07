@@ -229,7 +229,7 @@ namespace Quake2 {
             pm.touchents = new edict_s?[QShared.MAXTOUCH];
             pm.trace = CL_PMTrace;
             // pm.pointcontents = CL_PMpointcontents;
-            // pm_airaccelerate = atof(cl.configstrings[CS_AIRACCEL]);
+            common.pm_airaccelerate = Convert.ToSingle(cl.configstrings[QShared.CS_AIRACCEL], QShared.provider);
             pm.s = cl.frame.playerstate.pmove;
 
             /* run frames */

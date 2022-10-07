@@ -60,6 +60,11 @@ namespace Quake2 {
                 server.SV_LinkEdict(ent);
             }
 
+            public void unlinkentity(edict_s ent)
+            {
+                server.SV_UnlinkEdict(ent);
+            }
+
             public void Pmove(ref QShared.pmove_t pmove)
             {
                 server.common.Pmove(ref pmove);
@@ -95,6 +100,28 @@ namespace Quake2 {
             public int modelindex(string name)
             {
                 return server.SV_FindIndex(name, QShared.CS_MODELS, QShared.MAX_MODELS, true);
+            }
+
+            public void setmodel(edict_s ent, string name)
+            {
+                if (String.IsNullOrEmpty(name))
+                {
+                    server.common.Com_Error(QShared.ERR_DROP, "PF_setmodel: NULL");
+                }
+
+                var i = server.SV_FindIndex(name, QShared.CS_MODELS, QShared.MAX_MODELS, true);
+
+                ent.s.modelindex = i;
+
+                /* if it is an inline model, get
+                the size information for it */
+                if (name[0] == '*')
+                {
+                    var mod = server.common.CM_InlineModel(name);
+                    ent.mins = mod.mins;
+                    ent.maxs = mod.maxs;
+                    server.SV_LinkEdict(ent);
+                }
             }
 
             public QShared.trace_t trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,

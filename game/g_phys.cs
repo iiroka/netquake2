@@ -96,6 +96,85 @@ namespace Quake2 {
         }
 
 
+        /* ================================================================== */
+
+        /* PUSHMOVE */
+
+        /*
+        * Does not change the entities velocity at all
+        */
+        private QShared.trace_t SV_PushEntity(edict_t ent, in Vector3 push)
+        {
+            // var trace = new QShared.trace_t();
+        //     vec3_t start;
+        //     vec3_t end;
+        //     int mask;
+
+            var start = ent.s.origin;
+            var end = start + push;
+
+        // retry:
+
+            int mask;
+            if (ent.clipmask != 0)
+            {
+                mask = ent.clipmask;
+            }
+            else
+            {
+                mask = QShared.MASK_SOLID;
+            }
+
+            var trace = gi.trace(start, ent.mins, ent.maxs, end, ent, mask);
+
+            if (trace.startsolid || trace.allsolid)
+            {
+                mask ^= QCommon.CONTENTS_DEADMONSTER;
+                trace = gi.trace (start, ent.mins, ent.maxs, end, ent, mask);
+            }
+
+            ent.s.origin = trace.endpos;
+            gi.linkentity(ent);
+
+            /* Push slightly away from non-horizontal surfaces,
+               prevent origin stuck in the plane which causes
+               the entity to be rendered in full black. */
+            if (trace.plane.type != 2)
+            {
+        //         /* Limit the fix to gibs, debris and dead monsters.
+        //         Everything else may break existing maps. Items
+        //         may slide to unreachable locations, monsters may
+        //         get stuck, etc. */
+        //         if (((strncmp(ent->classname, "monster_", 8) == 0) && ent->health < 1) ||
+        //                 (strcmp(ent->classname, "debris") == 0) || (ent->s.effects & EF_GIB))
+        //         {
+        //             VectorAdd(ent->s.origin, trace.plane.normal, ent->s.origin);
+        //         }
+            }
+
+            if (trace.fraction != 1.0)
+            {
+        //         SV_Impact(ent, &trace);
+
+        //         /* if the pushed entity went away
+        //         and the pusher is still there */
+        //         if (!trace.ent->inuse && ent->inuse)
+        //         {
+        //             /* move the pusher back and try again */
+        //             VectorCopy(start, ent->s.origin);
+        //             gi.linkentity(ent);
+        //             goto retry;
+        //         }
+            }
+
+            if (ent.inuse)
+            {
+        //         G_TouchTriggers(ent);
+            }
+
+            return trace;
+        }
+
         /*
         * Bmodel objects don't interact with each
         * other, but push all box objects
@@ -110,12 +189,12 @@ namespace Quake2 {
                 return;
             }
 
-            // /* if not a team captain, so movement
-            // will be handled elsewhere */
-            // if (ent->flags & FL_TEAMSLAVE)
-            // {
-            //     return;
-            // }
+            /* if not a team captain, so movement
+            will be handled elsewhere */
+            if ((ent.flags & FL_TEAMSLAVE) != 0)
+            {
+                return;
+            }
 
             /* make sure all team slaves can move before commiting
             any moves or calling any think functions if the move
@@ -246,19 +325,19 @@ namespace Quake2 {
             }
 
             /* move angles */
-            // VectorMA(ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles);
+            QShared.VectorMA(ent.s.angles, FRAMETIME, ent.avelocity, out ent.s.angles);
 
-            // /* move origin */
-            // VectorScale(ent->velocity, FRAMETIME, move);
-            // trace = SV_PushEntity(ent, move);
+            /* move origin */
+            var move = ent.velocity * FRAMETIME;
+            var trace = SV_PushEntity(ent, move);
 
             if (!ent.inuse)
             {
                 return;
             }
 
-            // if (trace.fraction < 1)
-            // {
+            if (trace.fraction < 1)
+            {
             //     if (ent->movetype == MOVETYPE_BOUNCE)
             //     {
             //         backoff = 1.5;
@@ -281,9 +360,9 @@ namespace Quake2 {
             //             VectorCopy(vec3_origin, ent->avelocity);
             //         }
             //     }
-            // }
+            }
 
-            // /* check for water transition */
+            /* check for water transition */
             // wasinwater = (ent->watertype & MASK_WATER);
             // ent->watertype = gi.pointcontents(ent->s.origin);
             // isinwater = ent->watertype & MASK_WATER;
@@ -294,7 +373,7 @@ namespace Quake2 {
             // }
             // else
             // {
-            //     ent->waterlevel = 0;
+                ent.waterlevel = 0;
             // }
 
             // if (!wasinwater && isinwater)
