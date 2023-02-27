@@ -57,7 +57,7 @@ namespace Quake2 {
             if (gameStartUp)
             {
                 /* Process cmd arguments only startup. */
-                // Cbuf_AddEarlyCommands(true);
+                Cbuf_AddEarlyCommands(true);
             }
 
             Cbuf_Execute();
@@ -86,7 +86,7 @@ namespace Quake2 {
         //     randk_seed();
 
             // Start early subsystems.
-        //     COM_InitArgv(argc, argv);
+            COM_InitArgv(args);
         //     Swap_Init();
         //     Cbuf_Init();
             Cmd_Init();
@@ -99,7 +99,7 @@ namespace Quake2 {
             a basedir or cddir needs to be set before execing
             config files, but we want other parms to override
             the settings of the config files */
-        //     Cbuf_AddEarlyCommands(false);
+            Cbuf_AddEarlyCommands(false);
             Cbuf_Execute();
 
             // remember the initial game name that might have been set on commandline
@@ -168,8 +168,8 @@ namespace Quake2 {
         // #endif
 
             // Everythings up, let's add + cmds from command line.
-        //     if (!Cbuf_AddLateCommands())
-        //     {
+            if (!Cbuf_AddLateCommands())
+            {
                 if (!(dedicated?.Bool ?? false))
                 {
                     // Start demo loop...
@@ -182,15 +182,13 @@ namespace Quake2 {
                 }
 
                 Cbuf_Execute();
-        //     }
-        // #ifndef DEDICATED_ONLY
-        //     else
-        //     {
-        //         /* the user asked for something explicit
-        //         so drop the loading plaque */
-        //         SCR_EndLoadingPlaque();
-        //     }
-        // #endif
+            }
+            else
+            {
+                /* the user asked for something explicit
+                   so drop the loading plaque */
+                // client.SCR_EndLoadingPlaque();
+            }
 
             Com_Printf("==== Yamagi Quake II Initialized ====\n\n");
             Com_Printf("*************************************\n\n");

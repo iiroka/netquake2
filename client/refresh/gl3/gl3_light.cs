@@ -278,13 +278,6 @@ namespace Quake2 {
 
         private void GL3_LightPoint(in entity_t? currententity, in Vector3 p, out Vector3 color)
         {
-            // vec3_t end;
-            // float r;
-            // int lnum;
-            // dlight_t *dl;
-            // vec3_t dist;
-            // float add;
-
             if (gl3_worldmodel?.lightdata == null || currententity == null)
             {
                 color = new Vector3(1.0f);

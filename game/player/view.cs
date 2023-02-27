@@ -190,6 +190,126 @@ namespace Quake2 {
             ent.client.ps.viewoffset = v;
         }
 
+        private void G_SetClientFrame(edict_t ent)
+        {
+            // gclient_t *client;
+            // qboolean duck, run;
+
+            if (ent == null)
+            {
+                return;
+            }
+
+            if (ent.s.modelindex != 255)
+            {
+                return; /* not in the player model */
+            }
+
+            gclient_t client = (gclient_t)ent.client!;
+
+            bool duck =  ((client.ps.pmove.pm_flags & QShared.PMF_DUCKED) != 0);
+
+            bool run = (xyspeed != 0);
+            bool newanim = false;
+
+            /* check for stand/duck and stop/go transitions */
+            if ((duck != client.anim_duck) && (client.anim_priority < ANIM_DEATH))
+            {
+                newanim = true;
+            }
+
+            if (!newanim && (run != client.anim_run) && (client.anim_priority == ANIM_BASIC))
+            {
+                newanim = true;
+            }
+
+            if (!newanim && ent.groundentity == null && (client.anim_priority <= ANIM_WAVE))
+            {
+                newanim = true;
+            }
+
+            if (!newanim) 
+            {
+                if (client.anim_priority == ANIM_REVERSE)
+                {
+                    if (ent.s.frame > client.anim_end)
+                    {
+                        ent.s.frame--;
+                        return;
+                    }
+                }
+                else if (ent.s.frame < client.anim_end)
+                {
+                    /* continue an animation */
+                    ent.s.frame++;
+                    return;
+                }
+
+                if (client.anim_priority == ANIM_DEATH)
+                {
+                    return; /* stay there */
+                }
+
+                if (client.anim_priority == ANIM_JUMP)
+                {
+                    if (ent.groundentity == null)
+                    {
+                        return; /* stay there */
+                    }
+
+                    client.anim_priority = ANIM_WAVE;
+                    ent.s.frame = QuakeGamePlayer.FRAME_jump3;
+                    client.anim_end = QuakeGamePlayer.FRAME_jump6;
+                    return;
+                }
+            }
+
+            /* return to either a running or standing frame */
+            client.anim_priority = ANIM_BASIC;
+            client.anim_duck = duck;
+            client.anim_run = run;
+
+            if (ent.groundentity == null)
+            {
+                client.anim_priority = ANIM_JUMP;
+
+                if (ent.s.frame != QuakeGamePlayer.FRAME_jump2)
+                {
+                    ent.s.frame = QuakeGamePlayer.FRAME_jump1;
+                }
+
+                client.anim_end = QuakeGamePlayer.FRAME_jump2;
+            }
+            else if (run)
+            {
+                /* running */
+                if (duck)
+                {
+                    ent.s.frame = QuakeGamePlayer.FRAME_crwalk1;
+                    client.anim_end = QuakeGamePlayer.FRAME_crwalk6;
+                }
+                else
+                {
+                    ent.s.frame = QuakeGamePlayer.FRAME_run1;
+                    client.anim_end = QuakeGamePlayer.FRAME_run6;
+                }
+            }
+            else
+            {
+                /* standing */
+                if (duck)
+                {
+                    ent.s.frame = QuakeGamePlayer.FRAME_crstnd01;
+                    client.anim_end = QuakeGamePlayer.FRAME_crstnd19;
+                }
+                else
+                {
+                    ent.s.frame = QuakeGamePlayer.FRAME_stand01;
+                    client.anim_end = QuakeGamePlayer.FRAME_stand40;
+                }
+            }
+        }
+
         /*
         * Called for each player at the end of
         * the server frame and right after spawning
@@ -320,7 +440,7 @@ namespace Quake2 {
 
             // G_SetClientSound(ent);
 
-            // G_SetClientFrame(ent);
+            G_SetClientFrame(ent);
 
             current_client.oldvelocity = ent.velocity;
             current_client.oldviewangles = ent.client!.ps.viewangles;

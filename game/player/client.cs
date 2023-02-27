@@ -473,20 +473,20 @@ namespace Quake2 {
 
             // if (deathmatch->value && ((int)dmflags->value & DF_FIXED_FOV))
             // {
-                client.ps.fov = 90;
+                // client.ps.fov = 90;
             // }
             // else
             // {
-            //     client->ps.fov = (int)strtol(Info_ValueForKey(client->pers.userinfo, "fov"), (char **)NULL, 10);
+                client.ps.fov = Int32.Parse(QShared.Info_ValueForKey(client.pers.userinfo, "fov"));
 
-            //     if (client->ps.fov < 1)
-            //     {
-            //         client->ps.fov = 90;
-            //     }
-            //     else if (client->ps.fov > 160)
-            //     {
-            //         client->ps.fov = 160;
-            //     }
+                if (client.ps.fov < 1)
+                {
+                    client.ps.fov = 90;
+                }
+                else if (client.ps.fov > 160)
+                {
+                    client.ps.fov = 160;
+                }
             // }
 
             client.ps.gunindex = gi.modelindex(client.pers.weapon!.view_model);
@@ -850,9 +850,9 @@ namespace Quake2 {
 
             if (client.chase_target != null)
             {
-            //     client->resp.cmd_angles[0] = SHORT2ANGLE(ucmd->angles[0]);
-            //     client->resp.cmd_angles[1] = SHORT2ANGLE(ucmd->angles[1]);
-            //     client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
+                client.resp.cmd_angles.X = QShared.SHORT2ANGLE(ucmd.angles[0]);
+                client.resp.cmd_angles.Y = QShared.SHORT2ANGLE(ucmd.angles[1]);
+                client.resp.cmd_angles.Z = QShared.SHORT2ANGLE(ucmd.angles[2]);
             }
             else
             {
@@ -860,22 +860,22 @@ namespace Quake2 {
                 var pm = new QShared.pmove_t();
                 pm.touchents = new edict_s?[QShared.MAXTOUCH];
 
-            //     if (ent->movetype == MOVETYPE_NOCLIP)
-            //     {
-            //         client->ps.pmove.pm_type = PM_SPECTATOR;
-            //     }
-            //     else if (ent->s.modelindex != 255)
-            //     {
-            //         client->ps.pmove.pm_type = PM_GIB;
-            //     }
-            //     else if (ent->deadflag)
-            //     {
-            //         client->ps.pmove.pm_type = PM_DEAD;
-            //     }
-            //     else
-            //     {
+                if (ent.movetype == movetype_t.MOVETYPE_NOCLIP)
+                {
+                    client.ps.pmove.pm_type = QShared.pmtype_t.PM_SPECTATOR;
+                }
+                else if (ent.s.modelindex != 255)
+                {
+                    client.ps.pmove.pm_type = QShared.pmtype_t.PM_GIB;
+                }
+                else if (ent.deadflag != 0)
+                {
+                    client.ps.pmove.pm_type = QShared.pmtype_t.PM_DEAD;
+                }
+                else
+                {
                     client.ps.pmove.pm_type = QShared.pmtype_t.PM_NORMAL;
-            //     }
+                }
 
                 client.ps.pmove.gravity = (short)sv_gravity!.Int;
                 pm.s = client.ps.pmove;

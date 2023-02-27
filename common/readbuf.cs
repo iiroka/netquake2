@@ -39,7 +39,7 @@ namespace Quake2 {
 
             else
             {
-                c = (char)data[readcount];
+                c = (sbyte)data[readcount];
             }
 
             readcount++;

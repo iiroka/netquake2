@@ -952,14 +952,6 @@ namespace Quake2 {
 
         public static Vector3 RotatePointAroundVector(in Vector3 dir, in Vector3 point, float degrees)
         {
-            // float m[3][3];
-            // float im[3][3];
-            // float zrot[3][3];
-            // float tmpmat[3][3];
-            // float rot[3][3];
-            // int i;
-            // vec3_t vr, vup, vf;
-
             var vf = dir;
 
             var vr = PerpendicularVector(dir);
@@ -970,18 +962,6 @@ namespace Quake2 {
                 vr.Y, vup.Y, vf.Y,
                 vr.Z, vup.Z, vf.Z
             );
-
-            // m[0][0] = vr[0];
-            // m[1][0] = vr[1];
-            // m[2][0] = vr[2];
-
-            // m[0][1] = vup[0];
-            // m[1][1] = vup[1];
-            // m[2][1] = vup[2];
-
-            // m[0][2] = vf[0];
-            // m[1][2] = vf[1];
-            // m[2][2] = vf[2];
 
             var im = m;
 
@@ -1012,9 +992,6 @@ namespace Quake2 {
 
         public static void AngleVectors(in Vector3 angles, ref Vector3 forward, ref Vector3 right, ref Vector3 up)
         {
-            // float angle;
-            // static float sr, sp, sy, cr, cp, cy;
-
             var angle = angles.Yaw() * (MathF.PI * 2 / 360);
             var sy = MathF.Sin(angle);
             var cy = MathF.Cos(angle);

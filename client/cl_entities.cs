@@ -667,11 +667,6 @@ namespace Quake2 {
         */
         private void CL_CalcViewValues()
         {
-            // int i;
-            // float lerp, backlerp, ifov;
-            // frame_t *oldframe;
-            // player_state_t *ps, *ops;
-
             /* find the previous frame to interpolate from */
             ref var ps = ref cl.frame.playerstate;
             var i = (cl.frame.serverframe - 1) & QCommon.UPDATE_MASK;

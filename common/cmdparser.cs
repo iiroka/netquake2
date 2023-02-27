@@ -143,6 +143,81 @@ namespace Quake2 {
         }
 
         /*
+        * Adds command line parameters as script statements Commands lead with
+        * a +, and continue until another +
+        *
+        * Set commands are added early, so they are guaranteed to be set before
+        * the client and server initialize for the first time.
+        *
+        * Other commands are added late, after all initialization is complete.
+        */
+        public void Cbuf_AddEarlyCommands(bool clear)
+        {
+            for (int i = 0; i < COM_Argc(); i++)
+            {
+                string s = COM_Argv(i);
+
+                if (!String.Equals(s, "+set"))
+                {
+                    continue;
+                }
+
+                Cbuf_AddText($"set {COM_Argv(i + 1)} {COM_Argv(i + 2)}\n");
+
+                if (clear)
+                {
+                    COM_ClearArgv(i);
+                    COM_ClearArgv(i + 1);
+                    COM_ClearArgv(i + 2);
+                }
+
+                i += 2;
+            }
+        }
+
+        /*
+        * Adds command line parameters as script statements
+        * Commands lead with a + and continue until another + or -
+        * quake +developer 1 +map amlev1
+        *
+        * Returns true if any late commands were added, which
+        * will keep the demoloop from immediately starting
+        */
+        public bool Cbuf_AddLateCommands()
+        {
+            bool has_args = false;
+
+            /* build the combined string to parse from */
+            StringBuilder bldr = new StringBuilder();
+            int argc = COM_Argc();
+
+            for (int i = 1; i < argc; i++)
+            {
+                bldr.Append(COM_Argv(i));
+                if (i != argc - 1)
+                {
+                    bldr.Append(' ');
+                }
+            }
+            string text = bldr.ToString();
+            /* pull out the commands */
+            int index = 0;
+            while (true) {
+                int offset = text.IndexOf('+', index);
+                if (offset < 0) break;
+
+                int j;
+                for (j = offset; j < text.Length && (text[j] != '+') && !(text[j] == '-' && text[j-1] == ' '); j++) {}
+
+                Cbuf_AddText(text.Substring(offset + 1, j - offset));
+                Cbuf_AddText("\n");
+                has_args = true;
+                index = offset;
+            }
+            return has_args;
+        }
+
+        /*
         * Parses the given string into command line tokens.
         * $Cvars will be expanded unless they are in a quoted token
         */

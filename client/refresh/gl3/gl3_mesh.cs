@@ -454,7 +454,6 @@ namespace Quake2 {
             // dmdl_t *paliashdr;
             // float an;
             // vec3_t bbox[8];
-            // vec3_t shadelight;
             // vec3_t shadevector;
             // gl3image_t *skin;
             // hmm_mat4 origProjViewMat = {0}; // use for left-handed rendering
@@ -482,7 +481,7 @@ namespace Quake2 {
 
             /* get lighting information */
             Vector3 shadelight;
-            // if (entity->flags &
+            // if (entity.flags &
             //     (RF_SHELL_HALF_DAM | RF_SHELL_GREEN | RF_SHELL_RED |
             //     RF_SHELL_BLUE | RF_SHELL_DOUBLE))
             // {
@@ -516,7 +515,7 @@ namespace Quake2 {
             //         shadelight[2] = 1.0;
             //     }
             // }
-            // else if (entity->flags & RF_FULLBRIGHT)
+            // else if (entity.flags & RF_FULLBRIGHT)
             // {
                 shadelight = new Vector3(1.0f);
             // }
@@ -562,7 +561,7 @@ namespace Quake2 {
                 }
             }
 
-            // if (entity->flags & RF_GLOW)
+            // if (entity.flags & RF_GLOW)
             // {
             //     /* bonus items will pulse with time */
             //     float scale;
@@ -592,7 +591,7 @@ namespace Quake2 {
             //     shadelight[2] = 0.0;
             // }
 
-            // an = entity->angles[1] / 180 * M_PI;
+            // an = entity.angles[1] / 180 * M_PI;
             // shadevector[0] = cos(-an);
             // shadevector[1] = sin(-an);
             // shadevector[2] = 1;

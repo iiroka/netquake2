@@ -36,7 +36,7 @@ namespace Quake2 {
             {
                 // if (client.pers.weapon != null)
                 // {
-                //     i = ((client.pers.weapon.weapmodel & 0xff) << 8);
+                    // i = ((client.pers.weapon.weapmodel & 0xff) << 8);
                 // }
                 // else
                 {

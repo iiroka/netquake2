@@ -1367,7 +1367,7 @@ namespace Quake2 {
 
         //     GL3_DrawParticles();
 
-            GL3_DrawAlphaSurfaces(gl);
+            // Ikn GL3_DrawAlphaSurfaces(gl);
 
             // Note: R_Flash() is now GL3_Draw_Flash() and called from GL3_RenderFrame()
 
