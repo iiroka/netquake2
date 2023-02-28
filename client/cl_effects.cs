@@ -60,8 +60,8 @@ namespace Quake2 {
             var rv = new Vector3();
             var ignored = new Vector3();
             QShared.AngleVectors(cl_entities[i].current.angles, ref fv, ref rv, ref ignored);
-            // VectorMA(dl->origin, 18, fv, dl->origin);
-            // VectorMA(dl->origin, 16, rv, dl->origin);
+            QShared.VectorMA(dl.origin, 18, fv, out dl.origin);
+            QShared.VectorMA(dl.origin, 16, rv, out dl.origin);
 
             if (silenced != 0)
             {
@@ -768,7 +768,7 @@ namespace Quake2 {
 
         private void CL_ClearEffects()
         {
-            // CL_ClearParticles();
+            CL_ClearParticles();
             CL_ClearDlights();
             CL_ClearLightStyles();
         }

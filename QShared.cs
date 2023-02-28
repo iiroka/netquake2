@@ -938,8 +938,28 @@ namespace Quake2 {
 
         public static Random rand = new Random();
 
+        /*
+        * Generate a pseudorandom
+        * integer >0.
+        */
         public static int randk() {
             return rand.Next();
+        }
+
+        /*
+        * Generate a pseudorandom
+        * signed float between
+        * 0 and 1.
+        */
+        public static float frandk() {
+            return rand.NextSingle();
+        }
+
+        /* Generate a pseudorandom
+        * float between -1 and 1.
+        */
+        public static float crandk() {
+            return (2.0f * rand.NextSingle()) - 1.0f;
         }
 
         public static System.Globalization.NumberFormatInfo provider = new System.Globalization.NumberFormatInfo();

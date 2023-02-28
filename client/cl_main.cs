@@ -53,6 +53,12 @@ namespace Quake2 {
             this.cl.frame.playerstate.pmove.origin = new short[3];
             this.cl.frame.playerstate.pmove.velocity = new short[3];
             this.cl.frame.playerstate.pmove.delta_angles = new short[3];
+
+            this.particles = new cparticle_t[QRef.MAX_PARTICLES];
+            for (int i = 0; i < this.particles.Length; i++)
+            {
+                this.particles[i] = new cparticle_t();
+            }
         }
 
         private client_state_t cl;

@@ -46,7 +46,7 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_BLOOD: /* bullet hitting flesh */
                     var pos = msg.ReadPos();
                     var dir = msg.ReadDir(common);
-                    // CL_ParticleEffect(pos, dir, 0xe8, 60);
+                    CL_ParticleEffect(pos, dir, 0xe8, 60);
                     break;
 
                 case (int)QShared.temp_event_t.TE_GUNSHOT: /* bullet hitting wall */
@@ -55,14 +55,14 @@ namespace Quake2 {
                     pos = msg.ReadPos();
                     dir = msg.ReadDir(common);
 
-                //     if (type == TE_GUNSHOT)
-                //     {
-                //         CL_ParticleEffect(pos, dir, 0, 40);
-                //     }
-                //     else
-                //     {
-                //         CL_ParticleEffect(pos, dir, 0xe0, 6);
-                //     }
+                    if (type == (int)QShared.temp_event_t.TE_GUNSHOT)
+                    {
+                        CL_ParticleEffect(pos, dir, 0, 40);
+                    }
+                    else
+                    {
+                        CL_ParticleEffect(pos, dir, 0xe0, 6);
+                    }
 
                 //     if (type != TE_SPARKS)
                 //     {
@@ -91,15 +91,15 @@ namespace Quake2 {
                     pos = msg.ReadPos();
                     dir = msg.ReadDir(common);
 
-                //     if (type == TE_SCREEN_SPARKS)
-                //     {
-                //         CL_ParticleEffect(pos, dir, 0xd0, 40);
-                //     }
+                    if (type == (int)QShared.temp_event_t.TE_SCREEN_SPARKS)
+                    {
+                        CL_ParticleEffect(pos, dir, 0xd0, 40);
+                    }
 
-                //     else
-                //     {
-                //         CL_ParticleEffect(pos, dir, 0xb0, 40);
-                //     }
+                    else
+                    {
+                        CL_ParticleEffect(pos, dir, 0xb0, 40);
+                    }
 
                 //     if (cl_limitsparksounds->value)
                 //     {
@@ -138,7 +138,7 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_SHOTGUN: /* bullet hitting wall */
                     pos = msg.ReadPos();
                     dir = msg.ReadDir(common);
-                //     CL_ParticleEffect(pos, dir, 0, 20);
+                    CL_ParticleEffect(pos, dir, 0, 20);
                 //     CL_SmokeAndFlash(pos);
                     break;
 

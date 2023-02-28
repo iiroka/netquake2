@@ -730,6 +730,90 @@ namespace Quake2 {
             GL3_UpdateUBO3D(gl);
         }
 
+        private void GL3_DrawParticles(GL gl)
+        {
+            // TODO: stereo
+            //qboolean stereo_split_tb = ((gl_state.stereo_mode == STEREO_SPLIT_VERTICAL) && gl_state.camera_separation);
+            //qboolean stereo_split_lr = ((gl_state.stereo_mode == STEREO_SPLIT_HORIZONTAL) && gl_state.camera_separation);
+
+            //if (!(stereo_split_tb || stereo_split_lr))
+            // {
+        //         int i;
+                int numParticles = gl3_newrefdef.num_particles;
+        //         YQ2_ALIGNAS_TYPE(unsigned) byte color[4];
+        //         const particle_t *p;
+        //         // assume the size looks good with window height 480px and scale according to real resolution
+        //         float pointSize = gl3_particle_size->value * (float)gl3_newrefdef.height/480.0f;
+
+        //         typedef struct part_vtx {
+        //             GLfloat pos[3];
+        //             GLfloat size;
+        //             GLfloat dist;
+        //             GLfloat color[4];
+        //         } part_vtx;
+        //         assert(sizeof(part_vtx)==9*sizeof(float)); // remember to update GL3_SurfInit() if this changes!
+
+                // Don't try to draw particles if there aren't any.
+                if (numParticles == 0)
+                {
+                    return;
+                }
+
+        //         YQ2_VLA(part_vtx, buf, numParticles);
+
+        //         // TODO: viewOrg could be in UBO
+        //         vec3_t viewOrg;
+        //         VectorCopy(gl3_newrefdef.vieworg, viewOrg);
+
+                gl.DepthMask(false);
+                gl.Enable(EnableCap.Blend);
+
+        // #ifdef YQ2_GL3_GLES
+        //         // the RPi4 GLES3 implementation doesn't draw particles if culling is
+        //         // enabled (at least with GL_FRONT which seems to be default in q2?)
+        //         glDisable(GL_CULL_FACE);
+        // #else
+                // GLES doesn't have this, maybe it's always enabled? (https://gamedev.stackexchange.com/a/15528 says it works)
+                // luckily we don't use glPointSize() but set gl_PointSize in shader anyway
+                gl.Enable(EnableCap.ProgramPointSize);
+        // #endif
+
+                GL3_UseProgram(gl, gl3state.siParticle.shaderProgram);
+
+        //         for ( i = 0, p = gl3_newrefdef.particles; i < numParticles; i++, p++ )
+        //         {
+        //             *(int *) color = d_8to24table [ p->color & 0xFF ];
+        //             part_vtx* cur = &buf[i];
+        //             vec3_t offset; // between viewOrg and particle position
+        //             VectorSubtract(viewOrg, p->origin, offset);
+
+        //             VectorCopy(p->origin, cur->pos);
+        //             cur->size = pointSize;
+        //             cur->dist = VectorLength(offset);
+
+        //             for(int j=0; j<3; ++j)  cur->color[j] = color[j]*(1.0f/255.0f);
+
+        //             cur->color[3] = p->alpha;
+        //         }
+
+                GL3_BindVAO(gl, gl3state.vaoParticle);
+                GL3_BindVBO(gl, gl3state.vboParticle);
+        //         glBufferData(GL_ARRAY_BUFFER, sizeof(part_vtx)*numParticles, buf, GL_STREAM_DRAW);
+                gl.DrawArrays(GLEnum.Points, 0, (uint)numParticles);
+
+                gl.Disable(EnableCap.Blend);
+                gl.DepthMask(true);
+        // #ifdef YQ2_GL3_GLES
+        //         if(r_cull->value != 0.0f)
+        //             glEnable(GL_CULL_FACE);
+        // #else
+                gl.Disable(EnableCap.ProgramPointSize);
+        // #endif
+
+        //         YQ2_VLAFREE(buf);
+        //     }
+        }
+
         private void GL3_DrawEntitiesOnList(GL gl)
         {
             int i;
@@ -1365,7 +1449,7 @@ namespace Quake2 {
             // kick the silly gl1_flashblend poly lights
             // GL3_RenderDlights();
 
-        //     GL3_DrawParticles();
+            GL3_DrawParticles(gl);
 
             // Ikn GL3_DrawAlphaSurfaces(gl);
 

@@ -35,6 +35,9 @@ namespace Quake2 {
 
         private entity_t[] r_entities = new entity_t[QRef.MAX_ENTITIES];
         private int r_numentities;
+        private int r_numparticles;
+        private particle_t[] r_particles = new particle_t[QRef.MAX_PARTICLES];
+
         private string[] cl_weaponmodels = {};
 
         /*
@@ -44,7 +47,7 @@ namespace Quake2 {
         {
             r_numdlights = 0;
             r_numentities = 0;
-            // r_numparticles = 0;
+            r_numparticles = 0;
         }
 
         private void V_AddEntity(in entity_t ent)
@@ -55,6 +58,19 @@ namespace Quake2 {
             }
 
             r_entities[r_numentities++] = ent;
+        }
+
+        private void V_AddParticle(in Vector3 org, uint color, float alpha)
+        {
+            if (r_numparticles >= QRef.MAX_PARTICLES)
+            {
+                return;
+            }
+
+            r_particles[r_numparticles].origin = org;
+            r_particles[r_numparticles].color = (int)color;
+            r_particles[r_numparticles].alpha = alpha;
+            r_numparticles += 1;
         }
 
         private void V_AddLightStyle(int style, float r, float g, float b)
@@ -353,8 +369,8 @@ namespace Quake2 {
 
                 cl.refdef.num_entities = r_numentities;
                 cl.refdef.entities = r_entities;
-                // cl.refdef.num_particles = r_numparticles;
-                // cl.refdef.particles = r_particles;
+                cl.refdef.num_particles = r_numparticles;
+                cl.refdef.particles = r_particles;
                 cl.refdef.num_dlights = r_numdlights;
                 cl.refdef.dlights = r_dlights;
                 cl.refdef.lightstyles = r_lightstyles;

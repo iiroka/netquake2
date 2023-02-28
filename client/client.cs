@@ -37,6 +37,9 @@ namespace Quake2 {
         it can be un-deltad from the original */
         private const int MAX_PARSE_ENTITIES	= 1024;
 
+        private const int PARTICLE_GRAVITY = 40;
+        private const float INSTANT_PARTICLE = -10000.0f;
+
 
         private class frame_t : ICloneable
         {
