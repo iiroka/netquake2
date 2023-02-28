@@ -60,6 +60,28 @@ namespace Quake2 {
 
         public image_s?	skin; /* NULL for inline skin */
         public int		flags;
+
+
+        public void Clear() {
+            model = null;
+            angles.X = 0;
+            angles.Y = 0;
+            angles.Z = 0;
+            origin.X = 0;
+            origin.Y = 0;
+            origin.Z = 0;
+            frame = 0;
+            oldorigin.X = 0;
+            oldorigin.Y = 0;
+            oldorigin.Z = 0;
+            oldframe = 0;
+            backlerp = 0;
+            skinnum = 0;
+            lightstyle = 0;
+            alpha = 0;
+            skin = null;
+            flags = 0;
+        }
     }
 
     internal struct dlight_t {

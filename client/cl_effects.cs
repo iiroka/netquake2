@@ -766,6 +766,46 @@ namespace Quake2 {
             // }
         }        
 
+        /*
+        *  Wall impact puffs
+        */
+        private void CL_BlasterParticles(in Vector3 org, in Vector3 dir)
+        {
+            float time = (float)cl.time;
+
+            var count = 40;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (free_particles == null)
+                {
+                    return;
+                }
+
+                var p = free_particles;
+                free_particles = p.next;
+                p.next = active_particles;
+                active_particles = p;
+
+                p.time = time;
+                p.color = 0xe0 + (QShared.randk() & 7);
+                float d = QShared.randk() & 15;
+
+                p.org.X = org.X + ((QShared.randk() & 7) - 4) + d * dir.X;
+                p.org.Y = org.Y + ((QShared.randk() & 7) - 4) + d * dir.Y;
+                p.org.Z = org.Z + ((QShared.randk() & 7) - 4) + d * dir.Z;
+                p.vel.X = dir.X * 30 + QShared.crandk() * 40;
+                p.vel.Y = dir.Y * 30 + QShared.crandk() * 40;
+                p.vel.Z = dir.Z * 30 + QShared.crandk() * 40;
+
+                p.accel.X = p.accel.Y = 0;
+                p.accel.Z = -PARTICLE_GRAVITY;
+                p.alpha = 1.0f;
+
+                p.alphavel = -1.0f / (0.5f + QShared.frandk() * 0.3f);
+            }
+        }
+
         private void CL_ClearEffects()
         {
             CL_ClearParticles();

@@ -23,10 +23,141 @@
  *
  * =======================================================================
  */
+using System.Numerics;
 
 namespace Quake2 {
 
     partial class QClient {
+
+        private enum exptype_t
+        {
+            ex_free, ex_explosion, ex_misc, ex_flash, ex_mflash, ex_poly, ex_poly2
+        }
+
+        private struct explosion_t {
+            public exptype_t type;
+            public entity_t ent;
+
+            public int frames;
+            public float light;
+            public Vector3 lightcolor;
+            public float start;
+            public int baseframe;
+
+            public void Clear() {
+                type = exptype_t.ex_free;
+                ent.Clear();
+                frames = 0;
+                light = 0;
+                lightcolor.X = 0;
+                lightcolor.Y = 0;
+                lightcolor.Z = 0;
+                start = 0;
+                baseframe = 0;
+            }
+        }
+
+        const int MAX_EXPLOSIONS = 64;
+        const int MAX_BEAMS = 64;
+        const int MAX_LASERS = 64;
+
+        private explosion_t[] cl_explosions = new explosion_t[MAX_EXPLOSIONS];
+
+        private model_s? cl_mod_explode;
+        private model_s? cl_mod_smoke;
+        private model_s? cl_mod_flash;
+
+        private void CL_RegisterTEntModels()
+        {
+            cl_mod_explode = vid.R_RegisterModel("models/objects/explode/tris.md2");
+            cl_mod_smoke = vid.R_RegisterModel("models/objects/smoke/tris.md2");
+            cl_mod_flash = vid.R_RegisterModel("models/objects/flash/tris.md2");
+            // cl_mod_parasite_segment = R_RegisterModel("models/monsters/parasite/segment/tris.md2");
+            // cl_mod_grapple_cable = R_RegisterModel("models/ctf/segment/tris.md2");
+            // cl_mod_parasite_tip = R_RegisterModel("models/monsters/parasite/tip/tris.md2");
+            // cl_mod_explo4 = R_RegisterModel("models/objects/r_explode/tris.md2");
+            // cl_mod_bfg_explo = R_RegisterModel("sprites/s_bfg2.sp2");
+            // cl_mod_powerscreen = R_RegisterModel("models/items/armor/effect/tris.md2");
+
+            // R_RegisterModel("models/objects/laser/tris.md2");
+            // R_RegisterModel("models/objects/grenade2/tris.md2");
+            // R_RegisterModel("models/weapons/v_machn/tris.md2");
+            // R_RegisterModel("models/weapons/v_handgr/tris.md2");
+            // R_RegisterModel("models/weapons/v_shotg2/tris.md2");
+            // R_RegisterModel("models/objects/gibs/bone/tris.md2");
+            // R_RegisterModel("models/objects/gibs/sm_meat/tris.md2");
+            // R_RegisterModel("models/objects/gibs/bone2/tris.md2");
+
+            // Draw_FindPic("w_machinegun");
+            // Draw_FindPic("a_bullets");
+            // Draw_FindPic("i_health");
+            // Draw_FindPic("a_grenades");
+
+            // cl_mod_explo4_big = R_RegisterModel("models/objects/r_explode2/tris.md2");
+            // cl_mod_lightning = R_RegisterModel("models/proj/lightning/tris.md2");
+            // cl_mod_heatbeam = R_RegisterModel("models/proj/beam/tris.md2");
+            // cl_mod_monster_heatbeam = R_RegisterModel("models/proj/widowbeam/tris.md2");
+        }
+
+        private void CL_ClearTEnts()
+        {
+            // memset(cl_beams, 0, sizeof(cl_beams));
+            // memset(cl_explosions, 0, sizeof(cl_explosions));
+            for (int i = 0; i < cl_explosions.Length; i++) cl_explosions[i].Clear();
+            // memset(cl_lasers, 0, sizeof(cl_lasers));
+
+            // memset(cl_playerbeams, 0, sizeof(cl_playerbeams));
+            // memset(cl_sustains, 0, sizeof(cl_sustains));
+        }
+
+
+        private ref explosion_t CL_AllocExplosion()
+        {
+            for (int i = 0; i < MAX_EXPLOSIONS; i++)
+            {
+                if (cl_explosions[i].type == exptype_t.ex_free)
+                {
+                    cl_explosions[i].Clear();
+                    return ref cl_explosions[i];
+                }
+            }
+
+            /* find the oldest explosion */
+            float time = (float)cl.time;
+            int index = 0;
+
+            for (int i = 0; i < MAX_EXPLOSIONS; i++)
+            {
+                if (cl_explosions[i].start < time)
+                {
+                    time = cl_explosions[i].start;
+                    index = i;
+                }
+            }
+
+            cl_explosions[index].Clear();
+            return ref cl_explosions[index];
+        }
+
+        private void CL_SmokeAndFlash(in Vector3 origin)
+        {
+            var ex = CL_AllocExplosion();
+            ex.ent.origin = origin;
+            ex.type = exptype_t.ex_misc;
+            ex.frames = 4;
+            ex.ent.flags = QShared.RF_TRANSLUCENT;
+            ex.start = cl.frame.servertime - 100.0f;
+            ex.ent.model = cl_mod_smoke;
+
+            ex = CL_AllocExplosion();
+            ex.ent.origin = origin;
+            ex.type = exptype_t.ex_flash;
+            ex.ent.flags = QShared.RF_FULLBRIGHT;
+            ex.frames = 2;
+            ex.start = cl.frame.servertime - 100.0f;
+            ex.ent.model = cl_mod_flash;
+        }
+
 
         private void CL_ParseTEnt(ref QReadbuf msg)
         {
@@ -139,7 +270,7 @@ namespace Quake2 {
                     pos = msg.ReadPos();
                     dir = msg.ReadDir(common);
                     CL_ParticleEffect(pos, dir, 0, 20);
-                //     CL_SmokeAndFlash(pos);
+                    CL_SmokeAndFlash(pos);
                     break;
 
                 // case TE_SPLASH: /* bullet hitting water */
@@ -196,7 +327,7 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_BLASTER: { /* blaster hitting wall */
                     pos = msg.ReadPos();
                     dir = msg.ReadDir(common);
-                //     CL_BlasterParticles(pos, dir);
+                    CL_BlasterParticles(pos, dir);
 
                 //     ex = CL_AllocExplosion();
                 //     VectorCopy(pos, ex->ent.origin);
@@ -637,6 +768,146 @@ namespace Quake2 {
                     break;
             }
         }
+
+        private void CL_AddExplosions()
+        {
+            // entity_t *ent;
+            // int i;
+            // explosion_t *ex;
+            // float frac;
+            // int f;
+
+            // memset(&ent, 0, sizeof(ent));
+
+            for (int i = 0; i < MAX_EXPLOSIONS; i++)
+            {
+                ref var ex = ref cl_explosions[i];
+                if (ex.type == exptype_t.ex_free)
+                {
+                    continue;
+                }
+
+                float frac = (cl.time - ex.start) / 100.0f;
+                int f = (int)MathF.Floor(frac);
+
+                ref var ent = ref ex.ent;
+
+                switch (ex.type)
+                {
+                    case exptype_t.ex_mflash:
+
+                        if (f >= ex.frames - 1)
+                        {
+                            ex.type = exptype_t.ex_free;
+                        }
+
+                        break;
+                    case exptype_t.ex_misc:
+
+                        if (f >= ex.frames - 1)
+                        {
+                            ex.type = exptype_t.ex_free;
+                            break;
+                        }
+
+                        ent.alpha = 1.0f - frac / (ex.frames - 1);
+                        break;
+                    case exptype_t.ex_flash:
+
+                        if (f >= 1)
+                        {
+                            ex.type = exptype_t.ex_free;
+                            break;
+                        }
+
+                        ent.alpha = 1.0f;
+                        break;
+                    case exptype_t.ex_poly:
+
+                        if (f >= ex.frames - 1)
+                        {
+                            ex.type = exptype_t.ex_free;
+                            break;
+                        }
+
+                        ent.alpha = (16.0f - (float)f) / 16.0f;
+
+                        if (f < 10)
+                        {
+                            ent.skinnum = (f >> 1);
+
+                            if (ent.skinnum < 0)
+                            {
+                                ent.skinnum = 0;
+                            }
+                        }
+                        else
+                        {
+                            ent.flags |= QShared.RF_TRANSLUCENT;
+
+                            if (f < 13)
+                            {
+                                ent.skinnum = 5;
+                            }
+
+                            else
+                            {
+                                ent.skinnum = 6;
+                            }
+                        }
+
+                        break;
+                    case exptype_t.ex_poly2:
+
+                        if (f >= ex.frames - 1)
+                        {
+                            ex.type = exptype_t.ex_free;
+                            break;
+                        }
+
+                        ent.alpha = (5.0f - (float)f) / 5.0f;
+                        ent.skinnum = 0;
+                        ent.flags |= QShared.RF_TRANSLUCENT;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (ex.type == exptype_t.ex_free)
+                {
+                    continue;
+                }
+
+                if (ex.light != 0)
+                {
+                    V_AddLight(ent.origin, ex.light * ent.alpha,
+                            ex.lightcolor.X, ex.lightcolor.Y, ex.lightcolor.Z);
+                }
+
+                ent.oldorigin = ent.origin;
+
+                if (f < 0)
+                {
+                    f = 0;
+                }
+
+                ent.frame = ex.baseframe + f + 1;
+                ent.oldframe = ex.baseframe + f;
+                ent.backlerp = 1.0f - cl.lerpfrac;
+
+                V_AddEntity(ent);
+            }
+        }
+
+        private void CL_AddTEnts()
+        {
+            // CL_AddBeams();
+            // CL_AddPlayerBeams();
+            CL_AddExplosions();
+            // CL_AddLasers();
+            // CL_ProcessSustain();
+        }
+
 
     }
 }

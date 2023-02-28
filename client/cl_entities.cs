@@ -802,7 +802,7 @@ namespace Quake2 {
 
             CL_CalcViewValues();
             CL_AddPacketEntities(cl.frame);
-            // CL_AddTEnts();
+            CL_AddTEnts();
             CL_AddParticles();
             CL_AddDLights();
             CL_AddLightStyles();

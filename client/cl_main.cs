@@ -121,7 +121,7 @@ namespace Quake2 {
         {
             // S_StopAllSounds();
             CL_ClearEffects();
-            // CL_ClearTEnts();
+            CL_ClearTEnts();
 
             /* wipe the entire cl structure */
             cl = new client_state_t();

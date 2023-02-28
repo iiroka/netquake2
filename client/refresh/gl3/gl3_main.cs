@@ -730,7 +730,14 @@ namespace Quake2 {
             GL3_UpdateUBO3D(gl);
         }
 
-        private void GL3_DrawParticles(GL gl)
+        private struct part_vtx {
+            public Vector3D<float> pos;
+            public float size;
+            public float dist;
+            public Vector4D<float> color;
+        }
+
+        private unsafe void GL3_DrawParticles(GL gl)
         {
             // TODO: stereo
             //qboolean stereo_split_tb = ((gl_state.stereo_mode == STEREO_SPLIT_VERTICAL) && gl_state.camera_separation);
@@ -738,20 +745,9 @@ namespace Quake2 {
 
             //if (!(stereo_split_tb || stereo_split_lr))
             // {
-        //         int i;
                 int numParticles = gl3_newrefdef.num_particles;
-        //         YQ2_ALIGNAS_TYPE(unsigned) byte color[4];
-        //         const particle_t *p;
-        //         // assume the size looks good with window height 480px and scale according to real resolution
-        //         float pointSize = gl3_particle_size->value * (float)gl3_newrefdef.height/480.0f;
+                float pointSize = gl3_particle_size!.Float * (float)gl3_newrefdef.height/480.0f;
 
-        //         typedef struct part_vtx {
-        //             GLfloat pos[3];
-        //             GLfloat size;
-        //             GLfloat dist;
-        //             GLfloat color[4];
-        //         } part_vtx;
-        //         assert(sizeof(part_vtx)==9*sizeof(float)); // remember to update GL3_SurfInit() if this changes!
 
                 // Don't try to draw particles if there aren't any.
                 if (numParticles == 0)
@@ -759,11 +755,10 @@ namespace Quake2 {
                     return;
                 }
 
-        //         YQ2_VLA(part_vtx, buf, numParticles);
+                var buf = new part_vtx[numParticles];
 
-        //         // TODO: viewOrg could be in UBO
-        //         vec3_t viewOrg;
-        //         VectorCopy(gl3_newrefdef.vieworg, viewOrg);
+                // TODO: viewOrg could be in UBO
+                var viewOrg = gl3_newrefdef.vieworg;
 
                 gl.DepthMask(false);
                 gl.Enable(EnableCap.Blend);
@@ -780,25 +775,30 @@ namespace Quake2 {
 
                 GL3_UseProgram(gl, gl3state.siParticle.shaderProgram);
 
-        //         for ( i = 0, p = gl3_newrefdef.particles; i < numParticles; i++, p++ )
-        //         {
-        //             *(int *) color = d_8to24table [ p->color & 0xFF ];
-        //             part_vtx* cur = &buf[i];
-        //             vec3_t offset; // between viewOrg and particle position
-        //             VectorSubtract(viewOrg, p->origin, offset);
+                for (int i = 0; i < numParticles; i++)
+                {
+                    ref var p = ref gl3_newrefdef.particles[i];
+                    var color = d_8to24table [ p.color & 0xFF ];
+                    ref var cur = ref buf[i];
+                    var offset = viewOrg - p.origin;
 
-        //             VectorCopy(p->origin, cur->pos);
-        //             cur->size = pointSize;
-        //             cur->dist = VectorLength(offset);
+                    cur.pos.X = p.origin.X;
+                    cur.pos.Y = p.origin.Y;
+                    cur.pos.Z = p.origin.Z;
+                    cur.size = pointSize;
+                    cur.dist = offset.Length();
 
-        //             for(int j=0; j<3; ++j)  cur->color[j] = color[j]*(1.0f/255.0f);
-
-        //             cur->color[3] = p->alpha;
-        //         }
+                    cur.color.X = (float)((color >> 0) & 0xFF) / 255.0f;
+                    cur.color.Y = (float)((color >> 8) & 0xFF) / 255.0f;
+                    cur.color.Z = (float)((color >> 16) & 0xFF) / 255.0f;
+                    cur.color.W = p.alpha;
+                }
 
                 GL3_BindVAO(gl, gl3state.vaoParticle);
                 GL3_BindVBO(gl, gl3state.vboParticle);
-        //         glBufferData(GL_ARRAY_BUFFER, sizeof(part_vtx)*numParticles, buf, GL_STREAM_DRAW);
+                fixed (void *p = buf) {
+                    gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(sizeof(part_vtx)*numParticles), p, BufferUsageARB.StreamDraw);
+                }
                 gl.DrawArrays(GLEnum.Points, 0, (uint)numParticles);
 
                 gl.Disable(EnableCap.Blend);
