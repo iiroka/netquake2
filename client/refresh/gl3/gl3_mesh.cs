@@ -33,6 +33,8 @@ namespace Quake2 {
 
     partial class QRefGl3
     {
+        const int SHADEDOT_QUANT = 16;
+
 
         private (int, int) CountVerticesAndIndices(in gl3aliasmodel_t model)
         {
@@ -123,9 +125,9 @@ namespace Quake2 {
                     (QShared.RF_SHELL_RED | QShared.RF_SHELL_GREEN | QShared.RF_SHELL_BLUE | QShared.RF_SHELL_DOUBLE |
                     QShared.RF_SHELL_HALF_DAM)));
 
-            // // TODO: maybe we could somehow store the non-rotated normal and do the dot in shader?
-            // float* shadedots = r_avertexnormal_dots[((int)(entity->angles[1] *
-            //             (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
+            // TODO: maybe we could somehow store the non-rotated normal and do the dot in shader?
+            ref var shadedots = ref r_avertexnormal_dots[((int)(entity.angles.Y *
+                        (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
             ref var frame = ref model.frames[entity.frame];
             // verts = v = frame->verts;
@@ -243,7 +245,6 @@ namespace Quake2 {
                 }
                 else
                 {
-            //         int i;
                     for(int i=0; i<count; ++i)
                     {
                         ref var cur = ref vertexBuffer[vertexCount + i];
@@ -257,15 +258,10 @@ namespace Quake2 {
                         /* normals and vertexes come from the frame list */
                         // shadedots is set above according to rotation (around Z axis I think)
                         // to one of 16 (SHADEDOT_QUANT) presets in r_avertexnormal_dots
-            //             l = shadedots[verts[index_xyz].lightnormalindex];
+                        var l = shadedots[frame.verts[index_xyz].lightnormalindex];
 
                         cur.pos = s_lerped[index_xyz];
-                        cur.color = new Vector4D<float>(shadelight.X, shadelight.Y, shadelight.Z, alpha);
-            //             for(j=0; j<3; ++j)
-            //             {
-            //                 cur->pos[j] = s_lerped[index_xyz][j];
-            //                 cur->color[j] = l * shadelight[j];
-            //             }
+                        cur.color = new Vector4D<float>(l * shadelight.X, l * shadelight.Y, l * shadelight.Z, alpha);
                         cur.color.W = alpha;
                     }
                 }
@@ -480,48 +476,48 @@ namespace Quake2 {
             // paliashdr = (dmdl_t *)model->extradata;
 
             /* get lighting information */
-            Vector3 shadelight;
-            // if (entity.flags &
-            //     (RF_SHELL_HALF_DAM | RF_SHELL_GREEN | RF_SHELL_RED |
-            //     RF_SHELL_BLUE | RF_SHELL_DOUBLE))
-            // {
+            Vector3 shadelight = new Vector3();
+            if ((entity.flags &
+                (QShared.RF_SHELL_HALF_DAM | QShared.RF_SHELL_GREEN | QShared.RF_SHELL_RED |
+                QShared.RF_SHELL_BLUE | QShared.RF_SHELL_DOUBLE)) != 0)
+            {
             //     VectorClear(shadelight);
 
-            //     if (entity->flags & RF_SHELL_HALF_DAM)
-            //     {
-            //         shadelight[0] = 0.56;
-            //         shadelight[1] = 0.59;
-            //         shadelight[2] = 0.45;
-            //     }
+                if ((entity.flags & QShared.RF_SHELL_HALF_DAM) != 0)
+                {
+                    shadelight.X = 0.56f;
+                    shadelight.Y = 0.59f;
+                    shadelight.Z = 0.45f;
+                }
 
-            //     if (entity->flags & RF_SHELL_DOUBLE)
-            //     {
-            //         shadelight[0] = 0.9;
-            //         shadelight[1] = 0.7;
-            //     }
+                if ((entity.flags & QShared.RF_SHELL_DOUBLE) != 0)
+                {
+                    shadelight.X = 0.9f;
+                    shadelight.Y = 0.7f;
+                }
 
-            //     if (entity->flags & RF_SHELL_RED)
-            //     {
-            //         shadelight[0] = 1.0;
-            //     }
+                if ((entity.flags & QShared.RF_SHELL_RED) != 0)
+                {
+                    shadelight.X = 1.0f;
+                }
 
-            //     if (entity->flags & RF_SHELL_GREEN)
-            //     {
-            //         shadelight[1] = 1.0;
-            //     }
+                if ((entity.flags & QShared.RF_SHELL_GREEN) != 0)
+                {
+                    shadelight.Y = 1.0f;
+                }
 
-            //     if (entity->flags & RF_SHELL_BLUE)
-            //     {
-            //         shadelight[2] = 1.0;
-            //     }
-            // }
-            // else if (entity.flags & RF_FULLBRIGHT)
-            // {
+                if ((entity.flags & QShared.RF_SHELL_BLUE) != 0)
+                {
+                    shadelight.Z = 1.0f;
+                }
+            }
+            else if ((entity.flags & QShared.RF_FULLBRIGHT) != 0)
+            {
                 shadelight = new Vector3(1.0f);
-            // }
-            // else
-            // {
-            //     GL3_LightPoint(entity, entity->origin, shadelight);
+            }
+            else
+            {
+                GL3_LightPoint(entity, entity.origin, out shadelight);
 
             //     /* player lighting hack for communication back to server */
             //     if (entity->flags & RF_WEAPONMODEL)
@@ -551,7 +547,7 @@ namespace Quake2 {
             //             }
             //         }
             //     }
-            // }
+            }
 
             if ((entity.flags & QShared.RF_MINLIGHT) != 0)
             {

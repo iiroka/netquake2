@@ -797,7 +797,7 @@ namespace Quake2 {
             if (gl3_viewcluster2 != gl3_viewcluster)
             {
                 var fatvis = new byte[QCommon.MAX_MAP_LEAFS / 8];
-                Array.Copy(fatvis, vis, (gl3_worldmodel.numleafs + 7) / 8);
+                Array.Copy(vis, fatvis, (gl3_worldmodel.numleafs + 7) / 8);
                 vis = GL3_Mod_ClusterPVS(gl3_viewcluster2, gl3_worldmodel);
                 var c = (gl3_worldmodel.numleafs + 7) / 8;
 

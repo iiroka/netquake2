@@ -39,6 +39,26 @@ namespace Quake2 {
         private int bobcycle; /* odd cycles are right foot going forward */
         private float bobfracsin; /* sin(bobfrac*M_PI) */
 
+        private float SV_CalcRoll(in Vector3 angles, in Vector3 velocity)
+        {
+            var side = Vector3.Dot(velocity, right);
+            float sign = side < 0 ? -1 : 1;
+            side = MathF.Abs(side);
+
+            var value = sv_rollangle!.Float;
+
+            if (side < sv_rollspeed!.Float)
+            {
+                side = side * value / sv_rollspeed!.Float;
+            }
+            else
+            {
+                side = value;
+            }
+
+            return side * sign;
+        }
+
         /*
         * fall from 128: 400 = 160000
         * fall from 256: 580 = 336400
@@ -317,7 +337,6 @@ namespace Quake2 {
         private void ClientEndServerFrame(edict_t ent)
         {
             float bobtime;
-            int i;
 
             if (ent == null)
             {
@@ -354,20 +373,20 @@ namespace Quake2 {
             // /* burn from lava, etc */
             // P_WorldEffects();
 
-            // /* set model angles from view angles so other things in
-            // the world can tell which direction you are looking */
-            // if (ent->client->v_angle[PITCH] > 180)
-            // {
-            //     ent->s.angles[PITCH] = (-360 + ent->client->v_angle[PITCH]) / 3;
-            // }
-            // else
-            // {
+            /* set model angles from view angles so other things in
+               the world can tell which direction you are looking */
+            if (current_client.v_angle.Pitch() > 180)
+            {
+                ent.s.angles.SetPitch((-360 + current_client.v_angle.Pitch()) / 3);
+            }
+            else
+            {
                 ent.s.angles.SetPitch(current_client.v_angle.Pitch() / 3);
-            // }
+            }
 
             ent.s.angles.SetYaw(current_client.v_angle.Yaw());
             ent.s.angles.SetRoll(0);
-            // ent->s.angles[ROLL] = SV_CalcRoll(ent->s.angles, ent->velocity) * 4;
+            ent.s.angles.SetRoll(SV_CalcRoll(ent.s.angles, ent.velocity) * 4);
 
             /* calculate speed and cycle to be used for
             all cyclic walking effects */

@@ -326,8 +326,8 @@ namespace Quake2 {
                 cmd.sidemove -= (short)(cl_sidespeed!.Float * CL_KeyState(ref in_left));
             }
 
-            // cmd->sidemove += cl_sidespeed->value * CL_KeyState(&in_moveright);
-            // cmd->sidemove -= cl_sidespeed->value * CL_KeyState(&in_moveleft);
+            cmd.sidemove += (short)(cl_sidespeed!.Float * CL_KeyState(ref in_moveright));
+            cmd.sidemove -= (short)(cl_sidespeed!.Float * CL_KeyState(ref in_moveleft));
 
             // cmd->upmove += cl_upspeed->value * CL_KeyState(&in_up);
             // cmd->upmove -= cl_upspeed->value * CL_KeyState(&in_down);

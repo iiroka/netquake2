@@ -475,6 +475,7 @@ namespace Quake2 {
         private bool[] menubound = new bool[(int)QKEYS.K_LAST]; /* if true, can't be rebound while in menu */
         private int[] key_repeats = new int[(int)QKEYS.K_LAST]; /* if > 1, it is autorepeating */
         private bool[] keydown = new bool[(int)QKEYS.K_LAST];
+        private int anykeydown;
 
         /*
         * Returns a key number to be used to index
@@ -813,19 +814,19 @@ namespace Quake2 {
             and try to forget. */
             if (down)
             {
-                // if (key_repeats[key] == 1)
-                // {
-                //     anykeydown++;
-                // }
+                if (key_repeats[key] == 1)
+                {
+                    anykeydown++;
+                }
             }
             else
             {
-            //     anykeydown--;
+                anykeydown--;
 
-            //     if (anykeydown < 0)
-            //     {
-            //         anykeydown = 0;
-            //     }
+                if (anykeydown < 0)
+                {
+                    anykeydown = 0;
+                }
             }
 
             /* key up events only generate commands if the game key binding
@@ -839,7 +840,8 @@ namespace Quake2 {
 
                 if (!String.IsNullOrEmpty(kb) && (kb[0] == '+'))
                 {
-                    var cmd= $"-{kb.Substring(1)} {key} {time}\n";
+                    var cmd = $"-{kb.Substring(1)} {key} {time}\n";
+                    Console.Write(cmd);
                     common.Cbuf_AddText(cmd);
                 }
 
@@ -858,6 +860,7 @@ namespace Quake2 {
                     {
                         /* button commands add keynum and time as a parm */
                         var cmd = $"{kb} {key} {time}\n";
+                        Console.Write(cmd);
                         common.Cbuf_AddText(cmd);
                     }
                     else

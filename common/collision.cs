@@ -1080,7 +1080,7 @@ namespace Quake2 {
 
                 /* spread the mins / maxs by a pixel */
                 map_cmodels[i].mins = new Vector3(ind.mins[0]-1, ind.mins[1]-1, ind.mins[2]-1);
-                map_cmodels[i].maxs = new Vector3(ind.maxs[0]-1, ind.maxs[1]-1, ind.maxs[2]-1);
+                map_cmodels[i].maxs = new Vector3(ind.maxs[0]+1, ind.maxs[1]+1, ind.maxs[2]+1);
                 map_cmodels[i].origin = new Vector3(ind.origin);
 
                 map_cmodels[i].headnode = ind.headnode;
@@ -1147,8 +1147,8 @@ namespace Quake2 {
                 {
                     map_nodes[i].children[j] = ind.children[j];
                 }
-	}
-}
+            }
+        }
 
         private void CMod_LoadBrushes(byte[] buf, in lump_t l)
         {
@@ -1196,7 +1196,6 @@ namespace Quake2 {
 
             numleafs = count;
             numclusters = 0;
-            Console.WriteLine($"numleafs = {numleafs}");
 
             for (int i = 0; i < count; i++)
             {
@@ -1300,7 +1299,7 @@ namespace Quake2 {
 
             for (int i = 0; i < count; i++)
             {
-                map_leafbrushes[i] =BitConverter.ToUInt16(buf, l.fileofs + i * 2);
+                map_leafbrushes[i] = BitConverter.ToUInt16(buf, l.fileofs + i * 2);
             }
         }
 

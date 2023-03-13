@@ -252,6 +252,25 @@ namespace Quake2 {
             client.resp.coop_respawn = client.pers;
         }
 
+        private void FetchClientEntData(edict_t ent)
+        {
+            if (ent == null) {
+                return;
+            }
+            var client = (gclient_t)(ent!.client)!;
+
+            ent.health = client.pers.health;
+            ent.max_health = client.pers.max_health;
+            ent.flags |= (uint)client.pers.savedFlags;
+
+            // if (coop->value)
+            // {
+            //     ent->client->resp.score = ent->client->pers.score;
+            // }
+        }
+
+        /* ======================================================================= */
+
         /*
         * Chooses a player start, deathmatch start, coop start, etc
         */
@@ -431,8 +450,8 @@ namespace Quake2 {
 
             client.resp = resp;
 
-            // /* copy some data from the client to the entity */
-            // FetchClientEntData(ent);
+            /* copy some data from the client to the entity */
+            FetchClientEntData(ent);
 
             /* clear entity values */
             ent.groundentity = null;
@@ -555,9 +574,6 @@ namespace Quake2 {
         */
         public void ClientBegin(edict_s sent)
         {
-            int i;
-            Console.WriteLine("ClientBegin");
-
             if (sent == null || !(sent is edict_t))
             {
                 return;
@@ -574,9 +590,6 @@ namespace Quake2 {
 
             /* if there is already a body waiting for us (a loadgame),
             just take it, otherwise spawn one from scratch */
-            Console.WriteLine($"ent.inuse {ent.inuse}");
-            Console.WriteLine($"ent.index {ent.index}");
-            Console.WriteLine($"ent.client {ent.client}");
             if (ent.inuse == true)
             {
                 /* the client has cleared the client side viewangles upon
@@ -895,7 +908,7 @@ namespace Quake2 {
                 pm.cmd = ucmd;
 
                 pm.trace = PM_trace; /* adds default parms */
-            //     pm.pointcontents = gi.pointcontents;
+                // pm.pointcontents = gi.pointcontents;
 
                 /* perform a pmove */
                 gi.Pmove(ref pm);
@@ -904,8 +917,8 @@ namespace Quake2 {
                 client.ps.pmove = pm.s;
                 client.old_pmove = pm.s;
 
-                ent.s.origin = new Vector3(pm.s.origin[0]*0125f, pm.s.origin[1]*0125f, pm.s.origin[2]*0125f);
-                ent.velocity = new Vector3(pm.s.velocity[0]*0125f, pm.s.velocity[1]*0125f, pm.s.velocity[2]*0125f);
+                ent.s.origin = new Vector3((float)pm.s.origin[0]*0.125f, (float)pm.s.origin[1]*0.125f, (float)pm.s.origin[2]*0.125f);
+                ent.velocity = new Vector3((float)pm.s.velocity[0]*0.125f, (float)pm.s.velocity[1]*0.125f, (float)pm.s.velocity[2]*0.125f);
 
                 ent.mins = pm.mins;
                 ent.maxs = pm.maxs;
@@ -932,28 +945,28 @@ namespace Quake2 {
                     ent.groundentity_linkcount = pm.groundentity.linkcount;
                 }
 
-            //     if (ent->deadflag)
-            //     {
-            //         client->ps.viewangles[ROLL] = 40;
-            //         client->ps.viewangles[PITCH] = -15;
-            //         client->ps.viewangles[YAW] = client->killer_yaw;
-            //     }
-            //     else
-            //     {
-                client.v_angle = pm.viewangles;
-                client.ps.viewangles = pm.viewangles;
-            //     }
+                if (ent.deadflag != 0)
+                {
+                    client.ps.viewangles.SetRoll(40);
+                    client.ps.viewangles.SetPitch(-15);
+                    client.ps.viewangles.SetYaw(client.killer_yaw);
+                }
+                else
+                {
+                    client.v_angle = pm.viewangles;
+                    client.ps.viewangles = pm.viewangles;
+                }
 
                 gi.linkentity(ent);
 
-            //     if (ent->movetype != MOVETYPE_NOCLIP)
-            //     {
-            //         G_TouchTriggers(ent);
-            //     }
+                if (ent.movetype != movetype_t.MOVETYPE_NOCLIP)
+                {
+                    // G_TouchTriggers(ent);
+                }
 
-            //     /* touch other objects */
-            //     for (i = 0; i < pm.numtouch; i++)
-            //     {
+                /* touch other objects */
+                for (int i = 0; i < pm.numtouch; i++)
+                {
             //         other = pm.touchents[i];
 
             //         for (j = 0; j < i; j++)
@@ -975,7 +988,7 @@ namespace Quake2 {
             //         }
 
             //         other->touch(other, ent, NULL, NULL);
-            //     }
+                }
             }
 
             client.oldbuttons = client.buttons;
@@ -1076,7 +1089,7 @@ namespace Quake2 {
             /* run weapon animations if it hasn't been done by a ucmd_t */
             if (!client.weapon_thunk && !client.resp.spectator)
             {
-                // Think_Weapon(ent);
+                Think_Weapon(ent);
             }
             else
             {

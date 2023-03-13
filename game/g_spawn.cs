@@ -99,7 +99,7 @@ namespace Quake2 {
             // {"info_null", SP_info_null},
             // {"func_group", SP_info_null},
             // {"info_notnull", SP_info_notnull},
-            // {"path_corner", SP_path_corner},
+            {"path_corner", SP_path_corner},
             // {"point_combat", SP_point_combat},
 
             // {"misc_explobox", SP_misc_explobox},
@@ -125,8 +125,8 @@ namespace Quake2 {
             // {"monster_gladiator", SP_monster_gladiator},
             // {"monster_gunner", SP_monster_gunner},
             // {"monster_infantry", SP_monster_infantry},
-            // {"monster_soldier_light", SP_monster_soldier_light},
-            // {"monster_soldier", SP_monster_soldier},
+            {"monster_soldier_light", SP_monster_soldier_light},
+            {"monster_soldier", SP_monster_soldier}
             // {"monster_soldier_ss", SP_monster_soldier_ss},
             // {"monster_tank", SP_monster_tank},
             // {"monster_tank_commander", SP_monster_tank},

@@ -37,7 +37,7 @@ namespace Quake2 {
         */
         public static byte[] Mod_DecompressVis(ReadOnlySpan<byte> ind, int row)
         {
-            var decompressed = new byte[row];
+            var decompressed = new byte[QCommon.MAX_MAP_LEAFS / 8];
 
             if (ind == null)
             {

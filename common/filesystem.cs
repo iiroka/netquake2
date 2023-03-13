@@ -1285,9 +1285,7 @@ namespace Quake2 {
                 this.numedges = BitConverter.ToInt16(buffer, offset + 2 * 2 + 4);
                 this.texinfo = BitConverter.ToInt16(buffer, offset + 3 * 2 + 4);
                 this.styles = new byte[MAXLIGHTMAPS];
-                for (int i = 0; i < MAXLIGHTMAPS; i++) {
-                    this.styles[i] = buffer[offset + 4 * 2 + 4 + i];
-                }
+                Array.Copy(buffer, offset + 4 * 2 + 4, this.styles, 0, MAXLIGHTMAPS);
                 this.lightofs = BitConverter.ToInt32(buffer, offset + 4 * 2 + 4 + MAXLIGHTMAPS);
             }
 

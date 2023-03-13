@@ -2,6 +2,8 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        private const int MAXCHOICES = 8;
+
         /*
         * Searches all active entities for the next
         * one that holds the matching string at fieldofs
@@ -56,6 +58,54 @@ namespace Quake2 {
             }
 
             return null;
+        }
+
+        /*
+        * Searches all active entities for
+        * the next one that holds the matching
+        * string at fieldofs (use the FOFS() macro)
+        * in the structure.
+        *
+        * Searches beginning at the edict after from,
+        * or the beginning. If NULL, NULL will be
+        * returned if the end of the list is reached.
+        */
+        private edict_t? G_PickTarget(string targetname)
+        {
+            // edict_t *ent = NULL;
+            int num_choices = 0;
+            var choice = new edict_t?[MAXCHOICES];
+
+            if (targetname == null)
+            {
+                gi.dprintf("G_PickTarget called with NULL targetname\n");
+                return null;
+            }
+
+            edict_t? ent = null;
+            while (true)
+            {
+                ent = G_Find(ent, targetname, targetname);
+                if (ent == null)
+                {
+                    break;
+                }
+
+                choice[num_choices++] = ent;
+
+                if (num_choices == MAXCHOICES)
+                {
+                    break;
+                }
+            }
+
+            if (num_choices == 0)
+            {
+                gi.dprintf($"G_PickTarget: target {targetname} not found\n");
+                return null;
+            }
+
+            return choice[QShared.randk() % num_choices];
         }
 
         private void G_InitEdict(ref edict_t e)

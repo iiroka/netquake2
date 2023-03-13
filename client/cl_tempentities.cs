@@ -66,6 +66,8 @@ namespace Quake2 {
         private model_s? cl_mod_explode;
         private model_s? cl_mod_smoke;
         private model_s? cl_mod_flash;
+        private model_s? cl_mod_explo4;
+        private model_s? cl_mod_explo4_big;
 
         private void CL_RegisterTEntModels()
         {
@@ -75,25 +77,25 @@ namespace Quake2 {
             // cl_mod_parasite_segment = R_RegisterModel("models/monsters/parasite/segment/tris.md2");
             // cl_mod_grapple_cable = R_RegisterModel("models/ctf/segment/tris.md2");
             // cl_mod_parasite_tip = R_RegisterModel("models/monsters/parasite/tip/tris.md2");
-            // cl_mod_explo4 = R_RegisterModel("models/objects/r_explode/tris.md2");
+            cl_mod_explo4 = vid.R_RegisterModel("models/objects/r_explode/tris.md2");
             // cl_mod_bfg_explo = R_RegisterModel("sprites/s_bfg2.sp2");
             // cl_mod_powerscreen = R_RegisterModel("models/items/armor/effect/tris.md2");
 
-            // R_RegisterModel("models/objects/laser/tris.md2");
-            // R_RegisterModel("models/objects/grenade2/tris.md2");
-            // R_RegisterModel("models/weapons/v_machn/tris.md2");
-            // R_RegisterModel("models/weapons/v_handgr/tris.md2");
-            // R_RegisterModel("models/weapons/v_shotg2/tris.md2");
-            // R_RegisterModel("models/objects/gibs/bone/tris.md2");
-            // R_RegisterModel("models/objects/gibs/sm_meat/tris.md2");
-            // R_RegisterModel("models/objects/gibs/bone2/tris.md2");
+            vid.R_RegisterModel("models/objects/laser/tris.md2");
+            vid.R_RegisterModel("models/objects/grenade2/tris.md2");
+            vid.R_RegisterModel("models/weapons/v_machn/tris.md2");
+            vid.R_RegisterModel("models/weapons/v_handgr/tris.md2");
+            vid.R_RegisterModel("models/weapons/v_shotg2/tris.md2");
+            vid.R_RegisterModel("models/objects/gibs/bone/tris.md2");
+            vid.R_RegisterModel("models/objects/gibs/sm_meat/tris.md2");
+            vid.R_RegisterModel("models/objects/gibs/bone2/tris.md2");
 
             // Draw_FindPic("w_machinegun");
             // Draw_FindPic("a_bullets");
             // Draw_FindPic("i_health");
             // Draw_FindPic("a_grenades");
 
-            // cl_mod_explo4_big = R_RegisterModel("models/objects/r_explode2/tris.md2");
+            cl_mod_explo4_big = vid.R_RegisterModel("models/objects/r_explode2/tris.md2");
             // cl_mod_lightning = R_RegisterModel("models/proj/lightning/tris.md2");
             // cl_mod_heatbeam = R_RegisterModel("models/proj/beam/tris.md2");
             // cl_mod_monster_heatbeam = R_RegisterModel("models/proj/widowbeam/tris.md2");
@@ -195,10 +197,10 @@ namespace Quake2 {
                         CL_ParticleEffect(pos, dir, 0xe0, 6);
                     }
 
-                //     if (type != TE_SPARKS)
-                //     {
-                //         CL_SmokeAndFlash(pos);
-                //         /* impact sound */
+                    if (type != (int)QShared.temp_event_t.TE_SPARKS)
+                    {
+                        CL_SmokeAndFlash(pos);
+                        /* impact sound */
                 //         cnt = randk() & 15;
 
                 //         if (cnt == 1)
@@ -213,7 +215,7 @@ namespace Quake2 {
                 //         {
                 //             S_StartSound(pos, 0, 0, cl_sfx_ric3, 1, ATTN_NORM, 0);
                 //         }
-                //     }
+                    }
 
                     break;
 
@@ -329,36 +331,36 @@ namespace Quake2 {
                     dir = msg.ReadDir(common);
                     CL_BlasterParticles(pos, dir);
 
-                //     ex = CL_AllocExplosion();
-                //     VectorCopy(pos, ex->ent.origin);
-                //     ex->ent.angles[0] = (float)acos(dir[2]) / M_PI * 180;
+                    var ex = CL_AllocExplosion();
+                    ex.ent.origin = pos;
+                    ex.ent.angles.X = MathF.Acos(dir.Z) / MathF.PI * 180;
 
-                //     if (dir[0])
-                //     {
-                //         ex->ent.angles[1] = (float)atan2(dir[1], dir[0]) / M_PI * 180;
-                //     }
+                    if (dir.X != 0)
+                    {
+                        ex.ent.angles.Y = MathF.Atan2(dir.Y, dir.X) / MathF.PI * 180;
+                    }
 
-                //     else if (dir[1] > 0)
-                //     {
-                //         ex->ent.angles[1] = 90;
-                //     }
-                //     else if (dir[1] < 0)
-                //     {
-                //         ex->ent.angles[1] = 270;
-                //     }
-                //     else
-                //     {
-                //         ex->ent.angles[1] = 0;
-                //     }
+                    else if (dir.Y > 0)
+                    {
+                        ex.ent.angles.Y = 90;
+                    }
+                    else if (dir.Y < 0)
+                    {
+                        ex.ent.angles.Y = 270;
+                    }
+                    else
+                    {
+                        ex.ent.angles.Y = 0;
+                    }
 
-                //     ex->type = ex_misc;
-                //     ex->ent.flags = 0;
-                //     ex->start = cl.frame.servertime - 100.0f;
-                //     ex->light = 150;
-                //     ex->lightcolor[0] = 1;
-                //     ex->lightcolor[1] = 1;
-                //     ex->ent.model = cl_mod_explode;
-                //     ex->frames = 4;
+                    ex.type = exptype_t.ex_misc;
+                    ex.ent.flags = 0;
+                    ex.start = cl.frame.servertime - 100.0f;
+                    ex.light = 150;
+                    ex.lightcolor.X = 1;
+                    ex.lightcolor.Y = 1;
+                    ex.ent.model = cl_mod_explode;
+                    ex.frames = 4;
                 //     S_StartSound(pos, 0, 0, cl_sfx_lashit, 1, ATTN_NORM, 0);
                     break;
                 }
@@ -374,19 +376,19 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_GRENADE_EXPLOSION:
                 case (int)QShared.temp_event_t.TE_GRENADE_EXPLOSION_WATER: {
                     pos = msg.ReadPos();
-                //     ex = CL_AllocExplosion();
-                //     VectorCopy(pos, ex->ent.origin);
-                //     ex->type = ex_poly;
-                //     ex->ent.flags = RF_FULLBRIGHT | RF_NOSHADOW;
-                //     ex->start = cl.frame.servertime - 100.0f;
-                //     ex->light = 350;
-                //     ex->lightcolor[0] = 1.0;
-                //     ex->lightcolor[1] = 0.5;
-                //     ex->lightcolor[2] = 0.5;
-                //     ex->ent.model = cl_mod_explo4;
-                //     ex->frames = 19;
-                //     ex->baseframe = 30;
-                //     ex->ent.angles[1] = (float)(randk() % 360);
+                    var ex = CL_AllocExplosion();
+                    ex.ent.origin = pos;
+                    ex.type = exptype_t.ex_poly;
+                    ex.ent.flags = QShared.RF_FULLBRIGHT | QShared.RF_NOSHADOW;
+                    ex.start = cl.frame.servertime - 100.0f;
+                    ex.light = 350;
+                    ex.lightcolor.X = 1.0f;
+                    ex.lightcolor.Y = 0.5f;
+                    ex.lightcolor.Z = 0.5f;
+                    ex.ent.model = cl_mod_explo4;
+                    ex.frames = 19;
+                    ex.baseframe = 30;
+                    ex.ent.angles.Y = (float)(QShared.randk() % 360);
                 //     EXPLOSION_PARTICLES(pos);
 
                 //     if (type == TE_GRENADE_EXPLOSION_WATER)
@@ -431,32 +433,32 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_ROCKET_EXPLOSION:
                 case (int)QShared.temp_event_t.TE_ROCKET_EXPLOSION_WATER: {
                     pos = msg.ReadPos();
-                //     ex = CL_AllocExplosion();
-                //     VectorCopy(pos, ex->ent.origin);
-                //     ex->type = ex_poly;
-                //     ex->ent.flags = RF_FULLBRIGHT | RF_NOSHADOW;
-                //     ex->start = cl.frame.servertime - 100.0f;
-                //     ex->light = 350;
-                //     ex->lightcolor[0] = 1.0;
-                //     ex->lightcolor[1] = 0.5;
-                //     ex->lightcolor[2] = 0.5;
-                //     ex->ent.angles[1] = (float)(randk() % 360);
+                    var ex = CL_AllocExplosion();
+                    ex.ent.origin = pos;
+                    ex.type = exptype_t.ex_poly;
+                    ex.ent.flags = QShared.RF_FULLBRIGHT | QShared.RF_NOSHADOW;
+                    ex.start = cl.frame.servertime - 100.0f;
+                    ex.light = 350;
+                    ex.lightcolor.X = 1.0f;
+                    ex.lightcolor.Y = 0.5f;
+                    ex.lightcolor.Z = 0.5f;
+                    ex.ent.angles.X = (float)(QShared.randk() % 360);
 
-                //     if (type != TE_EXPLOSION1_BIG)
-                //     {
-                //         ex->ent.model = cl_mod_explo4;
-                //     }
-                //     else
-                //     {
-                //         ex->ent.model = cl_mod_explo4_big;
-                //     }
+                    if (type != (int)QShared.temp_event_t.TE_EXPLOSION1_BIG)
+                    {
+                        ex.ent.model = cl_mod_explo4;
+                    }
+                    else
+                    {
+                        ex.ent.model = cl_mod_explo4_big;
+                    }
 
-                //     if (frandk() < 0.5)
-                //     {
-                //         ex->baseframe = 15;
-                //     }
+                    if (QShared.frandk() < 0.5)
+                    {
+                        ex.baseframe = 15;
+                    }
 
-                //     ex->frames = 15;
+                    ex.frames = 15;
 
                 //     if ((type != TE_EXPLOSION1_BIG) && (type != TE_EXPLOSION1_NP))
                 //     {
@@ -771,14 +773,6 @@ namespace Quake2 {
 
         private void CL_AddExplosions()
         {
-            // entity_t *ent;
-            // int i;
-            // explosion_t *ex;
-            // float frac;
-            // int f;
-
-            // memset(&ent, 0, sizeof(ent));
-
             for (int i = 0; i < MAX_EXPLOSIONS; i++)
             {
                 ref var ex = ref cl_explosions[i];

@@ -240,23 +240,25 @@ namespace Quake2 {
                 {
                     continue;
                 }
+                // Console.WriteLine($"ent: {ent.classname} {ent.s.origin}");
 
                 level.current_entity = ent;
 
                 ent.s.old_origin = ent.s.origin;
 
-            //     /* if the ground entity moved, make sure we are still on it */
-            //     if ((ent->groundentity) &&
-            //         (ent->groundentity->linkcount != ent->groundentity_linkcount))
-            //     {
-            //         ent->groundentity = NULL;
+                /* if the ground entity moved, make sure we are still on it */
+                if ((ent.groundentity != null) &&
+                    (ent.groundentity!.linkcount != ent.groundentity_linkcount))
+                {
+                    ent.groundentity = null;
 
-            //         if (!(ent->flags & (FL_SWIM | FL_FLY)) &&
-            //             (ent->svflags & SVF_MONSTER))
-            //         {
+                    if ((ent.flags & (FL_SWIM | FL_FLY)) == 0 &&
+                        (ent.svflags & QGameFlags.SVF_MONSTER) != 0)
+                    {
+                        Console.WriteLine("M_CheckGround");
             //             M_CheckGround(ent);
-            //         }
-            //     }
+                    }
+                }
 
                 if ((i > 0) && (i <= maxclients!.Int))
                 {

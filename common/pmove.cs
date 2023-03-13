@@ -260,6 +260,55 @@ namespace Quake2 {
         }
 
         /*
+        * Handles both ground friction and water friction
+        */
+        private void PM_Friction(in QShared.pmove_t pm)
+        {
+            // float *vel;
+            float speed, newspeed, control;
+            float friction;
+            float drop;
+
+            speed = pml.velocity.Length();
+
+            if (speed < 1)
+            {
+                pml.velocity.X = 0;
+                pml.velocity.Y = 0;
+                return;
+            }
+
+            drop = 0;
+
+            /* apply ground friction */
+            if ((pm.groundentity != null && pml.groundsurface != null &&
+                (pml.groundsurface.Value.flags & SURF_SLICK) == 0) || (pml.ladder))
+            {
+                friction = pm_friction;
+                control = speed < pm_stopspeed ? pm_stopspeed : speed;
+                drop += control * friction * pml.frametime;
+            }
+
+            /* apply water friction */
+            if (pm.waterlevel != 0 && !pml.ladder)
+            {
+                drop += speed * pm_waterfriction * pm.waterlevel * pml.frametime;
+            }
+
+            /* scale the velocity */
+            newspeed = speed - drop;
+
+            if (newspeed < 0)
+            {
+                newspeed = 0;
+            }
+
+            newspeed /= speed;
+
+            pml.velocity= pml.velocity * newspeed;
+        }
+
+        /*
         * Handles user intended acceleration
         */
         private void PM_Accelerate(in Vector3 wishdir, float wishspeed, float accel)
@@ -405,7 +454,7 @@ namespace Quake2 {
                 }
 
                 /* add gravity */
-                pml.velocity.Z -= pm.s.gravity * pml.frametime;
+                pml.velocity.Z -= (float)pm.s.gravity * pml.frametime;
                 PM_StepSlideMove(ref pm);
             }
         }
@@ -513,6 +562,66 @@ namespace Quake2 {
             //         }
             //     }
             // }
+        }
+
+        /*
+        * Sets mins, maxs, and pm->viewheight
+        */
+        private void PM_CheckDuck(ref QShared.pmove_t pm)
+        {
+            // trace_t trace;
+
+            pm.mins.X = -16;
+            pm.mins.Y = -16;
+
+            pm.maxs.X = 16;
+            pm.maxs.Y = 16;
+
+            if (pm.s.pm_type == QShared.pmtype_t.PM_GIB)
+            {
+                pm.mins.Z = 0;
+                pm.maxs.Z = 16;
+                pm.viewheight = 8;
+                return;
+            }
+
+            pm.mins.Z = -24;
+
+            if (pm.s.pm_type == QShared.pmtype_t.PM_DEAD)
+            {
+                pm.s.pm_flags |= QShared.PMF_DUCKED;
+            }
+            else if ((pm.cmd.upmove < 0) && (pm.s.pm_flags & QShared.PMF_ON_GROUND) != 0)
+            {
+                /* duck */
+                pm.s.pm_flags |= QShared.PMF_DUCKED;
+            }
+            else
+            {
+                /* stand up if possible */
+                if ((pm.s.pm_flags & QShared.PMF_DUCKED) != 0)
+                {
+                    /* try to stand up */
+                    pm.maxs.Z = 32;
+                    var trace = pm.trace!(pml.origin, pm.mins, pm.maxs, pml.origin);
+
+                    if (!trace.allsolid)
+                    {
+                        pm.s.pm_flags &= byte.MaxValue ^ QShared.PMF_DUCKED;
+                    }
+                }
+            }
+
+            if ((pm.s.pm_flags & QShared.PMF_DUCKED) != 0)
+            {
+                pm.maxs.Z = 4;
+                pm.viewheight = -2;
+            }
+            else
+            {
+                pm.maxs.Z = 32;
+                pm.viewheight = 22;
+            }
         }
 
         private bool PM_GoodPosition(in QShared.pmove_t pm)
@@ -737,7 +846,7 @@ namespace Quake2 {
             }
 
             /* set mins, maxs, and viewheight */
-            // PM_CheckDuck();
+            PM_CheckDuck(ref pm);
 
             if (pm.snapinitial)
             {
@@ -798,7 +907,7 @@ namespace Quake2 {
                 // Console.WriteLine("PM_CheckJump");
                 // PM_CheckJump();
 
-                // PM_Friction();
+                PM_Friction(pm);
 
                 // if (pm->waterlevel >= 2)
                 // {
@@ -808,10 +917,10 @@ namespace Quake2 {
                 // {
                     var angles = pm.viewangles;
 
-                //     if (angles[PITCH] > 180)
-                //     {
-                //         angles[PITCH] = angles[PITCH] - 360;
-                //     }
+                    if (angles.Pitch() > 180)
+                    {
+                         angles.SetPitch(angles.Pitch() - 360);
+                    }
 
                     angles.SetPitch(angles.Pitch() / 3);
 
@@ -822,7 +931,7 @@ namespace Quake2 {
             }
 
             /* set groundentity, watertype, and waterlevel for final spot */
-            // PM_CatagorizePosition();
+            PM_CatagorizePosition(ref pm);
 
         // #if !defined(DEDICATED_ONLY)
             // PM_UpdateUnderwaterSfx();

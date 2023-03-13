@@ -33,6 +33,7 @@ namespace Quake2 {
         public cvar_t? vid_maxfps;
         public cvar_t? host_speeds;
         public cvar_t? cl_maxfps;
+        public cvar_t? cl_async;
 
         private QClient client;
         private QServer server;
@@ -141,7 +142,7 @@ namespace Quake2 {
 
         // #ifndef DEDICATED_ONLY
         //     busywait = Cvar_Get("busywait", "1", CVAR_ARCHIVE);
-        //     cl_async = Cvar_Get("cl_async", "1", CVAR_ARCHIVE);
+            cl_async = Cvar_Get("cl_async", "1", cvar_t.CVAR_ARCHIVE);
         //     cl_timedemo = Cvar_Get("timedemo", "0", 0);
             dedicated = Cvar_Get("dedicated", "0", cvar_t.CVAR_NOSET);
             vid_maxfps = Cvar_Get("vid_maxfps", "300", cvar_t.CVAR_ARCHIVE);
@@ -365,31 +366,31 @@ namespace Quake2 {
 
             // cl_maxfps <= 0 means: automatically choose a packet framerate that should work
             // well with the render framerate, which is the case if rfps is a multiple of pfps
-            // if (cl_maxfps!.Float <= 0.0f && cl_async!.Float != 0.0f)
-            // {
-            //     // packet framerates between about 45 and 90 should be ok,
-            //     // with other values the game (esp. movement/clipping) can become glitchy
-            //     // as pfps must be <= rfps, for rfps < 90 just use that as pfps
-            //     if (rfps < 90.0f)
-            //     {
-            //         pfps = rfps;
-            //     }
-            //     else
-            //     {
-            //         /* we want an integer divider, so every div-th renderframe is a packetframe.
-            //         this formula gives nice dividers that keep pfps as close as possible
-            //         to 60 (which seems to be ideal):
-            //         - for < 150 rfps div will be 2, so pfps will be between 45 and ~75
-            //             => exactly every second renderframe we also run a packetframe
-            //         - for < 210 rfps div will be 3, so pfps will be between 50 and ~70
-            //             => exactly every third renderframe we also run a packetframe
-            //         - etc, the higher the rfps, the closer the pfps-range will be to 60
-            //             (and you probably get the very best results by running at a
-            //             render framerate that's a multiple of 60) */
-            //         float div = round(rfps/60);
-            //         pfps = rfps/div;
-            //     }
-            // }
+            if (cl_maxfps!.Float <= 0.0f && cl_async!.Float != 0.0f)
+            {
+                // packet framerates between about 45 and 90 should be ok,
+                // with other values the game (esp. movement/clipping) can become glitchy
+                // as pfps must be <= rfps, for rfps < 90 just use that as pfps
+                if (rfps < 90.0f)
+                {
+                    pfps = rfps;
+                }
+                else
+                {
+                    /* we want an integer divider, so every div-th renderframe is a packetframe.
+                    this formula gives nice dividers that keep pfps as close as possible
+                    to 60 (which seems to be ideal):
+                    - for < 150 rfps div will be 2, so pfps will be between 45 and ~75
+                        => exactly every second renderframe we also run a packetframe
+                    - for < 210 rfps div will be 3, so pfps will be between 50 and ~70
+                        => exactly every third renderframe we also run a packetframe
+                    - etc, the higher the rfps, the closer the pfps-range will be to 60
+                        (and you probably get the very best results by running at a
+                        render framerate that's a multiple of 60) */
+                    float div = MathF.Round(rfps/60);
+                    pfps = rfps/div;
+                }
+            }
 
             // Calculate timings.
             packetdelta += usec;
@@ -399,36 +400,36 @@ namespace Quake2 {
 
             // if (!cl_timedemo->value)
             // {
-            //     if (cl_async->value)
-            //     {
-            //         // Render frames.
-            //         if (renderdelta < (1000000.0f / rfps))
-            //         {
-            //             renderframe = false;
-            //         }
+                if (cl_async!.Bool)
+                {
+                    // Render frames.
+                    if (renderdelta < (1000000.0f / rfps))
+                    {
+                        renderframe = false;
+                    }
 
-            //         // Network frames.
-            //         float packettargetdelta = 1000000.0f / pfps;
-            //         // "packetdelta + renderdelta/2 >= packettargetdelta" if now we're
-            //         // closer to when we want to run the next packetframe than we'd
-            //         // (probably) be after the next render frame
-            //         // also, we only run packetframes together with renderframes,
-            //         // because we must have at least one render frame between two packet frames
-            //         // TODO: does it make sense to use the average renderdelta of the last X frames
-            //         //       instead of just the last renderdelta?
-            //         if (!renderframe || packetdelta + renderdelta/2 < packettargetdelta)
-            //         {
-            //             packetframe = false;
-            //         }
-            //     }
-            //     else
-            //     {
+                    // Network frames.
+                    float packettargetdelta = 1000000.0f / pfps;
+                    // "packetdelta + renderdelta/2 >= packettargetdelta" if now we're
+                    // closer to when we want to run the next packetframe than we'd
+                    // (probably) be after the next render frame
+                    // also, we only run packetframes together with renderframes,
+                    // because we must have at least one render frame between two packet frames
+                    // TODO: does it make sense to use the average renderdelta of the last X frames
+                    //       instead of just the last renderdelta?
+                    if (!renderframe || packetdelta + renderdelta/2 < packettargetdelta)
+                    {
+                        packetframe = false;
+                    }
+                }
+                else
+                {
                     // Cap frames at target framerate.
                     if (renderdelta < (1000000.0f / rfps)) {
                         renderframe = false;
                         packetframe = false;
                     }
-            //     }
+                }
             // }
 
             // // Dedicated server terminal console.
@@ -443,10 +444,10 @@ namespace Quake2 {
             Cbuf_Execute();
 
 
-            // if (host_speeds->value)
-            // {
-            //     time_before = Sys_Milliseconds();
-            // }
+            if (host_speeds?.Bool ?? false)
+            {
+                time_before = Sys_Milliseconds();
+            }
 
 
             // Run the serverframe.
@@ -456,10 +457,10 @@ namespace Quake2 {
             }
 
 
-            // if (host_speeds->value)
-            // {
-            //     time_between = Sys_Milliseconds();
-            // }
+            if (host_speeds?.Bool ?? false)
+            {
+                time_between = Sys_Milliseconds();
+            }
 
 
             // Run the client frame.

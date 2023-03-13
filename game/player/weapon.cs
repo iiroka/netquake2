@@ -76,9 +76,46 @@ namespace Quake2 {
             // }
             // else
             // {
-            //     ent->s.frame = FRAME_pain301;
-            //     ent->client->anim_end = FRAME_pain304;
+                ent.s.frame = QuakeGamePlayer.FRAME_pain301;
+                client.anim_end = QuakeGamePlayer.FRAME_pain304;
             // }
         }
+
+        /*
+        * Called by ClientBeginServerFrame and ClientThink
+        */
+        private void Think_Weapon(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+            var client = (gclient_t)(ent.client!);
+
+            /* if just died, put the weapon away */
+            if (ent.health < 1)
+            {
+                // ent.client.newweapon = null;
+                // ChangeWeapon(ent);
+            }
+
+            /* call active weapon think routine */
+            if (client.pers.weapon != null && client.pers.weapon.weaponthink != null)
+            {
+                var is_quad = (client.quad_framenum > level.framenum);
+
+                // if (client.silencer_shots)
+                // {
+                //     is_silenced = MZ_SILENCED;
+                // }
+                // else
+                // {
+                //     is_silenced = 0;
+                // }
+
+                client.pers.weapon.weaponthink(ent);
+            }
+        }
+
     }
 }

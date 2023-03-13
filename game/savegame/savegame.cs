@@ -144,7 +144,7 @@ namespace Quake2 {
             // {"pausetime", STOFS(pausetime), F_FLOAT, FFL_SPAWNTEMP},
             // {"item", STOFS(item), F_LSTRING, FFL_SPAWNTEMP},
             // {"item", FOFS(item), F_ITEM},
-            // {"gravity", STOFS(gravity), F_LSTRING, FFL_SPAWNTEMP},
+            new field_t(){name="gravity", fname="gravity", type=fieldtype_t.F_LSTRING, flags=FFL_SPAWNTEMP},
             new field_t(){name="sky", fname="sky", type=fieldtype_t.F_LSTRING, flags=FFL_SPAWNTEMP},
             new field_t(){name="skyrotate", fname="skyrotate", type=fieldtype_t.F_FLOAT, flags=FFL_SPAWNTEMP},
             new field_t(){name="skyaxis", fname="skyaxis", type=fieldtype_t.F_VECTOR, flags=FFL_SPAWNTEMP},

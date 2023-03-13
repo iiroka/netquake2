@@ -23,12 +23,35 @@
  *
  * =======================================================================
  */
+using System.Numerics;
 
 namespace Quake2 {
 
     partial class QuakeGame
     {
         private const int START_OFF = 1;
+
+        private static void SP_path_corner(QuakeGame g, edict_t? self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.targetname == null)
+            {
+                g.gi.dprintf($"path_corner with no targetname at {self.s.origin}\n");
+                g.G_FreeEdict(self);
+                return;
+            }
+
+            self.solid = solid_t.SOLID_TRIGGER;
+            // self.touch = path_corner_touch;
+            self.mins = new Vector3(-8, -8, -8);
+            self.maxs = new Vector3(8, 8, 8);
+            self.svflags |= QGameFlags.SVF_NOCLIENT;
+            g.gi.linkentity(self);
+        }
 
         private static void SP_light(QuakeGame g, edict_t? self)
         {

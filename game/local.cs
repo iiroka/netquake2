@@ -72,6 +72,23 @@ namespace Quake2 {
             MOVETYPE_BOUNCE
         }
 
+        /* monster ai flags */
+        private const int AI_STAND_GROUND = 0x00000001;
+        private const int AI_TEMP_STAND_GROUND = 0x00000002;
+        private const int AI_SOUND_TARGET = 0x00000004;
+        private const int AI_LOST_SIGHT = 0x00000008;
+        private const int AI_PURSUIT_LAST_SEEN = 0x00000010;
+        private const int AI_PURSUE_NEXT = 0x00000020;
+        private const int AI_PURSUE_TEMP = 0x00000040;
+        private const int AI_HOLD_FRAME = 0x00000080;
+        private const int AI_GOOD_GUY = 0x00000100;
+        private const int AI_BRUTAL = 0x00000200;
+        private const int AI_NOSTEP = 0x00000400;
+        private const int AI_DUCKED = 0x00000800;
+        private const int AI_COMBAT_POINT = 0x00001000;
+        private const int AI_MEDIC = 0x00002000;
+        private const int AI_RESURRECTING = 0x00004000;
+
         private struct gitem_armor_t
         {
             public int base_count;
@@ -103,7 +120,8 @@ namespace Quake2 {
         private const int WEAP_BFG = 11;
 
         private delegate void edict_delegate(edict_t ent);
-
+        private delegate void edict_game_delegate(QuakeGame g, edict_t ent);
+ 
         private class gitem_t : ICloneable
         {
             public int index;
@@ -237,6 +255,99 @@ namespace Quake2 {
             public float maxyaw;
             public float minpitch;
             public float maxpitch;
+        }
+
+        private struct moveinfo_t
+        {
+            /* fixed data */
+            // vec3_t start_origin;
+            // vec3_t start_angles;
+            // vec3_t end_origin;
+            // vec3_t end_angles;
+
+            // int sound_start;
+            // int sound_middle;
+            // int sound_end;
+
+            // float accel;
+            // float speed;
+            // float decel;
+            // float distance;
+
+            // float wait;
+
+            // /* state data */
+            // int state;
+            // vec3_t dir;
+            // float current_speed;
+            // float move_speed;
+            // float next_speed;
+            // float remaining_distance;
+            // float decel_distance;
+            // void (*endfunc)(edict_t *);
+        }
+
+        private delegate void dist_game_delegate(QuakeGame g, edict_t self, float dist);
+        private struct mframe_t
+        {
+            public dist_game_delegate? aifunc;
+            public float dist;
+            public edict_game_delegate? thinkfunc;
+
+            public mframe_t(dist_game_delegate? ai, float d, edict_game_delegate? t) {
+                this.aifunc = ai;
+                this.dist = d;
+                this.thinkfunc = t;
+            }
+        }
+
+        private class mmove_t
+        {
+            public int firstframe;
+            public int lastframe;
+            public mframe_t[] frame;
+            public edict_game_delegate? endfunc;
+
+            public mmove_t(int first, int last, mframe_t[] frames, edict_game_delegate? end) {
+                this.firstframe = first;
+                this.lastframe = last;
+                this.frame = frames;
+                this.endfunc = end;
+            }
+        };
+
+        private struct monsterinfo_t
+        {
+            public mmove_t? currentmove;
+            public int aiflags;
+            public int nextframe;
+            public float scale;
+
+            public edict_delegate? stand;
+            public edict_delegate? idle;
+            public edict_delegate? search;
+            public edict_delegate? walk;
+            public edict_delegate? run;
+            // void (*dodge)(edict_t *self, edict_t *other, float eta);
+            public edict_delegate? attack;
+            public edict_delegate? melee;
+            // void (*sight)(edict_t *self, edict_t *other);
+            // qboolean (*checkattack)(edict_t *self);
+
+            public float pausetime;
+            public float attack_finished;
+
+            // vec3_t saved_goal;
+            public float search_time;
+            public float trail_time;
+            // vec3_t last_sighting;
+            public int attack_state;
+            // int lefty;
+            public float idle_time;
+            public int linkcount;
+
+            public int power_armor_type;
+            public int power_armor_power;
         }
 
 
@@ -491,13 +602,13 @@ namespace Quake2 {
             public float timestamp;
 
             public float angle; /* set in qe3, -1 = up, -2 = down */
-            public string target;
-            public string targetname;
-            public string killtarget;
-            public string team;
-            public string pathtarget;
-            public string deathtarget;
-            public string combattarget;
+            public string? target;
+            public string? targetname;
+            public string? killtarget;
+            public string? team;
+            public string? pathtarget;
+            public string? deathtarget;
+            public string? combattarget;
             // edict_t *target_ent;
 
             public float speed, accel, decel;
@@ -511,8 +622,8 @@ namespace Quake2 {
             public float gravity; /* per entity gravity multiplier (1.0 is normal)
                                      use for lowgrav artifact, flares */
 
-            // edict_t *goalentity;
-            // edict_t *movetarget;
+            public edict_t? goalentity;
+            public edict_t? movetarget;
             public float yaw_speed;
             public float ideal_yaw;
 
@@ -590,7 +701,7 @@ namespace Quake2 {
 
             // /* common data blocks */
             // moveinfo_t moveinfo;
-            // monsterinfo_t monsterinfo;
+            public monsterinfo_t monsterinfo = new monsterinfo_t();
         }  
     }
 }

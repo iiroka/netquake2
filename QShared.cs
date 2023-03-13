@@ -824,7 +824,7 @@ namespace Quake2 {
         */
 
         public static short ANGLE2SHORT(float x)  => (short)((int)((x) * 65536.0f / 360) & 65535);
-        public static float SHORT2ANGLE(int x) => (float)((x) * (360.0 / 65536));
+        public static float SHORT2ANGLE(int x) => (float)((float)(x) * (360.0f / 65536));
 
         /* config strings are a general means of communication from
         * the server to all connected clients. Each config string
