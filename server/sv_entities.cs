@@ -544,7 +544,7 @@ namespace Quake2 {
             frame.areabytes = common.CM_WriteAreaBits(ref frame.areabits, clientarea);
 
             /* grab the current player_state_t */
-            frame.ps = clent.client.ps;
+            frame.ps = (QShared.player_state_t)clent.client.ps.Clone();
 
             SV_FatPVS(org);
             byte[] clientphs = common.CM_ClusterPHS(clientcluster);
@@ -646,16 +646,14 @@ namespace Quake2 {
                     // }
                 }
 
-                /* add it to the circular client_entities array */
-                ref var state = ref svs.client_entities[svs.next_client_entities % svs.num_client_entities];
-
                 if (ent.s.number != e)
                 {
                     common.Com_DPrintf("FIXING ENT->S.NUMBER!!!\n");
                     ent.s.number = e;
                 }
 
-                state = ent.s;
+                /* add it to the circular client_entities array */
+                svs.client_entities[svs.next_client_entities % svs.num_client_entities].Copy(ent.s);
 
             //     /* don't mark players missiles as solid */
             //     if (ent->owner == client->edict)

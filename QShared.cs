@@ -897,6 +897,25 @@ namespace Quake2 {
                 return MemberwiseClone();
             }
 
+            public void Copy(entity_state_t other)
+            {
+                this.number = other.number;
+                this.origin = other.origin;
+                this.angles = other.angles;
+                this.old_origin = other.old_origin;
+                this.modelindex = other.modelindex;
+                this.modelindex2 = other.modelindex2;
+                this.modelindex3 = other.modelindex3;
+                this.modelindex4 = other.modelindex4;
+                this.frame = other.frame;
+                this.skinnum = other.skinnum;
+                this.effects = other.effects;
+                this.renderfx = other.renderfx;
+                this.solid = other.solid;
+                this.sound = other.sound;
+                this.ev = other.ev;
+            }
+
         }
 
         /* ============================================== */

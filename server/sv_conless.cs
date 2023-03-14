@@ -162,7 +162,6 @@ namespace Quake2 {
                 svs.clients[i].frames[j].ps.pmove.origin = new short[3];
                 svs.clients[i].frames[j].ps.pmove.velocity = new short[3];
                 svs.clients[i].frames[j].ps.pmove.delta_angles = new short[3];
-
             }
             svs.clients[i].datagram = new QWritebuf(QCommon.MAX_MSGLEN);
             var ent = ge!.getEdict(i + 1);
