@@ -637,7 +637,6 @@ namespace Quake2 {
             }
         }
 
-
         /*
         * Moves the given mins/maxs volume through the world from start to end.
         * Passedict and edicts owned by passedict are explicitly not checked.
@@ -645,9 +644,7 @@ namespace Quake2 {
         private QShared.trace_t SV_Trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
                 edict_s passedict, int contentmask)
         {
-            moveclip_t clip;
-
-            clip = new moveclip_t();
+            var clip = new moveclip_t();
             clip.trace = new QShared.trace_t();
 
             /* clip to world */
@@ -667,7 +664,7 @@ namespace Quake2 {
             clip.passedict = passedict;
 
             clip.mins2 = mins ?? Vector3.Zero;
-            clip.maxs2 = mins ?? Vector3.Zero;
+            clip.maxs2 = maxs ?? Vector3.Zero;
 
             /* create the bounding box of the entire move */
             SV_TraceBounds(start, clip.mins2, clip.maxs2, end, ref clip.boxmins, ref clip.boxmaxs);

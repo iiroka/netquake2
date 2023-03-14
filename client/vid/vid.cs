@@ -341,7 +341,9 @@ namespace Quake2 {
             var options = WindowOptions.Default;
             options.Size = new Vector2D<int>(width, height);
             options.PreferredBitDepth = new Vector4D<int>(8, 8, 8, 8);
-            options.UpdatesPerSecond = 60;
+            options.PreferredStencilBufferBits = 8;
+            options.PreferredDepthBufferBits = 24;
+            options.FramesPerSecond = 30;
             options.Title = "Quake2";
 
             window = Window.Create(options);
@@ -364,6 +366,8 @@ namespace Quake2 {
         private void OnLoad()
         {
             Console.WriteLine($"Window size {window!.Size[0]}x{window!.Size[1]}");
+            Console.WriteLine($"FramesPerSecond {window!.FramesPerSecond}");
+            Console.WriteLine($"UpdatesPerSecond {window!.UpdatesPerSecond}");
 
             input.Init(window!.CreateInput());
 

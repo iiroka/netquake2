@@ -1259,7 +1259,7 @@ namespace Quake2 {
             for (int i = 0; i < count; i++)
             {
                 var ind = new dplane_t(buf, l.fileofs + i * dplane_t.size);
-                map_planes[i].normal = new Vector3( ind.normal[0], ind.normal[1], ind.normal[1]);
+                map_planes[i].normal = new Vector3( ind.normal[0], ind.normal[1], ind.normal[2]);
 
 		        byte bits = 0;
                 for (int j = 0; j < 3; j++)
