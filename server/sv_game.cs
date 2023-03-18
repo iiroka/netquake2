@@ -130,6 +130,11 @@ namespace Quake2 {
                 return server.SV_Trace(start, mins, maxs, end, passent, contentmask);
             }
 
+            public int BoxEdicts(in Vector3 mins, in Vector3 maxs, edict_s[] list, int areatype)
+            {
+                return server.SV_AreaEdicts(mins, maxs, list, areatype);
+            }
+
         }
 
         /*

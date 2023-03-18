@@ -52,10 +52,9 @@ namespace Quake2 {
 
             if ((self.monsterinfo.aiflags & AI_STAND_GROUND) != 0)
             {
-            //     if (self->enemy)
-            //     {
-            //         VectorSubtract(self->enemy->s.origin, self->s.origin, v);
-            //         self->ideal_yaw = vectoyaw(v);
+                if (self.enemy != null)
+                {
+                    self.ideal_yaw = g.vectoyaw(self.enemy.s.origin - self.s.origin);
 
             //         if ((self->s.angles[YAW] != self->ideal_yaw) &&
             //             self->monsterinfo.aiflags & AI_TEMP_STAND_GROUND)
@@ -65,13 +64,13 @@ namespace Quake2 {
             //             self->monsterinfo.run(self);
             //         }
 
-            //         M_ChangeYaw(self);
+                    g.M_ChangeYaw(self);
             //         ai_checkattack(self);
-            //     }
-            //     else
-            //     {
-            //         FindTarget(self);
-            //     }
+                }
+                else
+                {
+                    g.FindTarget(self);
+                }
 
                 return;
             }
@@ -81,11 +80,11 @@ namespace Quake2 {
                 return;
             }
 
-            // if (level.time > self->monsterinfo.pausetime)
-            // {
-            //     self->monsterinfo.walk(self);
-            //     return;
-            // }
+            if (g.level.time > self.monsterinfo.pausetime)
+            {
+                self.monsterinfo.walk!(self);
+                return;
+            }
 
             // if (!(self->spawnflags & 1) && (self->monsterinfo.idle) &&
             //     (level.time > self->monsterinfo.idle_time))
@@ -112,7 +111,7 @@ namespace Quake2 {
                 return;
             }
 
-            // M_MoveToGoal(self, dist);
+            g.M_MoveToGoal(self, dist);
 
             /* check for noticing a player */
             if (g.FindTarget(self))
@@ -178,90 +177,91 @@ namespace Quake2 {
             not another monster getting angry or hearing
             something */
 
-            // heardit = false;
+            var heardit = false;
+            edict_t? client = null;
 
-            // if ((level.sight_entity_framenum >= (level.framenum - 1)) &&
-            //     !(self->spawnflags & 1))
-            // {
-            //     client = level.sight_entity;
+            if ((level.sight_entity_framenum >= (level.framenum - 1)) &&
+                (self.spawnflags & 1) == 0)
+            {
+                client = level.sight_entity;
 
-            //     if (client->enemy == self->enemy)
-            //     {
-            //         return false;
-            //     }
-            // }
-            // else if (level.sound_entity_framenum >= (level.framenum - 1))
-            // {
-            //     client = level.sound_entity;
-            //     heardit = true;
-            // }
-            // else if (!(self->enemy) &&
-            //         (level.sound2_entity_framenum >= (level.framenum - 1)) &&
-            //         !(self->spawnflags & 1))
-            // {
-            //     client = level.sound2_entity;
-            //     heardit = true;
-            // }
-            // else
-            // {
-            //     client = level.sight_client;
+                if (client!.enemy == self.enemy)
+                {
+                    return false;
+                }
+            }
+            else if (level.sound_entity_framenum >= (level.framenum - 1))
+            {
+                client = level.sound_entity;
+                heardit = true;
+            }
+            else if ((self.enemy == null) &&
+                    (level.sound2_entity_framenum >= (level.framenum - 1)) &&
+                    (self.spawnflags & 1) == 0)
+            {
+                client = level.sound2_entity;
+                heardit = true;
+            }
+            else
+            {
+                client = level.sight_client;
 
-            //     if (!client)
-            //     {
-            //         return false; /* no clients to get mad at */
-            //     }
-            // }
+                if (client == null)
+                {
+                    return false; /* no clients to get mad at */
+                }
+            }
 
-            return false;
             /* if the entity went away, forget it */
-            // if (!client.inuse)
-            // {
-            //     return false;
-            // }
+            if (!(client?.inuse ?? false))
+            {
+                return false;
+            }
 
-            // if (client == self->enemy)
-            // {
-            //     return true;
-            // }
+            if (client == self.enemy)
+            {
+                return true;
+            }
 
-            // if (client->client)
-            // {
-            //     if (client->flags & FL_NOTARGET)
-            //     {
-            //         return false;
-            //     }
-            // }
-            // else if (client->svflags & SVF_MONSTER)
-            // {
-            //     if (!client->enemy)
-            //     {
-            //         return false;
-            //     }
+            if (client.client == null)
+            {
+                if ((client.flags & FL_NOTARGET) != 0)
+                {
+                    return false;
+                }
+            }
+            else if ((client.svflags & QGameFlags.SVF_MONSTER) != 0)
+            {
+                if (client.enemy == null)
+                {
+                    return false;
+                }
 
-            //     if (client->enemy->flags & FL_NOTARGET)
-            //     {
-            //         return false;
-            //     }
-            // }
-            // else if (heardit)
-            // {
-            //     if (client->owner->flags & FL_NOTARGET)
-            //     {
-            //         return false;
-            //     }
-            // }
-            // else
-            // {
-            //     return false;
-            // }
+                if ((client.enemy.flags & FL_NOTARGET) != 0)
+                {
+                    return false;
+                }
+            }
+            else if (heardit)
+            {
+                if ((((edict_t)client.owner!).flags & FL_NOTARGET) != 0)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
 
-            // if (!heardit)
-            // {
+            if (!heardit)
+            {
+                Console.WriteLine("range");
             //     r = range(self, client);
 
             //     if (r == RANGE_FAR)
             //     {
-            //         return false;
+                    return false;
             //     }
 
             //     /* is client in an spot too dark to be seen? */
@@ -290,7 +290,7 @@ namespace Quake2 {
             //         }
             //     }
 
-            //     self->enemy = client;
+                // self.enemy = client;
 
             //     if (strcmp(self->enemy->classname, "player_noise") != 0)
             //     {
@@ -307,9 +307,9 @@ namespace Quake2 {
             //             }
             //         }
             //     }
-            // }
-            // else /* heardit */
-            // {
+            }
+            else /* heardit */
+            {
             //     vec3_t temp;
 
             //     if (self->spawnflags & 1)
@@ -327,30 +327,30 @@ namespace Quake2 {
             //         }
             //     }
 
-            //     VectorSubtract(client->s.origin, self->s.origin, temp);
+                var temp = client.s.origin - self.s.origin;
 
-            //     if (VectorLength(temp) > 1000) /* too far to hear */
-            //     {
-            //         return false;
-            //     }
+                if (temp.Length() > 1000) /* too far to hear */
+                {
+                    return false;
+                }
 
-            //     /* check area portals - if they are different
-            //     and not connected then we can't hear it */
-            //     if (client->areanum != self->areanum)
-            //     {
+                /* check area portals - if they are different
+                and not connected then we can't hear it */
+                if (client.areanum != self.areanum)
+                {
             //         if (!gi.AreasConnected(self->areanum, client->areanum))
             //         {
             //             return false;
             //         }
-            //     }
+                }
 
-            //     self->ideal_yaw = vectoyaw(temp);
-            //     M_ChangeYaw(self);
+                self.ideal_yaw = vectoyaw(temp);
+                M_ChangeYaw(self);
 
-            //     /* hunt the sound for a bit; hopefully find the real player */
-            //     self->monsterinfo.aiflags |= AI_SOUND_TARGET;
-            //     self->enemy = client;
-            // }
+                /* hunt the sound for a bit; hopefully find the real player */
+                self.monsterinfo.aiflags |= AI_SOUND_TARGET;
+                self.enemy = client;
+            }
 
             // FoundTarget(self);
 

@@ -328,7 +328,7 @@ namespace Quake2 {
             self.nextthink = level.time + FRAMETIME;
             self.svflags |= QGameFlags.SVF_MONSTER;
             self.s.renderfx |= QShared.RF_FRAMELERP;
-            // self.takedamage = DAMAGE_AIM;
+            self.takedamage = (int)damage_t.DAMAGE_AIM;
             self.air_finished = level.time + 12;
             // self.use = monster_use;
 
@@ -361,13 +361,13 @@ namespace Quake2 {
             //     }
             // }
 
-            // /* randomize what frame they start on */
-            // if (self->monsterinfo.currentmove)
-            // {
-            //     self->s.frame = self->monsterinfo.currentmove->firstframe +
-            //         (randk() % (self->monsterinfo.currentmove->lastframe -
-            //                 self->monsterinfo.currentmove->firstframe + 1));
-            // }
+            /* randomize what frame they start on */
+            if (self.monsterinfo.currentmove != null)
+            {
+                self.s.frame = self.monsterinfo.currentmove.firstframe +
+                    (QShared.randk() % (self.monsterinfo.currentmove.lastframe -
+                            self.monsterinfo.currentmove.firstframe + 1));
+            }
 
             return true;
         }
@@ -449,16 +449,14 @@ namespace Quake2 {
 
                 if (self.movetarget == null)
                 {
-            //         gi.dprintf("%s can't find target %s at %s\n", self->classname,
-            //                 self->target, vtos(self->s.origin));
+                    gi.dprintf($"{self.classname} can't find target {self.target} at {self.s.origin}\n");
                     self.target = null;
                     self.monsterinfo.pausetime = 100000000;
                     self.monsterinfo.stand!(self);
                 }
                 else if (self.movetarget.classname == "path_corner")
                 {
-            //         VectorSubtract(self->goalentity->s.origin, self->s.origin, v);
-            //         self->ideal_yaw = self->s.angles[YAW] = vectoyaw(v);
+                    self.ideal_yaw = self.s.angles[QShared.YAW] = vectoyaw(self.goalentity!.s.origin - self.s.origin);
                     self.monsterinfo.walk!(self);
                     self.target = null;
                 }

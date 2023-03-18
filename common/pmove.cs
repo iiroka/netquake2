@@ -654,13 +654,13 @@ namespace Quake2 {
             /* snap velocity to eigths */
             for (int i = 0; i < 3; i++)
             {
-                pm.s.velocity[i] = (short)(pml.velocity.Get(i) * 8);
+                pm.s.velocity[i] = (short)(pml.velocity[i] * 8);
             }
 
             short[] sign = new short[3];
             for (int i = 0; i < 3; i++)
             {
-                if (pml.origin.Get(i) >= 0)
+                if (pml.origin[i] >= 0)
                 {
                     sign[i] = 1;
                 }
@@ -669,9 +669,9 @@ namespace Quake2 {
                     sign[i] = -1;
                 }
 
-                pm.s.origin[i] = (short)(pml.origin.Get(i) * 8);
+                pm.s.origin[i] = (short)(pml.origin[i] * 8);
 
-                if (pm.s.origin[i] * 0.125f == pml.origin.Get(i))
+                if (pm.s.origin[i] * 0.125f == pml.origin[i])
                 {
                     sign[i] = 0;
                 }

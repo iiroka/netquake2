@@ -1,8 +1,45 @@
+/*
+ * Copyright (C) 1997-2001 Id Software, Inc.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+ * 02111-1307, USA.
+ *
+ * =======================================================================
+ *
+ * Misc. utility functions for the game logic.
+ *
+ * =======================================================================
+ */
+
+using System.Numerics;
+
 namespace Quake2 {
 
     partial class QuakeGame
     {
         private const int MAXCHOICES = 8;
+
+        private static void G_ProjectSource(in Vector3 point, in Vector3 distance, in Vector3 forward,
+                in Vector3 right, ref Vector3 result)
+        {
+            result[0] = point[0] + forward[0] * distance[0] + right[0] * distance[1];
+            result[1] = point[1] + forward[1] * distance[0] + right[1] * distance[1];
+            result[2] = point[2] + forward[2] * distance[0] + right[2] * distance[1] +
+                        distance[2];
+        }
 
         /*
         * Searches all active entities for the next
@@ -85,7 +122,7 @@ namespace Quake2 {
             edict_t? ent = null;
             while (true)
             {
-                ent = G_Find(ent, targetname, targetname);
+                ent = G_Find(ent, "targetname", targetname);
                 if (ent == null)
                 {
                     break;
@@ -106,6 +143,36 @@ namespace Quake2 {
             }
 
             return choice[QShared.randk() % num_choices];
+        }
+
+        private float vectoyaw(in Vector3 vec)
+        {
+            float yaw;
+
+            if (vec[QShared.PITCH] == 0)
+            {
+                yaw = 0;
+
+                if (vec[QShared.YAW] > 0)
+                {
+                    yaw = 90;
+                }
+                else if (vec[QShared.YAW] < 0)
+                {
+                    yaw = -90;
+                }
+            }
+            else
+            {
+                yaw = (int)(MathF.Atan2(vec[QShared.YAW], vec[QShared.PITCH]) * 180 / MathF.PI);
+
+                if (yaw < 0)
+                {
+                    yaw += 360;
+                }
+            }
+
+            return yaw;
         }
 
         private void G_InitEdict(ref edict_t e)
@@ -186,10 +253,10 @@ namespace Quake2 {
 
             if (deathmatch!.Bool || coop!.Bool)
             {
-                // if ((ed - g_edicts) <= (maxclients->value + BODY_QUEUE_SIZE))
-                // {
-                //     return;
-                // }
+                if (ed.index <= (maxclients!.Int + BODY_QUEUE_SIZE))
+                {
+                    return;
+                }
             }
             else
             {
@@ -199,10 +266,49 @@ namespace Quake2 {
                 }
             }
 
-            // memset(ed, 0, sizeof(*ed));
+            ed.Clear();
             ed.classname = "freed";
             ed.freetime = level.time;
             ed.inuse = false;
+        }
+
+        private void G_TouchTriggers(edict_t ent)
+        {
+            // int i, num;
+            // edict_t *touch[MAX_EDICTS], *hit;
+
+            if (ent == null)
+            {
+                return;
+            }
+
+            /* dead things don't activate triggers! */
+            if ((ent.client != null || (ent.svflags & QGameFlags.SVF_MONSTER) != 0) && (ent.health <= 0))
+            {
+                return;
+            }
+
+            var touch = new edict_t[QShared.MAX_EDICTS];
+            var num = gi.BoxEdicts(ent.absmin, ent.absmax, touch, QShared.AREA_TRIGGERS);
+
+            /* be careful, it is possible to have an entity in this
+            list removed before we get to it (killtriggered) */
+            for (int i = 0; i < num; i++)
+            {
+                var hit = touch[i];
+
+                if (!hit.inuse)
+                {
+                    continue;
+                }
+
+                if (hit.touch == null)
+                {
+                    continue;
+                }
+
+                hit.touch(hit, ent, null, null);
+            }
         }
 
     }

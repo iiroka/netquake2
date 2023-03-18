@@ -837,6 +837,7 @@ namespace Quake2 {
 
                 if ((currententity.flags & QShared.RF_BEAM) != 0)
                 {
+                    Console.WriteLine("GL3_DrawBeam");
                     // GL3_DrawBeam(currententity);
                 }
                 else
@@ -857,6 +858,7 @@ namespace Quake2 {
                             GL3_DrawBrushModel(gl, ref currententity, (gl3brushmodel_t)currentmodel);
                             break;
                         case modtype_t.mod_sprite:
+                            Console.WriteLine("GL3_DrawSpriteModel");
                             // GL3_DrawSpriteModel(currententity, currentmodel);
                             break;
                         default:
@@ -882,6 +884,7 @@ namespace Quake2 {
 
                 if ((currententity.flags & QShared.RF_BEAM) != 0)
                 {
+                    Console.WriteLine("GL3_DrawBeam");
                     // GL3_DrawBeam(currententity);
                 }
                 else
@@ -902,6 +905,7 @@ namespace Quake2 {
                             GL3_DrawBrushModel(gl, ref currententity, (gl3brushmodel_t)currentmodel);
                             break;
                         case modtype_t.mod_sprite:
+                            Console.WriteLine("GL3_DrawSpriteModel");
                             // GL3_DrawSpriteModel(currententity, currentmodel);
                             break;
                         default:

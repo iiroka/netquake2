@@ -43,6 +43,9 @@ namespace Quake2 {
 
         private const float FRAMETIME = 0.1f;
 
+        private const int MELEE_DISTANCE = 80;
+        private const int BODY_QUEUE_SIZE = 8;
+
         private enum damage_t
         {
             DAMAGE_NO,
@@ -50,11 +53,24 @@ namespace Quake2 {
             DAMAGE_AIM /* auto targeting recognizes this */
         }
 
+        private enum weaponstate_t
+        {
+            WEAPON_READY,
+            WEAPON_ACTIVATING,
+            WEAPON_DROPPING,
+            WEAPON_FIRING
+        }
+
         /* deadflag */
         private const int DEAD_NO = 0;
         private const int DEAD_DYING = 1;
         private const int DEAD_DEAD = 2;
         private const int DEAD_RESPAWNABLE = 3;
+
+        /* handedness values */
+        private const int RIGHT_HANDED = 0;
+        private const int LEFT_HANDED = 1;
+        private const int CENTER_HANDED = 2;
 
         /* edict->movetype values */
         private enum movetype_t
@@ -129,7 +145,7 @@ namespace Quake2 {
             // qboolean (*pickup)(struct edict_s *ent, struct edict_s *other);
             // void (*use)(struct edict_s *ent, struct gitem_s *item);
             // void (*drop)(struct edict_s *ent, struct gitem_s *item);
-            public edict_delegate? weaponthink  { get; init; }
+            public edict_game_delegate? weaponthink  { get; init; }
             // char *pickup_sound;
             public string world_model;
             // int world_model_flags;
@@ -260,30 +276,30 @@ namespace Quake2 {
         private struct moveinfo_t
         {
             /* fixed data */
-            // vec3_t start_origin;
-            // vec3_t start_angles;
-            // vec3_t end_origin;
-            // vec3_t end_angles;
+            public Vector3 start_origin;
+            public Vector3 start_angles;
+            public Vector3 end_origin;
+            public Vector3 end_angles;
 
-            // int sound_start;
-            // int sound_middle;
-            // int sound_end;
+            public int sound_start;
+            public int sound_middle;
+            public int sound_end;
 
-            // float accel;
-            // float speed;
-            // float decel;
-            // float distance;
+            public float accel;
+            public float speed;
+            public float decel;
+            public float distance;
 
-            // float wait;
+            public float wait;
 
-            // /* state data */
-            // int state;
-            // vec3_t dir;
-            // float current_speed;
-            // float move_speed;
-            // float next_speed;
-            // float remaining_distance;
-            // float decel_distance;
+             /* state data */
+            public int state;
+            public Vector3 dir;
+            public float current_speed;
+            public float move_speed;
+            public float next_speed;
+            public float remaining_distance;
+            public float decel_distance;
             // void (*endfunc)(edict_t *);
         }
 
@@ -410,7 +426,7 @@ namespace Quake2 {
             public int savedFlags;
 
             public int selected_item;
-            // int inventory[MAX_ITEMS];
+            public int[] inventory;
 
             /* ammo capacities */
             public int max_bullets;
@@ -477,7 +493,7 @@ namespace Quake2 {
 
             public float killer_yaw; /* when dead, look at killer */
 
-            // weaponstate_t weaponstate;
+            public weaponstate_t weaponstate;
             public Vector3 kick_angles; /* weapon kicks */
             public Vector3 kick_origin;
             public float v_dmg_roll, v_dmg_pitch, v_dmg_time; /* damage kicks */
@@ -585,18 +601,22 @@ namespace Quake2 {
             }
         }
 
+        private delegate void touch_delegate(edict_t self, edict_t other, QShared.cplane_t? plane,
+                    in QShared.csurface_t? surf);
+        private delegate void use_delegate(edict_t self, edict_t other, edict_t activator);
+
         private class edict_t : edict_s
         {
             public int index { get; init; }
             public movetype_t movetype;
             public uint flags;
 
-            public string model;
+            public string? model;
             public float freetime; /* sv.time when the object was freed */
 
             /* only used locally in game, not by server */
-            public string message;
-            public string classname;
+            public string? message;
+            public string? classname;
             public int spawnflags;
 
             public float timestamp;
@@ -631,9 +651,8 @@ namespace Quake2 {
             public edict_delegate? prethink;
             public edict_delegate? think;
             // void (*blocked)(edict_t *self, edict_t *other);
-            // void (*touch)(edict_t *self, edict_t *other, cplane_t *plane,
-            //         csurface_t *surf);
-            // void (*use)(edict_t *self, edict_t *other, edict_t *activator);
+            public touch_delegate? touch;
+            public use_delegate? use;
             // void (*pain)(edict_t *self, edict_t *other, float kick, int damage);
             // void (*die)(edict_t *self, edict_t *inflictor, edict_t *attacker,
             //         int damage, vec3_t point);
@@ -699,9 +718,133 @@ namespace Quake2 {
 
             public gitem_t? item; /* for bonus items */
 
-            // /* common data blocks */
-            // moveinfo_t moveinfo;
+            /* common data blocks */
+            public moveinfo_t moveinfo;
             public monsterinfo_t monsterinfo = new monsterinfo_t();
+
+            public void Clear() {
+                this.next = null;
+                this.prev = null;
+                this.s.effects = 0;
+                this.s.ev = 0;
+                this.s.frame = 0;
+                this.s.modelindex = 0;
+                this.s.modelindex2 = 0;
+                this.s.modelindex3 = 0;
+                this.s.modelindex4 = 0;
+                this.s.number = 0;
+                this.s.old_origin = Vector3.Zero;
+                this.s.origin = Vector3.Zero;
+                this.s.renderfx = 0;
+                this.s.skinnum = 0;
+                this.s.solid = 0;
+                this.s.sound = 0;
+                this.client = null;
+                this.inuse = false;
+                this.linkcount = 0;
+                this.area.next = null;
+                this.area.prev = null;
+                this.num_clusters = 0;
+                Array.Fill(this.clusternums, 0);
+                this.headnode = 0; 
+                this.areanum = 0;
+                this.areanum2 = 0;
+                this.svflags = 0;
+                this.mins = Vector3.Zero;
+                this.maxs = Vector3.Zero;
+                this.absmin = Vector3.Zero;
+                this.absmax = Vector3.Zero;
+                this.size = Vector3.Zero;
+                this.solid = solid_t.SOLID_NOT;
+                this.clipmask = 0;
+                this.owner = null;
+
+                this.movetype = movetype_t.MOVETYPE_NONE;
+                this.flags = 0;
+                this.model = null;
+                this.freetime = 0;
+                this.message = null;
+                this.classname = null;
+                this.spawnflags = 0;
+                this.timestamp = 0;
+                this.angle = 0;
+                this.target = null;
+                this.targetname = null;
+                this.killtarget = null;
+                this.team = null;
+                this.pathtarget = null;
+                this.deathtarget = null;
+                this.combattarget = null;
+                // // edict_t *target_ent;
+                // public float speed, accel, decel;
+                this.movedir = Vector3.Zero;
+                this.pos1 = Vector3.Zero;
+                this.pos2 = Vector3.Zero;
+                this.velocity = Vector3.Zero;
+                this.avelocity = Vector3.Zero;
+                // public int mass;
+                // public float air_finished;
+                // public float gravity; /* per entity gravity multiplier (1.0 is normal)
+                this.goalentity = null;
+                this.movetarget = null;
+                // public float yaw_speed;
+                // public float ideal_yaw;
+                // public float nextthink;
+                this.prethink = null;
+                this.think = null;
+                // // void (*blocked)(edict_t *self, edict_t *other);
+                this.touch = null;
+                this.use = null;
+                // // void (*pain)(edict_t *self, edict_t *other, float kick, int damage);
+                // // void (*die)(edict_t *self, edict_t *inflictor, edict_t *attacker,
+                // //         int damage, vec3_t point);
+                // public float touch_debounce_time;
+                // public float pain_debounce_time;
+                // public float damage_debounce_time;
+                // public float fly_sound_debounce_time;	/* now also used by insane marines to store pain sound timeout */
+                // public float last_move_time;
+                // public int health;
+                // public int max_health;
+                // public int gib_health;
+                // public int deadflag;
+                // public float show_hostile;
+                // public float powerarmor_time;
+                // public string map; /* target_changelevel */
+                // public int viewheight; /* height above origin where eyesight is determined */
+                // public int takedamage;
+                // public int dmg;
+                // public int radius_dmg;
+                // public float dmg_radius;
+                // public int sounds; /* now also used for player death sound aggregation */
+                // public int count;
+                this.chain = null;
+                this.enemy = null;
+                this.oldenemy = null;
+                this.activator = null;
+                this.groundentity = null;
+                // public int groundentity_linkcount;
+                this.teamchain = null;
+                this.teammaster = null;
+                this.mynoise = null;
+                this.mynoise2 = null;
+                // public int noise_index;
+                // public int noise_index2;
+                // public float volume;
+                // public float attenuation;
+                // public float wait;
+                // public float delay; /* before firing targets */
+                // public float random;
+                // public float last_sound_time;
+                // public int watertype;
+                // public int waterlevel;
+                // public Vector3 move_origin;
+                // public Vector3 move_angles;
+                // public int light_level;
+                // public int style; /* also used as areaportal number */
+                // public gitem_t? item = null;
+                // public moveinfo_t moveinfo;
+                // public monsterinfo_t monsterinfo = new monsterinfo_t();
+            }
         }  
     }
 }

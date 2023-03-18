@@ -841,7 +841,6 @@ namespace Quake2 {
                 if (!String.IsNullOrEmpty(kb) && (kb[0] == '+'))
                 {
                     var cmd = $"-{kb.Substring(1)} {key} {time}\n";
-                    Console.Write(cmd);
                     common.Cbuf_AddText(cmd);
                 }
 
@@ -860,7 +859,6 @@ namespace Quake2 {
                     {
                         /* button commands add keynum and time as a parm */
                         var cmd = $"{kb} {key} {time}\n";
-                        Console.Write(cmd);
                         common.Cbuf_AddText(cmd);
                     }
                     else

@@ -801,9 +801,9 @@ namespace Quake2 {
             float t1, t2, offset;
             if (plane.type < 3)
             {
-                t1 = p1.Get(plane.type) - plane.dist;
-                t2 = p2.Get(plane.type) - plane.dist;
-                offset = trace_extents.Get(plane.type);
+                t1 = p1[plane.type] - plane.dist;
+                t2 = p2[plane.type] - plane.dist;
+                offset = trace_extents[plane.type];
             }
             else
             {

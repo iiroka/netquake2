@@ -389,7 +389,7 @@ namespace Quake2 {
                     ex.frames = 19;
                     ex.baseframe = 30;
                     ex.ent.angles.Y = (float)(QShared.randk() % 360);
-                //     EXPLOSION_PARTICLES(pos);
+                    CL_ExplosionParticles(pos);
 
                 //     if (type == TE_GRENADE_EXPLOSION_WATER)
                 //     {
@@ -462,7 +462,7 @@ namespace Quake2 {
 
                 //     if ((type != TE_EXPLOSION1_BIG) && (type != TE_EXPLOSION1_NP))
                 //     {
-                //         EXPLOSION_PARTICLES(pos);
+                //         CL_ExplosionParticles(pos);
                 //     }
 
                 //     if (type == TE_ROCKET_EXPLOSION_WATER)

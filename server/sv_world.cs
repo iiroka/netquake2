@@ -236,14 +236,14 @@ namespace Quake2 {
 
                 for (int i = 0; i < 3; i++)
                 {
-                    float v = MathF.Abs(ent.mins.Get(i));
+                    float v = MathF.Abs(ent.mins[i]);
 
                     if (v > max)
                     {
                         max = v;
                     }
 
-                    v = MathF.Abs(ent.maxs.Get(i));
+                    v = MathF.Abs(ent.maxs[i]);
 
                     if (v > max)
                     {
@@ -461,12 +461,12 @@ namespace Quake2 {
             }
 
             /* recurse down both sides */
-            if (area_maxs.Get(node.axis) > node.dist)
+            if (area_maxs[node.axis] > node.dist)
             {
                 SV_AreaEdicts_r(node.children[0]!);
             }
 
-            if (area_mins.Get(node.axis) < node.dist)
+            if (area_mins[node.axis] < node.dist)
             {
                 SV_AreaEdicts_r(node.children[1]!);
             }
@@ -624,15 +624,15 @@ namespace Quake2 {
         {
             for (int i = 0; i < 3; i++)
             {
-                if (end.Get(i) > start.Get(i))
+                if (end[i] > start[i])
                 {
-                    boxmins.Set(i, start.Get(i) + mins.Get(i) - 1);
-                    boxmaxs.Set(i, end.Get(i) + maxs.Get(i) + 1);
+                    boxmins[i] = start[i] + mins[i] - 1;
+                    boxmaxs[i] = end[i] + maxs[i] + 1;
                 }
                 else
                 {
-                    boxmins.Set(i, end.Get(i) + mins.Get(i) - 1);
-                    boxmaxs.Set(i, start.Get(i) + maxs.Get(i) + 1);
+                    boxmins[i] = end[i] + mins[i] - 1;
+                    boxmaxs[i] = start[i] + maxs[i] + 1;
                 }
             }
         }

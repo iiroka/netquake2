@@ -86,6 +86,31 @@ namespace Quake2 {
         }
 
         /*
+        * Two entities have touched, so
+        * run their touch functions
+        */
+        private void SV_Impact(edict_t e1, in QShared.trace_t trace)
+        {
+            if (e1 == null || trace.ent == null)
+            {
+                return;
+            }
+
+            var e2 = (edict_t)trace.ent;
+            Console.WriteLine($"SV_Impact {e1.classname} {e2.classname}");
+
+            if (e1.touch != null && (e1.solid != solid_t.SOLID_NOT))
+            {
+                e1.touch(e1, e2, trace.plane, trace.surface);
+            }
+
+            if (e2.touch != null && (e2.solid != solid_t.SOLID_NOT))
+            {
+                e2.touch(e2, e1, null, null);
+            }
+        }
+
+        /*
         * Slide off of the impacting object
         * returns the blocked flags (1 = floor,
         * 2 = step / wall)
@@ -108,12 +133,12 @@ namespace Quake2 {
 
             for (int i = 0; i < 3; i++)
             {
-                var change = normal.Get(i) * backoff;
-                outd.Set(i, ind.Get(i) - change);
+                var change = normal[i] * backoff;
+                outd[i] = ind[i] - change;
 
-                if ((outd.Get(i) > -STOP_EPSILON) && (outd.Get(i) < STOP_EPSILON))
+                if ((outd[i] > -STOP_EPSILON) && (outd[i] < STOP_EPSILON))
                 {
-                    outd.Set(i, 0);
+                    outd[i] = 0;
                 }
             }
 
@@ -223,7 +248,7 @@ namespace Quake2 {
                 }
 
                 /* run the impact function */
-                // SV_Impact(ent, &trace);
+                SV_Impact(ent, trace);
 
                 if (!ent.inuse)
                 {
@@ -370,11 +395,10 @@ namespace Quake2 {
 
             if (trace.fraction != 1.0)
             {
-                Console.WriteLine("SV_Impact");
-        //         SV_Impact(ent, &trace);
+                SV_Impact(ent, trace);
 
-        //         /* if the pushed entity went away
-        //         and the pusher is still there */
+                /* if the pushed entity went away
+                and the pusher is still there */
         //         if (!trace.ent->inuse && ent->inuse)
         //         {
         //             /* move the pusher back and try again */
@@ -386,8 +410,7 @@ namespace Quake2 {
 
             if (ent.inuse)
             {
-                // Console.WriteLine("G_TouchTriggers");
-        //         G_TouchTriggers(ent);
+                G_TouchTriggers(ent);
             }
 
             return trace;
@@ -420,12 +443,13 @@ namespace Quake2 {
             // pushed_p = pushed;
 
             edict_t? part = null;
-            for (part = ent; part != null; part = part.teamchain)
+            for (part = ent; part != null; part = part!.teamchain)
             {
-            //     if (part->velocity[0] || part->velocity[1] || part->velocity[2] ||
-            //         part->avelocity[0] || part->avelocity[1] || part->avelocity[2])
-            //     {
-            //         /* object is moving */
+                if (part.velocity[0] != 0 || part.velocity[1] != 0 || part.velocity[2] != 0 ||
+                    part.avelocity[0] != 0 || part.avelocity[1] != 0 || part.avelocity[2] != 0)
+                {
+                    /* object is moving */
+                    Console.WriteLine("== PUSH ==");
             //         VectorScale(part->velocity, FRAMETIME, move);
             //         VectorScale(part->avelocity, FRAMETIME, amove);
 
@@ -433,7 +457,7 @@ namespace Quake2 {
             //         {
             //             break; /* move was blocked */
             //         }
-            //     }
+                }
             }
 
             // if (pushed_p > &pushed[MAX_EDICTS -1 ])
@@ -768,7 +792,7 @@ namespace Quake2 {
             //     }
 
                 gi.linkentity(ent);
-            //     G_TouchTriggers(ent);
+                G_TouchTriggers(ent);
 
                 if (!ent.inuse)
                 {

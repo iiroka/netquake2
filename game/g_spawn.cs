@@ -45,7 +45,7 @@ namespace Quake2 {
 
             // {"func_plat", SP_func_plat},
             // {"func_button", SP_func_button},
-            // {"func_door", SP_func_door},
+            {"func_door", SP_func_door},
             // {"func_door_secret", SP_func_door_secret},
             // {"func_door_rotating", SP_func_door_rotating},
             // {"func_rotating", SP_func_rotating},
@@ -73,7 +73,7 @@ namespace Quake2 {
             // {"trigger_monsterjump", SP_trigger_monsterjump},
 
             // {"target_temp_entity", SP_target_temp_entity},
-            // {"target_speaker", SP_target_speaker},
+            {"target_speaker", SP_target_speaker},
             // {"target_explosion", SP_target_explosion},
             // {"target_changelevel", SP_target_changelevel},
             // {"target_secret", SP_target_secret},

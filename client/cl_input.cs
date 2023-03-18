@@ -227,6 +227,14 @@ namespace Quake2 {
         {
             KeyUp(ref in_back, args);
         }
+        private void IN_AttackDown(string[] args)
+        {
+            KeyDown(ref in_attack, args);
+        }
+        private void IN_AttackUp(string[] args)
+        {
+            KeyUp(ref in_attack, args);
+        }
 
         /*
         * Returns the fraction of the
@@ -329,8 +337,8 @@ namespace Quake2 {
             cmd.sidemove += (short)(cl_sidespeed!.Float * CL_KeyState(ref in_moveright));
             cmd.sidemove -= (short)(cl_sidespeed!.Float * CL_KeyState(ref in_moveleft));
 
-            // cmd->upmove += cl_upspeed->value * CL_KeyState(&in_up);
-            // cmd->upmove -= cl_upspeed->value * CL_KeyState(&in_down);
+            cmd.upmove += (short)(cl_upspeed!.Float * CL_KeyState(ref in_up));
+            cmd.upmove -= (short)(cl_upspeed!.Float * CL_KeyState(ref in_down));
 
             if ((in_klook.state & 1) == 0)
             {
@@ -382,25 +390,25 @@ namespace Quake2 {
             // int ms;
             // int i;
 
-            // /* figure button bits */
-            // if (in_attack.state & 3)
-            // {
-            //     cmd->buttons |= BUTTON_ATTACK;
-            // }
+            /* figure button bits */
+            if ((in_attack.state & 3) != 0)
+            {
+                cmd.buttons |= QShared.BUTTON_ATTACK;
+            }
 
             in_attack.state &= ~2;
 
-            // if (in_use.state & 3)
-            // {
-            //     cmd->buttons |= BUTTON_USE;
-            // }
+            if ((in_use.state & 3) != 0)
+            {
+                cmd.buttons |= QShared.BUTTON_USE;
+            }
 
             in_use.state &= ~2;
 
-            // if (anykeydown && (cls.key_dest == key_game))
-            // {
-            //     cmd->buttons |= BUTTON_ANY;
-            // }
+            if (anykeydown != 0 && (cls.key_dest == keydest_t.key_game))
+            {
+                cmd.buttons |= QShared.BUTTON_ANY;
+            }
 
             /* send milliseconds of time to apply the move */
             int ms = (int)(cls.nframetime * 1000);
@@ -454,8 +462,8 @@ namespace Quake2 {
             // Cmd_AddCommand("-moveright", IN_MoverightUp);
             // Cmd_AddCommand("+speed", IN_SpeedDown);
             // Cmd_AddCommand("-speed", IN_SpeedUp);
-            // Cmd_AddCommand("+attack", IN_AttackDown);
-            // Cmd_AddCommand("-attack", IN_AttackUp);
+            common.Cmd_AddCommand("+attack", IN_AttackDown);
+            common.Cmd_AddCommand("-attack", IN_AttackUp);
             // Cmd_AddCommand("+use", IN_UseDown);
             // Cmd_AddCommand("-use", IN_UseUp);
             // Cmd_AddCommand("impulse", IN_Impulse);
@@ -509,11 +517,11 @@ namespace Quake2 {
             // Update frame time for the next call
             old_sys_frame_time = input.sys_frame_time;
 
-            // // Important events are send immediately
-            // if (((in_attack.state & 2)) || (in_use.state & 2))
-            // {
-            //     cls.forcePacket = true;
-            // }
+            // Important events are send immediately
+            if (((in_attack.state & 2) != 0) || (in_use.state & 2) != 0)
+            {
+                cls.forcePacket = true;
+            }
         }
 
         private void CL_RefreshMove()
@@ -547,25 +555,25 @@ namespace Quake2 {
             ref var cmd = ref cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
 
             // Mouse button events
-            // if (in_attack.state & 3)
-            // {
-            //     cmd->buttons |= BUTTON_ATTACK;
-            // }
+            if ((in_attack.state & 3) != 0)
+            {
+                cmd.buttons |= QShared.BUTTON_ATTACK;
+            }
 
             in_attack.state &= ~2;
 
-            // if (in_use.state & 3)
-            // {
-            //     cmd->buttons |= BUTTON_USE;
-            // }
+            if ((in_use.state & 3) != 0)
+            {
+                cmd.buttons |= QShared.BUTTON_USE;
+            }
 
             in_use.state &= ~2;
 
-            // // Keyboard events
-            // if (anykeydown && cls.key_dest == key_game)
-            // {
-            //     cmd->buttons |= BUTTON_ANY;
-            // }
+            // Keyboard events
+            if (anykeydown != 0 && cls.key_dest == keydest_t.key_game)
+            {
+                cmd.buttons |= QShared.BUTTON_ANY;
+            }
 
             cmd.impulse = (byte)in_impulse;
             in_impulse = 0;

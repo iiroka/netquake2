@@ -766,6 +766,44 @@ namespace Quake2 {
             // }
         }        
 
+
+        private void CL_ExplosionParticles(in Vector3 org)
+        {
+            // int i, j;
+            // cparticle_t *p;
+            // float time;
+
+            var time = (float)cl.time;
+
+            for (int i = 0; i < 256; i++)
+            {
+                if (free_particles == null)
+                {
+                    return;
+                }
+
+                var p = free_particles;
+                free_particles = p.next;
+                p.next = active_particles;
+                active_particles = p;
+
+                p.time = time;
+                p.color = 0xe0 + (QShared.randk() & 7);
+
+                for (int j = 0; j < 3; j++)
+                {
+                    p.org[j] = org[j] + ((QShared.randk() % 32) - 16);
+                    p.vel[j] = (QShared.randk() % 384) - 192;
+                }
+
+                p.accel[0] = p.accel[1] = 0;
+                p.accel[2] = -PARTICLE_GRAVITY;
+                p.alpha = 1.0f;
+
+                p.alphavel = -0.8f / (0.5f + QShared.frandk() * 0.3f);
+            }
+        }
+
         /*
         *  Wall impact puffs
         */

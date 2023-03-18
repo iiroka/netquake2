@@ -147,8 +147,7 @@ namespace Quake2 {
         // solidity changes, it must be relinked. */
         void linkentity(edict_s ent);
         void unlinkentity(edict_s ent); /* call before removing an interactive edict */
-        // int (*BoxEdicts)(vec3_t mins, vec3_t maxs, edict_t **list, int maxcount,
-        //         int areatype);
+        int BoxEdicts(in Vector3 mins, in Vector3 maxs, edict_s[] list, int areatype);
         void Pmove(ref QShared.pmove_t pmove); /* player movement code common with client prediction */
 
         // /* network messaging */

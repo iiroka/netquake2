@@ -29,6 +29,11 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        private const int STEPSIZE = 18;
+        private const int DI_NODIR = -1;
+
+        private int c_yes, c_no;
+
         /*
         * Called by monster program code.
         * The move will be adjusted for slopes
@@ -266,10 +271,299 @@ namespace Quake2 {
             if (relink)
             {
                 gi.linkentity(ent);
-                // G_TouchTriggers(ent);
+                G_TouchTriggers(ent);
             }
 
             return true;
+        }
+
+        /* ============================================================================ */
+
+        private void M_ChangeYaw(edict_t ent)
+        {
+            // float ideal;
+            // float current;
+            // float move;
+            // float speed;
+
+            if (ent == null)
+            {
+                return;
+            }
+
+            var current = QShared.anglemod(ent.s.angles[QShared.YAW]);
+            var ideal = ent.ideal_yaw;
+
+            if (current == ideal)
+            {
+                return;
+            }
+
+            var move = ideal - current;
+            var speed = ent.yaw_speed;
+
+            if (ideal > current)
+            {
+                if (move >= 180)
+                {
+                    move = move - 360;
+                }
+            }
+            else
+            {
+                if (move <= -180)
+                {
+                    move = move + 360;
+                }
+            }
+
+            if (move > 0)
+            {
+                if (move > speed)
+                {
+                    move = speed;
+                }
+            }
+            else
+            {
+                if (move < -speed)
+                {
+                    move = -speed;
+                }
+            }
+
+            ent.s.angles[QShared.YAW] = QShared.anglemod(current + move);
+        }
+
+        /*
+        * Turns to the movement direction, and
+        * walks the current distance if facing it.
+        */
+        private bool SV_StepDirection(edict_t ent, float yaw, float dist)
+        {
+            if (ent == null)
+            {
+                return false;
+            }
+
+            ent.ideal_yaw = yaw;
+            M_ChangeYaw(ent);
+
+            yaw = yaw * MathF.PI * 2 / 360;
+            var move = new Vector3(
+                MathF.Cos(yaw) * dist,
+                MathF.Sin(yaw) * dist,
+                0);
+
+            var oldorigin = ent.s.origin;
+
+            if (SV_movestep(ent, move, false))
+            {
+                var delta = ent.s.angles[QShared.YAW] - ent.ideal_yaw;
+
+                if ((delta > 45) && (delta < 315))
+                {
+                    /* not turned far enough, so don't take the step */
+                    ent.s.origin = oldorigin;
+                }
+
+                gi.linkentity(ent);
+                G_TouchTriggers(ent);
+                return true;
+            }
+
+            gi.linkentity(ent);
+            G_TouchTriggers(ent);
+            return false;
+        }
+
+        private void SV_FixCheckBottom(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            ent.flags |= FL_PARTIALGROUND;
+        }
+
+        private void SV_NewChaseDir(edict_t actor, edict_t enemy, float dist)
+        {
+            // float deltax, deltay;
+            // float d[3];
+            // float tdir, olddir, turnaround;
+
+            if (actor == null || enemy == null)
+            {
+                return;
+            }
+
+            var olddir = QShared.anglemod((int)(actor.ideal_yaw / 45) * 45);
+            var turnaround = QShared.anglemod(olddir - 180);
+
+            var deltax = enemy.s.origin[0] - actor.s.origin[0];
+            var deltay = enemy.s.origin[1] - actor.s.origin[1];
+
+            var d = new Vector3();
+            if (deltax > 10)
+            {
+                d[1] = 0;
+            }
+            else if (deltax < -10)
+            {
+                d[1] = 180;
+            }
+            else
+            {
+                d[1] = DI_NODIR;
+            }
+
+            if (deltay < -10)
+            {
+                d[2] = 270;
+            }
+            else if (deltay > 10)
+            {
+                d[2] = 90;
+            }
+            else
+            {
+                d[2] = DI_NODIR;
+            }
+
+            /* try direct route */
+            if ((d[1] != DI_NODIR) && (d[2] != DI_NODIR))
+            {
+                float tdir;
+                if (d[1] == 0)
+                {
+                    tdir = d[2] == 90 ? 45 : 315;
+                }
+                else
+                {
+                    tdir = d[2] == 90 ? 135 : 215;
+                }
+
+                if ((tdir != turnaround) && SV_StepDirection(actor, tdir, dist))
+                {
+                    return;
+                }
+            }
+
+            /* try other directions */
+            if (((QShared.randk() & 3) & 1) != 0 || (MathF.Abs(deltay) > MathF.Abs(deltax)))
+            {
+                var tdir = d[1];
+                d[1] = d[2];
+                d[2] = tdir;
+            }
+
+            if ((d[1] != DI_NODIR) && (d[1] != turnaround) &&
+                SV_StepDirection(actor, d[1], dist))
+            {
+                return;
+            }
+
+            if ((d[2] != DI_NODIR) && (d[2] != turnaround) &&
+                SV_StepDirection(actor, d[2], dist))
+            {
+                return;
+            }
+
+            /* there is no direct path to the player, so pick another direction */
+            if ((olddir != DI_NODIR) && SV_StepDirection(actor, olddir, dist))
+            {
+                return;
+            }
+
+            if ((QShared.randk() & 1) != 0) /* randomly determine direction of search */
+            {
+                for (float tdir = 0; tdir <= 315; tdir += 45)
+                {
+                    if ((tdir != turnaround) && SV_StepDirection(actor, tdir, dist))
+                    {
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                for (float tdir = 315; tdir >= 0; tdir -= 45)
+                {
+                    if ((tdir != turnaround) && SV_StepDirection(actor, tdir, dist))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            if ((turnaround != DI_NODIR) && SV_StepDirection(actor, turnaround, dist))
+            {
+                return;
+            }
+
+            actor.ideal_yaw = olddir; /* can't move */
+
+            /* if a bridge was pulled out from underneath
+            a monster, it may not have a valid standing
+            position at all */
+            // if (!M_CheckBottom(actor))
+            // {
+            //     SV_FixCheckBottom(actor);
+            // }
+        }
+
+        private bool SV_CloseEnough(edict_t ent, edict_t goal, float dist)
+        {
+            if (ent == null || goal == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                if (goal.absmin[i] > ent.absmax[i] + dist)
+                {
+                    return false;
+                }
+
+                if (goal.absmax[i] < ent.absmin[i] - dist)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void M_MoveToGoal(edict_t ent, float dist)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            var goal = ent.goalentity!;
+
+            if (ent.groundentity == null && (ent.flags & (FL_FLY | FL_SWIM)) == 0)
+            {
+                return;
+            }
+
+            /* if the next step hits the enemy, return immediately */
+            if (ent.enemy != null && SV_CloseEnough(ent, ent.enemy, dist))
+            {
+                return;
+            }
+
+            /* bump around... */
+            if (((QShared.randk() & 3) == 1) || !SV_StepDirection(ent, ent.ideal_yaw, dist))
+            {
+                if (ent.inuse)
+                {
+                    SV_NewChaseDir(ent, goal, dist);
+                }
+            }
         }
 
         private bool M_walkmove(edict_t ent, float yaw, float dist)

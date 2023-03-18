@@ -82,7 +82,7 @@ namespace Quake2 {
 
             ent.solid = solid_t.SOLID_TRIGGER;
             ent.movetype = movetype_t.MOVETYPE_TOSS;
-            // ent->touch = Touch_Item;
+            // ent.touch = Touch_Item;
 
             var dest = ent.s.origin + new Vector3(0,0,-128);
 
@@ -379,7 +379,7 @@ namespace Quake2 {
                 // NULL,
                 // Use_Weapon,
                 // NULL,
-                // Weapon_Blaster,
+                weaponthink = Weapon_Blaster,
                 // "misc/w_pkup.wav",
                 // NULL, 0,
                 view_model = "models/weapons/v_blast/tris.md2",

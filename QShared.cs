@@ -1634,53 +1634,29 @@ namespace Quake2 {
     {
         public static float Pitch(this Vector3 v)
         {
-            return v.X;
+            return v[QShared.PITCH];
         }
         public static float Yaw(this Vector3 v)
         {
-            return v.Y;
+            return v[QShared.YAW];
         }
         public static float Roll(this Vector3 v)
         {
-            return v.Z;
+            return v[QShared.ROLL];
         }
         public static void SetPitch(this ref Vector3 v, float value)
         {
-            v.X = value;
+            v[QShared.PITCH] = value;
         }
         public static void SetYaw(this ref Vector3 v, float value)
         {
-            v.Y = value;
+            v[QShared.YAW] = value;
         }
         public static void SetRoll(this ref Vector3 v, float value)
         {
-            v.Z = value;
+            v[QShared.ROLL] = value;
         }
 
-        public static void Set(this ref Vector3 v, int index, float value)
-        {
-            if (index == 0)
-                v.X = value;
-            else if (index == 1)
-                v.Y = value;
-            else if (index == 2)
-                v.Z = value;
-            else
-                throw new IndexOutOfRangeException();
-        }
-
-        public static float Get(this Vector3 v, int index)
-        {
-            if (index == 0)
-                return v.X;
-            else if (index == 1)
-                return v.Y;
-            else if (index == 2)
-                return v.Z;
-            else
-                throw new IndexOutOfRangeException();
-        }
-
-    }        
+    }
 
 }

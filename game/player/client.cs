@@ -219,11 +219,13 @@ namespace Quake2 {
                 return;
             }
 
-            client.pers = new client_persistant_t();
+            client.pers = new client_persistant_t() {
+                inventory = new int[QShared.MAX_ITEMS]
+            };
 
             var item = FindItem("Blaster");
             client.pers.selected_item = item!.index;
-            // client.pers.inventory[client.pers.selected_item] = 1;
+            client.pers.inventory[client.pers.selected_item] = 1;
 
             client.pers.weapon = item;
 
@@ -528,7 +530,7 @@ namespace Quake2 {
             for (int i = 0; i < 3; i++)
             {
                 client.ps.pmove.delta_angles[i] = QShared.ANGLE2SHORT(
-                        spawn_angles.Get(i) - client.resp.cmd_angles.Get(i));
+                        spawn_angles[i] - client.resp.cmd_angles[i]);
             }
 
             ent.s.angles.SetPitch(0);
@@ -961,7 +963,7 @@ namespace Quake2 {
 
                 if (ent.movetype != movetype_t.MOVETYPE_NOCLIP)
                 {
-                    // G_TouchTriggers(ent);
+                    G_TouchTriggers(ent);
                 }
 
                 /* touch other objects */

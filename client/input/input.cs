@@ -146,6 +146,8 @@ namespace Quake2 {
                     return (int)QClient.QKEYS.K_LEFTARROW;
                 case Key.Right:
                     return (int)QClient.QKEYS.K_RIGHTARROW;
+                case Key.ControlLeft:
+                    return (int)QClient.QKEYS.K_CTRL;
             }
             return 0;
         }
@@ -161,7 +163,6 @@ namespace Quake2 {
         {
             while (keyQueue.TryDequeue(out KeyEvent kevent))
             {
-                Console.WriteLine($"Key {kevent.key} down:{kevent.down} sc:{kevent.scancode}");
 				if (kevent.key >= Key.Number0 && kevent.key <= Key.Number9)
 				{
 					client.Key_Event('0' + (kevent.key - Key.Number0), kevent.down, false);
@@ -180,6 +181,8 @@ namespace Quake2 {
                     if (key != 0)
                     {
                         client.Key_Event(key, kevent.down, false);
+                    } else {
+                        Console.WriteLine($"Key {kevent.key} down:{kevent.down} sc:{kevent.scancode}");
                     }
                 }
 

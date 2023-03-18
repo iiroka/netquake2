@@ -32,7 +32,7 @@ namespace Quake2 {
         private edict_t? current_player;
         private gclient_t? current_client;
 
-        private static Vector3 forward, right, up;
+        private static Vector3 _view_forward, _view_right, _view_up;
         private float xyspeed;
 
         private float bobmove;
@@ -41,7 +41,7 @@ namespace Quake2 {
 
         private float SV_CalcRoll(in Vector3 angles, in Vector3 velocity)
         {
-            var side = Vector3.Dot(velocity, right);
+            var side = Vector3.Dot(velocity, _view_right);
             float sign = side < 0 ? -1 : 1;
             side = MathF.Abs(side);
 
@@ -118,10 +118,10 @@ namespace Quake2 {
                 angles.SetPitch(angles.Pitch() + ratio * client.fall_value);
 
                 /* add angles based on velocity */
-                var delta = Vector3.Dot(ent.velocity, forward);
+                var delta = Vector3.Dot(ent.velocity, _view_forward);
                 angles.SetPitch(angles.Pitch() + delta * run_pitch!.Float);
 
-                delta = Vector3.Dot(ent.velocity, right);
+                delta = Vector3.Dot(ent.velocity, _view_right);
                 angles.SetRoll(angles.Roll() + delta * run_roll!.Float);
 
                 /* add angles based on bob */
@@ -208,6 +208,73 @@ namespace Quake2 {
             }
 
             ent.client.ps.viewoffset = v;
+        }
+
+        private void SV_CalcGunOffset(edict_t ent)
+        {
+            int i;
+            float delta;
+
+            if (ent == null || ent.client == null)
+            {
+                return;
+            }
+
+            /* gun angles from bobbing */
+            ent.client.ps.gunangles[QShared.ROLL] = xyspeed * bobfracsin * 0.005f;
+            ent.client.ps.gunangles[QShared.YAW] = xyspeed * bobfracsin * 0.01f;
+
+            if ((bobcycle & 1) != 0)
+            {
+                ent.client.ps.gunangles[QShared.ROLL] = -ent.client.ps.gunangles[QShared.ROLL];
+                ent.client.ps.gunangles[QShared.YAW] = -ent.client.ps.gunangles[QShared.YAW];
+            }
+
+            ent.client.ps.gunangles[QShared.PITCH] = xyspeed * bobfracsin * 0.005f;
+
+            /* gun angles from delta movement */
+            for (i = 0; i < 3; i++)
+            {
+                delta = ((gclient_t)ent.client).oldviewangles[i] - ent.client.ps.viewangles[i];
+
+                if (delta > 180)
+                {
+                    delta -= 360;
+                }
+
+                if (delta < -180)
+                {
+                    delta += 360;
+                }
+
+                if (delta > 45)
+                {
+                    delta = 45;
+                }
+
+                if (delta < -45)
+                {
+                    delta = -45;
+                }
+
+                if (i == QShared.YAW)
+                {
+                    ent.client.ps.gunangles[QShared.ROLL] += 0.1f * delta;
+                }
+
+                ent.client.ps.gunangles[i] += 0.2f * delta;
+            }
+
+            /* gun height */
+            ent.client.ps.gunoffset = Vector3.Zero;
+
+            /* gun_x / gun_y / gun_z are development tools */
+            for (i = 0; i < 3; i++)
+            {
+                ent.client.ps.gunoffset[i] += _view_forward[i] * (gun_y!.Float);
+                ent.client.ps.gunoffset[i] += _view_right[i] * gun_x!.Float;
+                ent.client.ps.gunoffset[i] += _view_up[i] * (-gun_z!.Float);
+            }
         }
 
         private void G_SetClientFrame(edict_t ent)
@@ -364,11 +431,11 @@ namespace Quake2 {
             {
                 current_client.ps.blend[3] = 0;
                 current_client.ps.fov = 90;
-            //     G_SetStats(ent);
+                G_SetStats(ent);
                 return;
             }
 
-            QShared.AngleVectors(current_client.v_angle, ref forward, ref right, ref up);
+            QShared.AngleVectors(current_client.v_angle, ref _view_forward, ref _view_right, ref _view_up);
 
             // /* burn from lava, etc */
             // P_WorldEffects();
@@ -434,7 +501,7 @@ namespace Quake2 {
             SV_CalcViewOffset(ent);
 
             /* determine the gun offsets */
-            // SV_CalcGunOffset(ent);
+            SV_CalcGunOffset(ent);
 
             /* determine the full screen color blend
             must be after viewoffset, so eye contents
@@ -448,7 +515,7 @@ namespace Quake2 {
             // }
             // else
             // {
-            //     G_SetStats(ent);
+                G_SetStats(ent);
             // }
 
             // G_CheckChaseStats(ent);

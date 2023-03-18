@@ -148,8 +148,8 @@ namespace Quake2 {
             /* start up the next map */
             SV_Map(false, map, false, false);
 
-            // /* archive server state */
-            // Q_strlcpy(svs.mapcmd, map, sizeof(svs.mapcmd));
+            /* archive server state */
+            svs.mapcmd = map;
 
             // /* copy off the level to the autosave slot */
             // if (!dedicated->value)

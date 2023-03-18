@@ -31,6 +31,84 @@ namespace Quake2 {
     {
         private const int START_OFF = 1;
 
+        /* ===================================================== */
+
+        /*
+        * QUAKED path_corner (.5 .3 0) (-8 -8 -8) (8 8 8) TELEPORT
+        * Target: next path corner
+        * Pathtarget: gets used when an entity that has
+        *             this path_corner targeted touches it
+        */
+        private void path_corner_touch(edict_t self, edict_t other, QShared.cplane_t? _plane,
+                in QShared.csurface_t? _surf)
+        {
+            // vec3_t v;
+            // edict_t *next;
+            Console.WriteLine("path_corner_touch");
+
+            if (self == null || other == null)
+            {
+                return;
+            }
+
+            if (other.movetarget != self)
+            {
+                return;
+            }
+
+            if (other.enemy != null)
+            {
+                return;
+            }
+
+            // if (self->pathtarget)
+            // {
+            //     char *savetarget;
+
+            //     savetarget = self->target;
+            //     self->target = self->pathtarget;
+            //     G_UseTargets(self, other);
+            //     self->target = savetarget;
+            // }
+
+            edict_t? next = null;
+            if (self.target != null)
+            {
+                next = G_PickTarget(self.target);
+            }
+
+            // if ((next) && (next->spawnflags & 1))
+            // {
+            //     VectorCopy(next->s.origin, v);
+            //     v[2] += next->mins[2];
+            //     v[2] -= other->mins[2];
+            //     VectorCopy(v, other->s.origin);
+            //     next = G_PickTarget(next->target);
+            //     other->s.event = EV_OTHER_TELEPORT;
+            // }
+
+            other.goalentity = other.movetarget = next;
+
+            // if (self->wait)
+            // {
+            //     other->monsterinfo.pausetime = level.time + self->wait;
+            //     other->monsterinfo.stand(other);
+            //     return;
+            // }
+
+            // if (!other->movetarget)
+            // {
+            //     other->monsterinfo.pausetime = level.time + 100000000;
+            //     other->monsterinfo.stand(other);
+            // }
+            // else
+            // {
+            //     VectorSubtract(other->goalentity->s.origin, other->s.origin, v);
+            //     other->ideal_yaw = vectoyaw(v);
+            // }
+        }
+
+
         private static void SP_path_corner(QuakeGame g, edict_t? self)
         {
             if (self == null)
@@ -46,7 +124,7 @@ namespace Quake2 {
             }
 
             self.solid = solid_t.SOLID_TRIGGER;
-            // self.touch = path_corner_touch;
+            self.touch = g.path_corner_touch;
             self.mins = new Vector3(-8, -8, -8);
             self.maxs = new Vector3(8, 8, 8);
             self.svflags |= QGameFlags.SVF_NOCLIENT;
