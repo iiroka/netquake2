@@ -969,27 +969,27 @@ namespace Quake2 {
                 /* touch other objects */
                 for (int i = 0; i < pm.numtouch; i++)
                 {
-            //         other = pm.touchents[i];
+                    var other = (edict_t)pm.touchents[i]!;
+                    int j;
+                    for (j = 0; j < i; j++)
+                    {
+                        if (pm.touchents[j] == other)
+                        {
+                            break;
+                        }
+                    }
 
-            //         for (j = 0; j < i; j++)
-            //         {
-            //             if (pm.touchents[j] == other)
-            //             {
-            //                 break;
-            //             }
-            //         }
+                    if (j != i)
+                    {
+                        continue; /* duplicated */
+                    }
 
-            //         if (j != i)
-            //         {
-            //             continue; /* duplicated */
-            //         }
+                    if (other.touch == null)
+                    {
+                        continue;
+                    }
 
-            //         if (!other->touch)
-            //         {
-            //             continue;
-            //         }
-
-            //         other->touch(other, ent, NULL, NULL);
+                    other.touch!(other, ent, null, null);
                 }
             }
 
@@ -1001,9 +1001,9 @@ namespace Quake2 {
                on for monster sighting AI */
             ent.light_level = ucmd.lightlevel;
 
-            // /* fire weapon from final position if needed */
-            // if (client->latched_buttons & BUTTON_ATTACK)
-            // {
+            /* fire weapon from final position if needed */
+            if ((client.latched_buttons & QShared.BUTTON_ATTACK) != 0)
+            {
             //     if (client->resp.spectator)
             //     {
             //         client->latched_buttons = 0;
@@ -1023,7 +1023,7 @@ namespace Quake2 {
             //         client->weapon_thunk = true;
             //         Think_Weapon(ent);
             //     }
-            // }
+            }
 
             // if (client->resp.spectator)
             // {

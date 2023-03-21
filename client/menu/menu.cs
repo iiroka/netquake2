@@ -314,16 +314,16 @@ namespace Quake2 {
                     flags = MenuFlags.QMF_LEFT_JUSTIFY,
                     x = 0,
                     y = 10,
-                    name = "medium"
-                    // callback = EasyGameFunc;
+                    name = "medium",
+                    callback = MediumGameFunc
                 };
 
                 s_hard_game_action = new menuaction_s(){
                     flags = MenuFlags.QMF_LEFT_JUSTIFY,
                     x = 0,
                     y = 20,
-                    name = "hard"
-                    // callback = EasyGameFunc;
+                    name = "hard",
+                    callback = HardGameFunc
                 };
 
                 AddItem(s_easy_game_action);
@@ -360,6 +360,18 @@ namespace Quake2 {
             private void EasyGameFunc(menucommon_s _data)
             {
                 client.common.Cvar_ForceSet("skill", "0");
+                StartGame();
+            }
+
+            private void MediumGameFunc(menucommon_s _data)
+            {
+                client.common.Cvar_ForceSet("skill", "1");
+                StartGame();
+            }
+
+            private void HardGameFunc(menucommon_s _data)
+            {
+                client.common.Cvar_ForceSet("skill", "2");
                 StartGame();
             }
 

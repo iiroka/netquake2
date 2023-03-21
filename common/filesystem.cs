@@ -965,32 +965,32 @@ namespace Quake2 {
 
         /* upper design bounds: leaffaces, leafbrushes, planes, and 
         * verts are still bounded by 16 bit short limits */
-        public static int MAX_MAP_MODELS = 1024;
-        public static int MAX_MAP_BRUSHES = 8192;
-        public static int MAX_MAP_ENTITIES = 2048;
-        public static int MAX_MAP_ENTSTRING = 0x40000;
-        public static int MAX_MAP_TEXINFO = 8192;
+        public const int MAX_MAP_MODELS = 1024;
+        public const int MAX_MAP_BRUSHES = 8192;
+        public const int MAX_MAP_ENTITIES = 2048;
+        public const int MAX_MAP_ENTSTRING = 0x40000;
+        public const int MAX_MAP_TEXINFO = 8192;
 
-        public static int MAX_MAP_AREAS = 256;
-        public static int MAX_MAP_AREAPORTALS = 1024;
-        public static int MAX_MAP_PLANES = 65536;
-        public static int MAX_MAP_NODES = 65536;
-        public static int MAX_MAP_BRUSHSIDES = 65536;
-        public static int MAX_MAP_LEAFS = 65536;
-        public static int MAX_MAP_VERTS = 65536;
-        public static int MAX_MAP_FACES = 65536;
-        public static int MAX_MAP_LEAFFACES = 65536;
-        public static int MAX_MAP_LEAFBRUSHES = 65536;
-        public static int MAX_MAP_PORTALS = 65536;
-        public static int MAX_MAP_EDGES = 128000;
-        public static int MAX_MAP_SURFEDGES = 256000;
-        public static int MAX_MAP_LIGHTING = 0x200000;
-        public static int MAX_MAP_VISIBILITY = 0x100000;
+        public const int MAX_MAP_AREAS = 256;
+        public const int MAX_MAP_AREAPORTALS = 1024;
+        public const int MAX_MAP_PLANES = 65536;
+        public const int MAX_MAP_NODES = 65536;
+        public const int MAX_MAP_BRUSHSIDES = 65536;
+        public const int MAX_MAP_LEAFS = 65536;
+        public const int MAX_MAP_VERTS = 65536;
+        public const int MAX_MAP_FACES = 65536;
+        public const int MAX_MAP_LEAFFACES = 65536;
+        public const int MAX_MAP_LEAFBRUSHES = 65536;
+        public const int MAX_MAP_PORTALS = 65536;
+        public const int MAX_MAP_EDGES = 128000;
+        public const int MAX_MAP_SURFEDGES = 256000;
+        public const int MAX_MAP_LIGHTING = 0x200000;
+        public const int MAX_MAP_VISIBILITY = 0x100000;
 
         /* key / value pair sizes */
 
-        public static int MAX_KEY = 32;
-        public static int MAX_VALUE = 1024;
+        public const int MAX_KEY = 32;
+        public const int MAX_VALUE = 1024;
 
         /* ================================================================== */
 
@@ -1005,29 +1005,29 @@ namespace Quake2 {
                 filelen = BitConverter.ToInt32(buffer, offset + 4);
             }
 
-            public static int size = 2 * 4;
+            public const int size = 2 * 4;
         }
 
-        public static int LUMP_ENTITIES = 0;
-        public static int LUMP_PLANES = 1;
-        public static int LUMP_VERTEXES = 2;
-        public static int LUMP_VISIBILITY = 3;
-        public static int LUMP_NODES = 4;
-        public static int LUMP_TEXINFO = 5;
-        public static int LUMP_FACES = 6;
-        public static int LUMP_LIGHTING = 7;
-        public static int LUMP_LEAFS = 8;
-        public static int LUMP_LEAFFACES = 9;
-        public static int LUMP_LEAFBRUSHES = 10;
-        public static int LUMP_EDGES = 11;
-        public static int LUMP_SURFEDGES = 12;
-        public static int LUMP_MODELS = 13;
-        public static int LUMP_BRUSHES = 14;
-        public static int LUMP_BRUSHSIDES = 15;
-        public static int LUMP_POP = 16;
-        public static int LUMP_AREAS = 17;
-        public static int LUMP_AREAPORTALS = 18;
-        public static int HEADER_LUMPS = 19;
+        public const int LUMP_ENTITIES = 0;
+        public const int LUMP_PLANES = 1;
+        public const int LUMP_VERTEXES = 2;
+        public const int LUMP_VISIBILITY = 3;
+        public const int LUMP_NODES = 4;
+        public const int LUMP_TEXINFO = 5;
+        public const int LUMP_FACES = 6;
+        public const int LUMP_LIGHTING = 7;
+        public const int LUMP_LEAFS = 8;
+        public const int LUMP_LEAFFACES = 9;
+        public const int LUMP_LEAFBRUSHES = 10;
+        public const int LUMP_EDGES = 11;
+        public const int LUMP_SURFEDGES = 12;
+        public const int LUMP_MODELS = 13;
+        public const int LUMP_BRUSHES = 14;
+        public const int LUMP_BRUSHSIDES = 15;
+        public const int LUMP_POP = 16;
+        public const int LUMP_AREAS = 17;
+        public const int LUMP_AREAPORTALS = 18;
+        public const int HEADER_LUMPS = 19;
 
         public record struct dheader_t
         {
@@ -1046,7 +1046,7 @@ namespace Quake2 {
                 }
             }
 
-            public static int size = 2 * 4 + HEADER_LUMPS * lump_t.size;
+            public const int size = 2 * 4 + HEADER_LUMPS * lump_t.size;
         }
 
         public record struct dmodel_t
@@ -1081,7 +1081,7 @@ namespace Quake2 {
                 this.numfaces = BitConverter.ToInt32(buffer, offset + 11 * 4);
             }
 
-            public static int size = 12 * 4;
+            public const int size = 12 * 4;
         }
 
         public record struct dvertex_t
@@ -1361,14 +1361,14 @@ namespace Quake2 {
             public const int size = 3 * 4;
         }
 
-        public static int ANGLE_UP = -1;
-        public static int ANGLE_DOWN = -2;
+        public const int ANGLE_UP = -1;
+        public const int ANGLE_DOWN = -2;
 
         /* the visibility lump consists of a header with a count, then 
         * byte offsets for the PVS and PHS of each cluster, then the raw 
         * compressed bit vectors */
-        public static int DVIS_PVS = 0;
-        public static int DVIS_PHS = 1;
+        public const int DVIS_PVS = 0;
+        public const int DVIS_PHS = 1;
         public record struct dvis_t
         {
            public int numclusters { get; }

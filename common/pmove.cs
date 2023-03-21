@@ -69,6 +69,22 @@ namespace Quake2 {
         private const float MIN_STEP_NORMAL = 0.7f; /* can't step up onto very steep slopes */
         private const int MAX_CLIP_PLANES = 5;
 
+        private void PM_ClipVelocity(in Vector3 ind, in Vector3 normal, ref Vector3 outd, float overbounce)
+        {
+            var backoff = Vector3.Dot(ind, normal) * overbounce;
+
+            for (int i = 0; i < 3; i++)
+            {
+                var change = normal[i] * backoff;
+                outd[i] = ind[i] - change;
+
+                if ((outd[i] > -STOP_EPSILON) && (outd[i] < STOP_EPSILON))
+                {
+                    outd[i] = 0;
+                }
+            }
+        }
+
         /*
         * Each intersection will try to step over the obstruction instead of
         * sliding along it.
@@ -147,50 +163,51 @@ namespace Quake2 {
                 int i;
                 for (i = 0; i < numplanes; i++)
                 {
-            //         PM_ClipVelocity(pml.velocity, planes[i], pml.velocity, 1.01f);
+                    PM_ClipVelocity(pml.velocity, planes[i], ref pml.velocity, 1.01f);
 
-            //         for (j = 0; j < numplanes; j++)
-            //         {
-            //             if (j != i)
-            //             {
-            //                 if (DotProduct(pml.velocity, planes[j]) < 0)
-            //                 {
-            //                     break; /* not ok */
-            //                 }
-            //             }
-            //         }
+                    int j;
+                    for (j = 0; j < numplanes; j++)
+                    {
+                        if (j != i)
+                        {
+                            if (Vector3.Dot(pml.velocity, planes[j]) < 0)
+                            {
+                                break; /* not ok */
+                            }
+                        }
+                    }
 
-            //         if (j == numplanes)
-            //         {
-            //             break;
-            //         }
+                    if (j == numplanes)
+                    {
+                        break;
+                    }
                 }
 
-            //     if (i != numplanes)
-            //     {
-            //         /* go along this plane */
-            //     }
-            //     else
-            //     {
-            //         /* go along the crease */
-            //         if (numplanes != 2)
-            //         {
-            //             VectorCopy(vec3_origin, pml.velocity);
-            //             break;
-            //         }
+                if (i != numplanes)
+                {
+                    /* go along this plane */
+                }
+                else
+                {
+                    /* go along the crease */
+                    if (numplanes != 2)
+                    {
+                        pml.velocity = Vector3.Zero;
+                        break;
+                    }
 
-            //         CrossProduct(planes[0], planes[1], dir);
-            //         d = DotProduct(dir, pml.velocity);
-            //         VectorScale(dir, d, pml.velocity);
-            //     }
+                    var dir = Vector3.Cross(planes[0], planes[1]);
+                    var d = Vector3.Dot(dir, pml.velocity);
+                    pml.velocity = d * dir;
+                }
 
-            //     /* if velocity is against the original velocity, stop dead
-            //     to avoid tiny occilations in sloping corners */
-            //     if (DotProduct(pml.velocity, primal_velocity) <= 0)
-            //     {
-            //         VectorCopy(vec3_origin, pml.velocity);
-            //         break;
-            //     }
+                /* if velocity is against the original velocity, stop dead
+                to avoid tiny occilations in sloping corners */
+                if (Vector3.Dot(pml.velocity, primal_velocity) <= 0)
+                {
+                    pml.velocity = Vector3.Zero;
+                    break;
+                }
             }
 
             if (pm.s.pm_time != 0)
@@ -677,7 +694,6 @@ namespace Quake2 {
                 }
             }
 
-            // VectorCopy(pm->s.origin, base);
             var b = pm.s.origin;
 
             /* try all combinations */

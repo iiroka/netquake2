@@ -59,32 +59,29 @@ namespace Quake2 {
                 return;
             }
 
-            // if (self->owner && self->owner->client)
-            // {
+            if (self.owner != null && self.owner.client != null)
+            {
             //     PlayerNoise(self->owner, self->s.origin, PNOISE_IMPACT);
-            // }
+            }
 
             if (other.takedamage != 0)
             {
-            //     if (self->spawnflags & 1)
-            //     {
-            //         mod = MOD_HYPERBLASTER;
-            //     }
-            //     else
-            //     {
-            //         mod = MOD_BLASTER;
-            //     }
+                var mod = MOD_BLASTER;;
+                if ((self.spawnflags & 1) != 0)
+                {
+                    mod = MOD_HYPERBLASTER;
+                }
 
-            //     if (plane)
-            //     {
-            //         T_Damage(other, self, self->owner, self->velocity, self->s.origin,
-            //                 plane->normal, self->dmg, 1, DAMAGE_ENERGY, mod);
-            //     }
-            //     else
-            //     {
-            //         T_Damage(other, self, self->owner, self->velocity, self->s.origin,
-            //                 vec3_origin, self->dmg, 1, DAMAGE_ENERGY, mod);
-            //     }
+                if (plane != null)
+                {
+                    T_Damage(other, self, (edict_t)self.owner!, self.velocity, self.s.origin,
+                            plane.normal, self.dmg, 1, DAMAGE_ENERGY, mod);
+                }
+                else
+                {
+                    T_Damage(other, self, (edict_t)self.owner!, self.velocity, self.s.origin,
+                            Vector3.Zero, self.dmg, 1, DAMAGE_ENERGY, mod);
+                }
             }
             else
             {

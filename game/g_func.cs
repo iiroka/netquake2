@@ -79,45 +79,246 @@ namespace Quake2 {
         private const int DOOR_X_AXIS = 64;
         private const int DOOR_Y_AXIS = 128;
 
-        private void door_use(edict_t self, edict_t _other, edict_t _activator)
+        private void Move_Done(edict_t ent)
         {
-            Console.WriteLine("door_use");
-            // if (!self || !activator)
+            if (ent == null)
+            {
+                return;
+            }
+
+            ent.velocity = Vector3.Zero;
+            ent.moveinfo.endfunc!(ent);
+        }
+
+        private void Move_Final(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            if (ent.moveinfo.remaining_distance == 0)
+            {
+                Move_Done(ent);
+                return;
+            }
+
+            ent.velocity = ent.moveinfo.remaining_distance / FRAMETIME * ent.moveinfo.dir;
+
+            ent.think = Move_Done;
+            ent.nextthink = level.time + FRAMETIME;
+        }
+
+        private void Move_Begin(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            if ((ent.moveinfo.speed * FRAMETIME) >= ent.moveinfo.remaining_distance)
+            {
+                Move_Final(ent);
+                return;
+            }
+
+            ent.velocity = ent.moveinfo.speed * ent.moveinfo.dir;
+            var frames = MathF.Floor(
+                    (ent.moveinfo.remaining_distance /
+                    ent.moveinfo.speed) / FRAMETIME);
+            ent.moveinfo.remaining_distance -= frames * ent.moveinfo.speed *
+                                                FRAMETIME;
+            ent.nextthink = level.time + (frames * FRAMETIME);
+            ent.think = Move_Final;
+        }
+
+        private void Move_Calc(edict_t ent, in Vector3 dest, edict_delegate func)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            ent.velocity = Vector3.Zero;
+            ent.moveinfo.dir = dest - ent.s.origin;
+            ent.moveinfo.remaining_distance = ent.moveinfo.dir.Length();
+            ent.moveinfo.dir = Vector3.Normalize(ent.moveinfo.dir);
+            ent.moveinfo.endfunc = func;
+
+            if ((ent.moveinfo.speed == ent.moveinfo.accel) &&
+                (ent.moveinfo.speed == ent.moveinfo.decel))
+            {
+                if (level.current_entity ==
+                    ((ent.flags & FL_TEAMSLAVE) != 0 ? ent.teammaster : ent))
+                {
+                    Move_Begin(ent);
+                }
+                else
+                {
+                    ent.nextthink = level.time + FRAMETIME;
+                    ent.think = Move_Begin;
+                }
+            }
+            else
+            {
+                /* accelerative */
+                ent.moveinfo.current_speed = 0;
+                ent.think = Think_AccelMove;
+                ent.nextthink = level.time + FRAMETIME;
+            }
+        }
+
+        /*
+        * The team has completed a frame of movement,
+        * so change the speed for the next frame
+        */
+        private void Think_AccelMove(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            ent.moveinfo.remaining_distance -= ent.moveinfo.current_speed;
+
+            // if (ent.moveinfo.current_speed == 0) /* starting or blocked */
             // {
-            //     return;
+            //     plat_CalcAcceleratedMove(&ent->moveinfo);
             // }
 
-            // edict_t *ent;
+            // plat_Accelerate(&ent->moveinfo);
 
-            // if (self->flags & FL_TEAMSLAVE)
-            // {
-            //     return;
-            // }
+            /* will the entire move complete on next frame? */
+            if (ent.moveinfo.remaining_distance <= ent.moveinfo.current_speed)
+            {
+                Move_Final(ent);
+                return;
+            }
 
-            // if (self->spawnflags & DOOR_TOGGLE)
+            ent.velocity = ent.moveinfo.current_speed * 10 * ent.moveinfo.dir;
+            ent.nextthink = level.time + FRAMETIME;
+            ent.think = Think_AccelMove;
+        }
+
+
+        private void door_hit_top(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            // if (!(self->flags & FL_TEAMSLAVE))
             // {
-            //     if ((self->moveinfo.state == STATE_UP) ||
-            //         (self->moveinfo.state == STATE_TOP))
+            //     if (self->moveinfo.sound_end)
             //     {
-            //         /* trigger all paired doors */
-            //         for (ent = self; ent; ent = ent->teamchain)
-            //         {
-            //             ent->message = NULL;
-            //             ent->touch = NULL;
-            //             door_go_down(ent);
-            //         }
-
-            //         return;
+            //         gi.sound(self, CHAN_NO_PHS_ADD + CHAN_VOICE, self->moveinfo.sound_end,
+            //                 1, ATTN_STATIC, 0);
             //     }
+
+            //     self->s.sound = 0;
             // }
 
-            // /* trigger all paired doors */
-            // for (ent = self; ent; ent = ent->teamchain)
+            self.moveinfo.state = STATE_TOP;
+
+            if ((self.spawnflags & DOOR_TOGGLE) != 0)
+            {
+                return;
+            }
+
+            // if (self.moveinfo.wait >= 0)
             // {
-            //     ent->message = NULL;
-            //     ent->touch = NULL;
-            //     door_go_up(ent, activator);
+            //     self.think = door_go_down;
+            //     self.nextthink = level.time + self.moveinfo.wait;
             // }
+        }
+
+        private void door_go_up(edict_t  self, edict_t activator)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.moveinfo.state == STATE_UP)
+            {
+                return; /* already going up */
+            }
+
+            if (self.moveinfo.state == STATE_TOP)
+            {
+                /* reset top wait time */
+                if (self.moveinfo.wait >= 0)
+                {
+                    self.nextthink = level.time + self.moveinfo.wait;
+                }
+
+                return;
+            }
+
+            if ((self.flags & FL_TEAMSLAVE) == 0)
+            {
+                // if (self->moveinfo.sound_start)
+                // {
+                //     gi.sound(self, CHAN_NO_PHS_ADD + CHAN_VOICE,
+                //             self->moveinfo.sound_start, 1,
+                //             ATTN_STATIC, 0);
+                // }
+
+                // self->s.sound = self->moveinfo.sound_middle;
+            }
+
+            self.moveinfo.state = STATE_UP;
+
+            if (self.classname == "func_door")
+            {
+                Move_Calc(self, self.moveinfo.end_origin, door_hit_top);
+            }
+            else if (self.classname == "func_door_rotating")
+            {
+                // AngleMove_Calc(self, door_hit_top);
+            }
+
+            // G_UseTargets(self, activator);
+            // door_use_areaportals(self, true);
+        }
+
+        private void door_use(edict_t self, edict_t _other, edict_t activator)
+        {
+            if (self == null || activator == null)
+            {
+                return;
+            }
+
+            if ((self.flags & FL_TEAMSLAVE) != 0)
+            {
+                return;
+            }
+
+            if ((self.spawnflags & DOOR_TOGGLE) != 0)
+            {
+                if ((self.moveinfo.state == STATE_UP) ||
+                    (self.moveinfo.state == STATE_TOP))
+                {
+                    /* trigger all paired doors */
+                    for (var ent = self; ent != null; ent = ent.teamchain)
+                    {
+                        ent.message = null;
+                        ent.touch = null;
+            //             door_go_down(ent);
+                    }
+
+                    return;
+                }
+            }
+
+            /* trigger all paired doors */
+            for (var ent = self; ent != null; ent = ent.teamchain)
+            {
+                ent.message = null;
+                ent.touch = null;
+                door_go_up(ent, activator);
+            }
         }
 
         private void Touch_DoorTrigger(edict_t self, edict_t other, QShared.cplane_t? _plane,
@@ -127,23 +328,22 @@ namespace Quake2 {
             {
                 return;
             }
-            Console.WriteLine("Touch_DoorTrigger");
 
             if (other.health <= 0)
             {
                 return;
             }
 
-            // if (!(other->svflags & SVF_MONSTER) && (!other->client))
-            // {
-            //     return;
-            // }
+            if ((other.svflags & QGameFlags.SVF_MONSTER) == 0 && (other.client == null))
+            {
+                return;
+            }
 
-            // if ((self->owner->spawnflags & DOOR_NOMONSTER) &&
-            //     (other->svflags & SVF_MONSTER))
-            // {
-            //     return;
-            // }
+            if ((((edict_t)self.owner!).spawnflags & DOOR_NOMONSTER) != 0 &&
+                (other.svflags & QGameFlags.SVF_MONSTER) != 0)
+            {
+                return;
+            }
 
             if (level.time < self.touch_debounce_time)
             {
@@ -249,10 +449,10 @@ namespace Quake2 {
             other.touch = Touch_DoorTrigger;
             gi.linkentity(other);
 
-            // if (ent->spawnflags & DOOR_START_OPEN)
-            // {
+            if ((ent.spawnflags & DOOR_START_OPEN) != 0)
+            {
             //     door_use_areaportals(ent, true);
-            // }
+            }
 
             Think_CalcMoveSpeed(ent);
         }
@@ -273,7 +473,7 @@ namespace Quake2 {
             //     ent->moveinfo.sound_end = gi.soundindex("doors/dr1_end.wav");
             // }
 
-            // g.G_SetMovedir(ent.s.angles, ent.movedir);
+            g.G_SetMovedir(ref ent.s.angles, ref ent.movedir);
             ent.movetype = movetype_t.MOVETYPE_PUSH;
             ent.solid = solid_t.SOLID_BSP;
             g.gi.setmodel(ent, ent.model!);

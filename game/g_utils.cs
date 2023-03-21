@@ -145,6 +145,31 @@ namespace Quake2 {
             return choice[QShared.randk() % num_choices];
         }
 
+        static readonly Vector3 VEC_UP = new Vector3(0, -1, 0);
+        static readonly Vector3 MOVEDIR_UP = new Vector3(0, 0, 1);
+        static readonly Vector3 VEC_DOWN = new Vector3(0, -2, 0);
+        static readonly Vector3 MOVEDIR_DOWN = new Vector3(0, 0, -1);
+
+        private void G_SetMovedir(ref Vector3 angles, ref Vector3 movedir)
+        {
+            if (angles == VEC_UP)
+            {
+                movedir = MOVEDIR_UP;
+            }
+            else if (angles == VEC_DOWN)
+            {
+                movedir = MOVEDIR_DOWN;
+            }
+            else
+            {
+                var t1 = new Vector3();
+                var t2 = new Vector3();
+                QShared.AngleVectors(angles, ref movedir, ref t1, ref t2);
+            }
+
+            angles = Vector3.Zero;
+        }
+
         private float vectoyaw(in Vector3 vec)
         {
             float yaw;
@@ -202,8 +227,7 @@ namespace Quake2 {
                 /* the first couple seconds of server time can involve a lot of
                 freeing and allocating, so relax the replacement policy
                 */
-                // if (!g_edicts[i].inuse && (policy == POLICY_DESPERATE || g_edicts[i].freetime < 2.0f || (level.time - g_edicts[i].freetime) > 0.5f))
-                if (!g_edicts[i].inuse)
+                if (!g_edicts[i].inuse && (policy == POLICY_DESPERATE || g_edicts[i].freetime < 2.0f || (level.time - g_edicts[i].freetime) > 0.5f))
                 {
                     G_InitEdict (ref g_edicts[i]);
                     return g_edicts[i];
@@ -241,7 +265,7 @@ namespace Quake2 {
             if (e == null)
                 gi.error ("ED_Alloc: no free edicts");
 
-            return e;
+            return e!;
         }
 
         /*

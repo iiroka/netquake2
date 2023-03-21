@@ -45,6 +45,76 @@ namespace Quake2 {
             // }
         }
 
+        private void PlayerNoise(edict_t who, in Vector3 where, int type)
+        {
+            // edict_t *noise;
+
+            if (who == null || who.client == null)
+            {
+                return;
+            }
+
+            // if (type == PNOISE_WEAPON)
+            // {
+            //     if (who.client.silencer_shots)
+            //     {
+            //         who.client.silencer_shots--;
+            //         return;
+            //     }
+            // }
+
+            if (deathmatch!.Bool)
+            {
+                return;
+            }
+
+            if ((who.flags & FL_NOTARGET) != 0)
+            {
+                return;
+            }
+
+            // PlayerNoise_Verify(who);
+
+            // if ((type == PNOISE_SELF) || (type == PNOISE_WEAPON))
+            // {
+            //     if (level.framenum <= (level.sound_entity_framenum + 3))
+            //     {
+            //         return;
+            //     }
+
+            //     if (!who->mynoise)
+            //     {
+            //         return;
+            //     }
+
+            //     noise = who->mynoise;
+            //     level.sound_entity = noise;
+            //     level.sound_entity_framenum = level.framenum;
+            // }
+            // else
+            // {
+            //     if (level.framenum <= (level.sound2_entity_framenum + 3))
+            //     {
+            //         return;
+            //     }
+
+            //     if (!who->mynoise2)
+            //     {
+            //         return;
+            //     }
+
+            //     noise = who->mynoise2;
+            //     level.sound2_entity = noise;
+            //     level.sound2_entity_framenum = level.framenum;
+            // }
+
+            // VectorCopy(where, noise->s.origin);
+            // VectorSubtract(where, noise->maxs, noise->absmin);
+            // VectorAdd(where, noise->maxs, noise->absmax);
+            // noise->last_sound_time = level.time;
+            // gi.linkentity(noise);
+        }
+
         /*
         * The old weapon has been dropped all
         * the way, so make the new one current
@@ -298,16 +368,16 @@ namespace Quake2 {
 
                     if (pause_frames != null)
                     {
-            //             for (n = 0; pause_frames[n]; n++)
-            //             {
-            //                 if (ent->client->ps.gunframe == pause_frames[n])
-            //                 {
-            //                     if (randk() & 15)
-            //                     {
-            //                         return;
-            //                     }
-            //                 }
-            //             }
+                        for (int n = 0; pause_frames[n] != 0; n++)
+                        {
+                            if (client.ps.gunframe == pause_frames[n])
+                            {
+                                if ((QShared.randk() & 15) != 0)
+                                {
+                                    return;
+                                }
+                            }
+                        }
                     }
 
                     client.ps.gunframe++;

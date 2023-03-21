@@ -416,6 +416,194 @@ namespace Quake2 {
             return trace;
         }
 
+        private struct pushed_t
+        {
+            public edict_t? ent;
+            public Vector3 origin;
+            public Vector3 angles;
+        }
+
+        private pushed_t[] pushed = new pushed_t[QShared.MAX_EDICTS];
+        private int pushed_i = 0;
+
+        /*
+        * Objects need to be moved back on a failed push,
+        * otherwise riders would continue to slide.
+        */
+        private bool SV_Push(edict_t pusher, ref Vector3 move, in Vector3 amove)
+        {
+            // int i, e;
+            // edict_t *check, *block;
+            // pushed_t *p;
+            // vec3_t org, org2, move2, forward, right, up;
+            // vec3_t realmins, realmaxs;
+
+            if (pusher == null)
+            {
+                return false;
+            }
+
+            /* clamp the move to 1/8 units, so the position will
+            be accurate for client side prediction */
+            for (int i = 0; i < 3; i++)
+            {
+                var temp = move[i] * 8.0f;
+
+                if (temp > 0.0)
+                {
+                    temp += 0.5f;
+                }
+                else
+                {
+                    temp -= 0.5f;
+                }
+
+                move[i] = 0.125f * (int)temp;
+            }
+
+            /* we need this for pushing things later */
+            var org = -amove;
+            var forward = new Vector3();
+            var right = new Vector3();
+            var up = new Vector3();
+            QShared.AngleVectors(org, ref forward, ref right, ref up);
+
+            /* save the pusher's original position */
+            pushed[pushed_i].ent = pusher;
+            pushed[pushed_i].origin = pusher.s.origin;
+            pushed[pushed_i].angles = pusher.s.angles;
+            pushed_i++;
+
+            /* move the pusher to it's final position */
+            pusher.s.origin = pusher.s.origin + move;
+            pusher.s.angles = pusher.s.angles + amove;
+            gi.linkentity(pusher);
+
+            /* Create a real bounding box for
+               rotating brush models. */
+            // RealBoundingBox(pusher,realmins,realmaxs);
+
+            /* see if any solid entities
+               are inside the final position */
+            for (int e = 1; e < global_num_ecicts; e++)
+            {
+                var check = g_edicts[e];
+                if (!check.inuse)
+                {
+                    continue;
+                }
+
+                if ((check.movetype == movetype_t.MOVETYPE_PUSH) ||
+                    (check.movetype == movetype_t.MOVETYPE_STOP) ||
+                    (check.movetype == movetype_t.MOVETYPE_NONE) ||
+                    (check.movetype == movetype_t.MOVETYPE_NOCLIP))
+                {
+                    continue;
+                }
+
+                if (check.area.prev == null)
+                {
+                    continue; /* not linked in anywhere */
+                }
+
+                /* if the entity is standing on the pusher,
+                   it will definitely be moved */
+                if (check.groundentity != pusher)
+                {
+                    /* see if the ent needs to be tested */
+            //         if ((check->absmin[0] >= realmaxs[0]) ||
+            //             (check->absmin[1] >= realmaxs[1]) ||
+            //             (check->absmin[2] >= realmaxs[2]) ||
+            //             (check->absmax[0] <= realmins[0]) ||
+            //             (check->absmax[1] <= realmins[1]) ||
+            //             (check->absmax[2] <= realmins[2]))
+            //         {
+            //             continue;
+            //         }
+
+            //         /* see if the ent's bbox is inside
+            //         the pusher's final position */
+            //         if (!SV_TestEntityPosition(check))
+            //         {
+            //             continue;
+            //         }
+                }
+
+                if ((pusher.movetype == movetype_t.MOVETYPE_PUSH) ||
+                    (check.groundentity == pusher))
+                {
+                    /* move this entity */
+                    pushed[pushed_i].ent = check;
+                    pushed[pushed_i].origin = check.s.origin;
+                    pushed[pushed_i].angles = check.s.angles;
+                    pushed_i++;
+
+                    /* try moving the contacted entity */
+                    check.s.origin = check.s.origin + move;
+
+                    /* figure movement due to the pusher's amove */
+            //         VectorSubtract(check->s.origin, pusher->s.origin, org);
+            //         org2[0] = DotProduct(org, forward);
+            //         org2[1] = -DotProduct(org, right);
+            //         org2[2] = DotProduct(org, up);
+            //         VectorSubtract(org2, org, move2);
+            //         VectorAdd(check->s.origin, move2, check->s.origin);
+
+            //         /* may have pushed them off an edge */
+            //         if (check->groundentity != pusher)
+            //         {
+            //             check->groundentity = NULL;
+            //         }
+
+            //         block = SV_TestEntityPosition(check);
+
+            //         if (!block)
+
+            //         {   /* pushed ok */
+            //             gi.linkentity(check);
+            //             continue;
+            //         }
+
+            //         /* if it is ok to leave in the old position, do it
+            //         this is only relevent for riding entities, not
+            //         pushed */
+            //         VectorSubtract(check->s.origin, move, check->s.origin);
+            //         block = SV_TestEntityPosition(check);
+
+            //         if (!block)
+            //         {
+            //             pushed_p--;
+            //             continue;
+            //         }
+                }
+
+                /* save off the obstacle so we can
+                call the block function */
+                // obstacle = check;
+
+            //     /* move back any entities we already moved
+            //     go backwards, so if the same entity was pushed
+            //     twice, it goes back to the original position */
+            //     for (p = pushed_p - 1; p >= pushed; p--)
+            //     {
+            //         VectorCopy(p->origin, p->ent->s.origin);
+            //         VectorCopy(p->angles, p->ent->s.angles);
+
+            //         gi.linkentity(p->ent);
+            //     }
+
+                return false;
+            }
+
+            // /* see if anything we moved has touched a trigger */
+            // for (p = pushed_p - 1; p >= pushed; p--)
+            // {
+            //     G_TouchTriggers(p->ent);
+            // }
+
+            return true;
+        }
+
         /*
         * Bmodel objects don't interact with each
         * other, but push all box objects
@@ -440,7 +628,7 @@ namespace Quake2 {
             /* make sure all team slaves can move before commiting
             any moves or calling any think functions if the move
             is blocked, all moved objects will be backed out */
-            // pushed_p = pushed;
+            pushed_i = 0;
 
             edict_t? part = null;
             for (part = ent; part != null; part = part!.teamchain)
@@ -449,14 +637,13 @@ namespace Quake2 {
                     part.avelocity[0] != 0 || part.avelocity[1] != 0 || part.avelocity[2] != 0)
                 {
                     /* object is moving */
-                    Console.WriteLine("== PUSH ==");
-            //         VectorScale(part->velocity, FRAMETIME, move);
-            //         VectorScale(part->avelocity, FRAMETIME, amove);
+                    var move = FRAMETIME * part.velocity;
+                    var amove = FRAMETIME * part.avelocity;
 
-            //         if (!SV_Push(part, move, amove))
-            //         {
-            //             break; /* move was blocked */
-            //         }
+                    if (!SV_Push(part, ref move, amove))
+                    {
+                        break; /* move was blocked */
+                    }
                 }
             }
 

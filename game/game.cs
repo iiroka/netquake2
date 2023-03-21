@@ -100,6 +100,8 @@ namespace Quake2 {
         public int clipmask;
         public edict_s? owner;
 
+        public string? classname;
+
         /* the game dll can add anything it wants
         after this point in the structure */
     }

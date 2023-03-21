@@ -144,6 +144,7 @@ namespace Quake2 {
             RemoveLink(ent.area);
             ent.area.prev = null;
             ent.area.next = null;
+            ent.area.ent = ent;
         }
 
 
@@ -156,6 +157,8 @@ namespace Quake2 {
             // int i, j, k;
             // int area;
             // int topnode;
+
+            ent.area.ent = ent;
 
             if (ent.area.prev != null)
             {

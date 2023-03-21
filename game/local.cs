@@ -141,19 +141,19 @@ namespace Quake2 {
         private class gitem_t : ICloneable
         {
             public int index;
-            public string classname { get; init; } /* spawning name */
+            public string? classname { get; init; } /* spawning name */
             // qboolean (*pickup)(struct edict_s *ent, struct edict_s *other);
             // void (*use)(struct edict_s *ent, struct gitem_s *item);
             // void (*drop)(struct edict_s *ent, struct gitem_s *item);
             public edict_game_delegate? weaponthink  { get; init; }
             // char *pickup_sound;
-            public string world_model;
+            public string? world_model { get; init; }
             // int world_model_flags;
-            public string view_model { get; init; }
+            public string? view_model { get; init; }
 
-            // /* client side info */
-            // char *icon;
-            public string pickup_name { get; init; } /* for printing on pickup */
+            /* client side info */
+            public string? icon { get; init; }
+            public string? pickup_name { get; init; } /* for printing on pickup */
             // int count_width; /* number of digits to display by icon */
 
             // int quantity; /* for ammo how much, for weapons how much is used per shot */
@@ -300,7 +300,7 @@ namespace Quake2 {
             public float next_speed;
             public float remaining_distance;
             public float decel_distance;
-            // void (*endfunc)(edict_t *);
+            public edict_delegate? endfunc;
         }
 
         private delegate void dist_game_delegate(QuakeGame g, edict_t self, float dist);
@@ -366,6 +366,49 @@ namespace Quake2 {
             public int power_armor_power;
         }
 
+        /* means of death */;
+        private const int MOD_UNKNOWN = 0;
+        private const int MOD_BLASTER = 1;
+        private const int MOD_SHOTGUN = 2;
+        private const int MOD_SSHOTGUN = 3;
+        private const int MOD_MACHINEGUN = 4;
+        private const int MOD_CHAINGUN = 5;
+        private const int MOD_GRENADE = 6;
+        private const int MOD_G_SPLASH = 7;
+        private const int MOD_ROCKET = 8;
+        private const int MOD_R_SPLASH = 9;
+        private const int MOD_HYPERBLASTER = 10;
+        private const int MOD_RAILGUN = 11;
+        private const int MOD_BFG_LASER = 12;
+        private const int MOD_BFG_BLAST = 13;
+        private const int MOD_BFG_EFFECT = 14;
+        private const int MOD_HANDGRENADE = 15;
+        private const int MOD_HG_SPLASH = 16;
+        private const int MOD_WATER = 17;
+        private const int MOD_SLIME = 18;
+        private const int MOD_LAVA = 19;
+        private const int MOD_CRUSH = 20;
+        private const int MOD_TELEFRAG = 21;
+        private const int MOD_FALLING = 22;
+        private const int MOD_SUICIDE = 23;
+        private const int MOD_HELD_GRENADE = 24;
+        private const int MOD_EXPLOSIVE = 25;
+        private const int MOD_BARREL = 26;
+        private const int MOD_BOMB = 27;
+        private const int MOD_EXIT = 28;
+        private const int MOD_SPLASH = 29;
+        private const int MOD_TARGET_LASER = 30;
+        private const int MOD_TRIGGER_HURT = 31;
+        private const int MOD_HIT = 32;
+        private const int MOD_TARGET_BLASTER = 33;
+        private const int MOD_FRIENDLY_FIRE = 0x8000000;
+
+        /* Easier handling of AI skill levels */
+        private const int SKILL_EASY = 0;
+        private const int SKILL_MEDIUM = 1;
+        private const int SKILL_HARD = 2;
+        private const int SKILL_HARDPLUS = 3;
+
 
         /* fields are needed for spawning from the entity
         string and saving / loading games */
@@ -397,6 +440,14 @@ namespace Quake2 {
             public int flags { get; init; }
             public short save_ver { get; init; }
         }
+
+        /* damage flags */
+        private const int DAMAGE_RADIUS = 0x00000001; /* damage was indirect */
+        private const int DAMAGE_NO_ARMOR = 0x00000002; /* armour does not protect from this damage */
+        private const int DAMAGE_ENERGY = 0x00000004; /* damage is from an energy based weapon */
+        private const int DAMAGE_NO_KNOCKBACK = 0x00000008; /* do not affect velocity, just view angles */
+        private const int DAMAGE_BULLET = 0x00000010; /* damage is from a bullet (used for ricochets) */
+        private const int DAMAGE_NO_PROTECTION = 0x00000020; /* armor, shields, invulnerability, and godmode have no effect */
 
         /* ============================================================================ */
 
@@ -616,7 +667,7 @@ namespace Quake2 {
 
             /* only used locally in game, not by server */
             public string? message;
-            public string? classname;
+            // public string? classname;
             public int spawnflags;
 
             public float timestamp;

@@ -44,8 +44,6 @@ namespace Quake2 {
         {
             // vec3_t v;
             // edict_t *next;
-            Console.WriteLine("path_corner_touch");
-
             if (self == null || other == null)
             {
                 return;
@@ -89,23 +87,22 @@ namespace Quake2 {
 
             other.goalentity = other.movetarget = next;
 
-            // if (self->wait)
-            // {
-            //     other->monsterinfo.pausetime = level.time + self->wait;
-            //     other->monsterinfo.stand(other);
-            //     return;
-            // }
+            if (self.wait != 0)
+            {
+                other.monsterinfo.pausetime = level.time + self.wait;
+                other.monsterinfo.stand!(other);
+                return;
+            }
 
-            // if (!other->movetarget)
-            // {
-            //     other->monsterinfo.pausetime = level.time + 100000000;
-            //     other->monsterinfo.stand(other);
-            // }
-            // else
-            // {
-            //     VectorSubtract(other->goalentity->s.origin, other->s.origin, v);
-            //     other->ideal_yaw = vectoyaw(v);
-            // }
+            if (other.movetarget == null)
+            {
+                other.monsterinfo.pausetime = level.time + 100000000;
+                other.monsterinfo.stand!(other);
+            }
+            else
+            {
+                other.ideal_yaw = vectoyaw(other.groundentity!.s.origin - other.s.origin);
+            }
         }
 
 

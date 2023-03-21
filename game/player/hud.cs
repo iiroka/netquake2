@@ -148,10 +148,10 @@ namespace Quake2 {
             //         gi.imageindex(itemlist[ent->client->pers.selected_item].icon);
             // }
 
-            // ent->client->ps.stats[STAT_SELECTED_ITEM] = ent->client->pers.selected_item;
+            ent.client.ps.stats[QShared.STAT_SELECTED_ITEM] = (short)client.pers.selected_item;
 
-            // /* layouts */
-            // ent->client->ps.stats[STAT_LAYOUTS] = 0;
+            /* layouts */
+            ent.client.ps.stats[QShared.STAT_LAYOUTS] = 0;
 
             // if (deathmatch->value)
             // {
@@ -179,8 +179,8 @@ namespace Quake2 {
             //     }
             // }
 
-            // /* frags */
-            // ent->client->ps.stats[STAT_FRAGS] = ent->client->resp.score;
+            /* frags */
+            ent.client.ps.stats[QShared.STAT_FRAGS] = (short)client.resp.score;
 
             // /* help icon / current weapon if not shown */
             // if (ent->client->pers.helpchanged && (level.framenum & 8))
