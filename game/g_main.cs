@@ -240,7 +240,6 @@ namespace Quake2 {
                 {
                     continue;
                 }
-                // Console.WriteLine($"ent: {ent.classname} {ent.s.origin}");
 
                 level.current_entity = ent;
 

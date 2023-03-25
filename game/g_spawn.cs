@@ -384,7 +384,7 @@ namespace Quake2 {
             level = new level_locals_t();
             for (int i = 0; i < g_edicts.Length; i++)
             {
-                g_edicts[i] = new edict_t() { index = i, area = new link_t() { ent = g_edicts[i] } };
+                g_edicts[i].Clear();
             }
 
             level.mapname = mapname;
@@ -443,19 +443,19 @@ namespace Quake2 {
                 //     }
                 //     else
                 //     {
-                //         if (((skill->value == SKILL_EASY) &&
-                //             (ent->spawnflags & SPAWNFLAG_NOT_EASY) != 0) ||
-                //             ((skill->value == SKILL_MEDIUM) &&
-                //             (ent->spawnflags & SPAWNFLAG_NOT_MEDIUM) != 0) ||
-                //             (((skill->value == SKILL_HARD) ||
-                //             (skill->value == SKILL_HARDPLUS)) &&
-                //             (ent->spawnflags & SPAWNFLAG_NOT_HARD) != 0)
-                //             )
-                //         {
-                //             G_FreeEdict(ent);
-                //             inhibit++;
-                //             continue;
-                //         }
+                        if (((skill.Int == SKILL_EASY) &&
+                            (ent.spawnflags & SPAWNFLAG_NOT_EASY) != 0) ||
+                            ((skill.Int == SKILL_MEDIUM) &&
+                            (ent.spawnflags & SPAWNFLAG_NOT_MEDIUM) != 0) ||
+                            (((skill.Int == SKILL_HARD) ||
+                            (skill.Int == SKILL_HARDPLUS)) &&
+                            (ent.spawnflags & SPAWNFLAG_NOT_HARD) != 0)
+                            )
+                        {
+                            G_FreeEdict(ent);
+                            inhibit++;
+                            continue;
+                        }
                 //     }
 
                     ent.spawnflags &=

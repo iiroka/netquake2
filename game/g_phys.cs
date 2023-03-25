@@ -35,6 +35,32 @@ namespace Quake2 {
         private const int FRICTION = 6;
         private const int WATERFRICTION = 1;
 
+        private edict_t? SV_TestEntityPosition(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return null;
+            }
+
+            /* dead bodies are supposed to not be solid so lets
+            ensure they only collide with BSP during pushmoves
+            */
+            var mask = QShared.MASK_SOLID;
+            if (ent.clipmask != 0 && (ent.svflags & QGameFlags.SVF_DEADMONSTER) == 0)
+            {
+                mask = ent.clipmask;
+            }
+
+            var trace = gi.trace(ent.s.origin, ent.mins, ent.maxs, ent.s.origin, ent, mask);
+
+            if (trace.startsolid)
+            {
+                return g_edicts[0];
+            }
+
+            return null;
+        }
+
 
         private void SV_CheckVelocity(edict_t ent)
         {
@@ -337,6 +363,119 @@ namespace Quake2 {
             ent.velocity.Z -= ent.gravity * sv_gravity!.Float * FRAMETIME;
         }
 
+        /*
+        * Returns the actual bounding box of a bmodel.
+        * This is a big improvement over what q2 normally
+        * does with rotating bmodels - q2 sets absmin,
+        * absmax to a cube that will completely contain
+        * the bmodel at *any* rotation on *any* axis, whether
+        * the bmodel can actually rotate to that angle or not.
+        * This leads to a lot of false block tests in SV_Push
+        * if another bmodel is in the vicinity.
+        */
+        private void RealBoundingBox(edict_t ent, out Vector3 mins, out Vector3 maxs)
+        {
+            // vec3_t forward, left, up, f1, l1, u1;
+            // vec3_t p[8];
+            // int i, j, k, j2, k4;
+
+            var p = new Vector3[8];
+            for (int k = 0; k < 2; k++)
+            {
+                int k4 = k * 4;
+
+                if (k != 0)
+                {
+                    p[k4][2] = ent.maxs[2];
+                }
+                else
+                {
+                    p[k4][2] = ent.mins[2];
+                }
+
+                p[k4 + 1][2] = p[k4][2];
+                p[k4 + 2][2] = p[k4][2];
+                p[k4 + 3][2] = p[k4][2];
+
+                for (int j = 0; j < 2; j++)
+                {
+                    int j2 = j * 2;
+
+                    if (j != 0)
+                    {
+                        p[j2 + k4][1] = ent.maxs[1];
+                    }
+                    else
+                    {
+                        p[j2 + k4][1] = ent.mins[1];
+                    }
+
+                    p[j2 + k4 + 1][1] = p[j2 + k4][1];
+
+                    for (int i = 0; i < 2; i++)
+                    {
+                        if (i != 0)
+                        {
+                            p[i + j2 + k4][0] = ent.maxs[0];
+                        }
+                        else
+                        {
+                            p[i + j2 + k4][0] = ent.mins[0];
+                        }
+                    }
+                }
+            }
+
+            var forward = new Vector3();
+            var left = new Vector3();
+            var up = new Vector3();
+            QShared.AngleVectors(ent.s.angles, ref forward, ref left, ref up);
+
+            for (int i = 0; i < 8; i++)
+            {
+                var f1 = p[i][0] * forward;
+                var l1 = -p[i][1] * left;
+                var u1 = p[i][2] * up;
+                p[i] = ent.s.origin + f1 + l1 + u1;
+            }
+
+            mins = p[0];
+            maxs = p[0];
+
+            for (int i = 1; i < 8; i++)
+            {
+                if (mins[0] > p[i][0])
+                {
+                    mins[0] = p[i][0];
+                }
+
+                if (mins[1] > p[i][1])
+                {
+                    mins[1] = p[i][1];
+                }
+
+                if (mins[2] > p[i][2])
+                {
+                    mins[2] = p[i][2];
+                }
+
+                if (maxs[0] < p[i][0])
+                {
+                    maxs[0] = p[i][0];
+                }
+
+                if (maxs[1] < p[i][1])
+                {
+                    maxs[1] = p[i][1];
+                }
+
+                if (maxs[2] < p[i][2])
+                {
+                    maxs[2] = p[i][2];
+                }
+            }
+        }
+
         /* ================================================================== */
 
         /* PUSHMOVE */
@@ -481,7 +620,7 @@ namespace Quake2 {
 
             /* Create a real bounding box for
                rotating brush models. */
-            // RealBoundingBox(pusher,realmins,realmaxs);
+            RealBoundingBox(pusher, out var realmins, out var realmaxs);
 
             /* see if any solid entities
                are inside the final position */
@@ -511,22 +650,22 @@ namespace Quake2 {
                 if (check.groundentity != pusher)
                 {
                     /* see if the ent needs to be tested */
-            //         if ((check->absmin[0] >= realmaxs[0]) ||
-            //             (check->absmin[1] >= realmaxs[1]) ||
-            //             (check->absmin[2] >= realmaxs[2]) ||
-            //             (check->absmax[0] <= realmins[0]) ||
-            //             (check->absmax[1] <= realmins[1]) ||
-            //             (check->absmax[2] <= realmins[2]))
-            //         {
-            //             continue;
-            //         }
+                    if ((check.absmin[0] >= realmaxs[0]) ||
+                        (check.absmin[1] >= realmaxs[1]) ||
+                        (check.absmin[2] >= realmaxs[2]) ||
+                        (check.absmax[0] <= realmins[0]) ||
+                        (check.absmax[1] <= realmins[1]) ||
+                        (check.absmax[2] <= realmins[2]))
+                    {
+                        continue;
+                    }
 
-            //         /* see if the ent's bbox is inside
-            //         the pusher's final position */
-            //         if (!SV_TestEntityPosition(check))
-            //         {
-            //             continue;
-            //         }
+                    /* see if the ent's bbox is inside
+                    the pusher's final position */
+                    if (SV_TestEntityPosition(check) == null)
+                    {
+                        continue;
+                    }
                 }
 
                 if ((pusher.movetype == movetype_t.MOVETYPE_PUSH) ||
@@ -538,59 +677,65 @@ namespace Quake2 {
                     pushed[pushed_i].angles = check.s.angles;
                     pushed_i++;
 
+                    Console.WriteLine($"Push {pusher.classname} {check.classname} {move}");
+
                     /* try moving the contacted entity */
                     check.s.origin = check.s.origin + move;
 
                     /* figure movement due to the pusher's amove */
-            //         VectorSubtract(check->s.origin, pusher->s.origin, org);
-            //         org2[0] = DotProduct(org, forward);
-            //         org2[1] = -DotProduct(org, right);
-            //         org2[2] = DotProduct(org, up);
-            //         VectorSubtract(org2, org, move2);
-            //         VectorAdd(check->s.origin, move2, check->s.origin);
+                    org = check.s.origin - pusher.s.origin;
+                    var org2 = new Vector3(
+                        Vector3.Dot(org, forward),
+                        -Vector3.Dot(org, right),
+                        Vector3.Dot(org, up)
+                    );
+                    var move2 = org2 - org;
+                    check.s.origin = check.s.origin + move2;
 
-            //         /* may have pushed them off an edge */
-            //         if (check->groundentity != pusher)
-            //         {
-            //             check->groundentity = NULL;
-            //         }
+                    /* may have pushed them off an edge */
+                    if (check.groundentity != pusher)
+                    {
+                        check.groundentity = null;
+                    }
+                    Console.WriteLine($"Pushed to {pusher.classname} {check.classname} {check.s.origin}");
 
-            //         block = SV_TestEntityPosition(check);
+                    var block = SV_TestEntityPosition(check);
 
-            //         if (!block)
+                    if (block == null)
 
-            //         {   /* pushed ok */
-            //             gi.linkentity(check);
-            //             continue;
-            //         }
+                    {   /* pushed ok */
+                        gi.linkentity(check);
+                        continue;
+                    }
 
-            //         /* if it is ok to leave in the old position, do it
-            //         this is only relevent for riding entities, not
-            //         pushed */
-            //         VectorSubtract(check->s.origin, move, check->s.origin);
-            //         block = SV_TestEntityPosition(check);
+                    Console.WriteLine("Blocked");
+                    /* if it is ok to leave in the old position, do it
+                    this is only relevent for riding entities, not
+                    pushed */
+                    check.s.origin = check.s.origin - move;
+                    block = SV_TestEntityPosition(check);
 
-            //         if (!block)
-            //         {
-            //             pushed_p--;
-            //             continue;
-            //         }
+                    if (block == null)
+                    {
+                        pushed_i--;
+                        continue;
+                    }
                 }
 
                 /* save off the obstacle so we can
                 call the block function */
                 // obstacle = check;
 
-            //     /* move back any entities we already moved
-            //     go backwards, so if the same entity was pushed
-            //     twice, it goes back to the original position */
-            //     for (p = pushed_p - 1; p >= pushed; p--)
-            //     {
-            //         VectorCopy(p->origin, p->ent->s.origin);
-            //         VectorCopy(p->angles, p->ent->s.angles);
+                /* move back any entities we already moved
+                go backwards, so if the same entity was pushed
+                twice, it goes back to the original position */
+                for (int p = pushed_i - 1; p >= 0; p--)
+                {
+                    pushed[p].ent!.s.origin = pushed[p].origin;
+                    pushed[p].ent!.s.angles = pushed[p].angles;
 
-            //         gi.linkentity(p->ent);
-            //     }
+                    gi.linkentity(pushed[p].ent!);
+                }
 
                 return false;
             }

@@ -591,10 +591,11 @@ namespace Quake2 {
             public edict_t? chase_target; /* player we are chasing */
             public bool update_chase; /* need to update chase info? */
 
+            // Clear everything except pers
             public void Clear()
             {
-            // client_respawn_t resp;
-            // pmove_state_t old_pmove; /* for detecting out-of-pmove changes */
+                resp = new client_respawn_t();
+                old_pmove = new QShared.pmove_state_t();
                 showscores = false;
                 showinventory = false;
                 showhelp = false;
@@ -611,7 +612,7 @@ namespace Quake2 {
                 damage_knockback = 0;
                 damage_from = new Vector3();
                 killer_yaw = 0;
-                // weaponstate_t weaponstate;
+                weaponstate = weaponstate_t.WEAPON_READY;
                 kick_angles = new Vector3();
                 kick_origin = new Vector3();
                 v_dmg_roll = 0;
@@ -680,7 +681,7 @@ namespace Quake2 {
             public string? pathtarget;
             public string? deathtarget;
             public string? combattarget;
-            // edict_t *target_ent;
+            public edict_t? target_ent;
 
             public float speed, accel, decel;
             public Vector3 movedir;
@@ -826,21 +827,23 @@ namespace Quake2 {
                 this.pathtarget = null;
                 this.deathtarget = null;
                 this.combattarget = null;
-                // // edict_t *target_ent;
-                // public float speed, accel, decel;
+                this.target_ent = null;
+                this.speed = 0;
+                this.accel = 0;
+                this.decel = 0;
                 this.movedir = Vector3.Zero;
                 this.pos1 = Vector3.Zero;
                 this.pos2 = Vector3.Zero;
                 this.velocity = Vector3.Zero;
                 this.avelocity = Vector3.Zero;
-                // public int mass;
-                // public float air_finished;
-                // public float gravity; /* per entity gravity multiplier (1.0 is normal)
+                this.mass = 0;
+                this.air_finished = 0;
+                this.gravity = 0;
                 this.goalentity = null;
                 this.movetarget = null;
-                // public float yaw_speed;
-                // public float ideal_yaw;
-                // public float nextthink;
+                this.yaw_speed = 0;
+                this.ideal_yaw = 0;
+                this.nextthink = 0;
                 this.prethink = null;
                 this.think = null;
                 // // void (*blocked)(edict_t *self, edict_t *other);
@@ -849,52 +852,52 @@ namespace Quake2 {
                 // // void (*pain)(edict_t *self, edict_t *other, float kick, int damage);
                 // // void (*die)(edict_t *self, edict_t *inflictor, edict_t *attacker,
                 // //         int damage, vec3_t point);
-                // public float touch_debounce_time;
-                // public float pain_debounce_time;
-                // public float damage_debounce_time;
-                // public float fly_sound_debounce_time;	/* now also used by insane marines to store pain sound timeout */
-                // public float last_move_time;
-                // public int health;
-                // public int max_health;
-                // public int gib_health;
-                // public int deadflag;
-                // public float show_hostile;
-                // public float powerarmor_time;
-                // public string map; /* target_changelevel */
-                // public int viewheight; /* height above origin where eyesight is determined */
-                // public int takedamage;
-                // public int dmg;
-                // public int radius_dmg;
-                // public float dmg_radius;
-                // public int sounds; /* now also used for player death sound aggregation */
-                // public int count;
+                this.touch_debounce_time = 0;
+                this.pain_debounce_time = 0;
+                this.damage_debounce_time = 0;
+                this.fly_sound_debounce_time = 0;
+                this.last_move_time = 0;
+                this.health = 0;
+                this.max_health = 0;
+                this.gib_health = 0;
+                this.deadflag = 0;
+                this.show_hostile = 0;
+                this.powerarmor_time = 0;
+                this.map = "";
+                this.viewheight = 0;
+                this.takedamage = 0;
+                this.dmg = 0;
+                this.radius_dmg = 0;
+                this.dmg_radius = 0;
+                this.sounds = 0;
+                this.count = 0;
                 this.chain = null;
                 this.enemy = null;
                 this.oldenemy = null;
                 this.activator = null;
                 this.groundentity = null;
-                // public int groundentity_linkcount;
+                this.groundentity_linkcount = 0;
                 this.teamchain = null;
                 this.teammaster = null;
                 this.mynoise = null;
                 this.mynoise2 = null;
-                // public int noise_index;
-                // public int noise_index2;
-                // public float volume;
-                // public float attenuation;
-                // public float wait;
-                // public float delay; /* before firing targets */
-                // public float random;
-                // public float last_sound_time;
-                // public int watertype;
-                // public int waterlevel;
-                // public Vector3 move_origin;
-                // public Vector3 move_angles;
-                // public int light_level;
-                // public int style; /* also used as areaportal number */
-                // public gitem_t? item = null;
-                // public moveinfo_t moveinfo;
-                // public monsterinfo_t monsterinfo = new monsterinfo_t();
+                this.noise_index = 0;
+                this.noise_index2 = 0;
+                this.volume = 0;
+                this.attenuation = 0;
+                this.wait = 0;
+                this.delay = 0;
+                this.random = 0;
+                this.last_sound_time = 0;
+                this.watertype = 0;
+                this.waterlevel = 0;
+                this.move_origin = Vector3.Zero;
+                this.move_angles = Vector3.Zero;;
+                this.light_level = 0;
+                this.style = 0;
+                this.item = null;
+                this.moveinfo = new moveinfo_t();
+                this.monsterinfo = new monsterinfo_t();
             }
         }  
     }

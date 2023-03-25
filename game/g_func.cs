@@ -115,6 +115,7 @@ namespace Quake2 {
             {
                 return;
             }
+            Console.WriteLine($"Move_Begin {ent.classname}");
 
             if ((ent.moveinfo.speed * FRAMETIME) >= ent.moveinfo.remaining_distance)
             {
@@ -138,6 +139,7 @@ namespace Quake2 {
             {
                 return;
             }
+            Console.WriteLine($"Move_Calc {ent.classname}");
 
             ent.velocity = Vector3.Zero;
             ent.moveinfo.dir = dest - ent.s.origin;
@@ -239,6 +241,7 @@ namespace Quake2 {
             {
                 return;
             }
+            Console.WriteLine($"door_go_up {self.classname} {activator.classname}");
 
             if (self.moveinfo.state == STATE_UP)
             {
@@ -419,6 +422,7 @@ namespace Quake2 {
             {
                 return;
             }
+            Console.WriteLine($"Think_SpawnDoorTrigger {ent.classname}");
 
             if ((ent.flags & FL_TEAMSLAVE) != 0)
             {
