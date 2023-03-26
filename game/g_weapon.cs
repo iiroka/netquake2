@@ -46,7 +46,6 @@ namespace Quake2 {
                 G_FreeEdict(self);
                 return;
             }
-            Console.WriteLine($"blaster_touch {other.classname}");
 
             if (other == self.owner)
             {

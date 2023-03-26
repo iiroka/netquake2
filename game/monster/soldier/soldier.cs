@@ -66,6 +66,79 @@ namespace Quake2 {
             // }
         }
 
+        private static void soldier_idle(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            // if (random() > 0.8)
+            // {
+            //     gi.sound(self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
+            // }
+        }
+
+        private static void soldier_cock(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            // if (self->s.frame == FRAME_stand322)
+            // {
+            //     gi.sound(self, CHAN_WEAPON, sound_cock, 1, ATTN_IDLE, 0);
+            // }
+            // else
+            // {
+            //     gi.sound(self, CHAN_WEAPON, sound_cock, 1, ATTN_NORM, 0);
+            // }
+        }
+
+
+        private static mframe_t[] soldier_frames_stand1 = {
+            new mframe_t(ai_stand, 0, soldier_idle),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, null)
+        };
+
+        private static mmove_t soldier_move_stand1 = new mmove_t(
+            QuakeGameSoldier.FRAME_stand101,
+            QuakeGameSoldier.FRAME_stand130,
+            soldier_frames_stand1,
+            soldier_stand_f
+        );
+
         private static mframe_t[] soldier_frames_stand3 = {
             new mframe_t(ai_stand, 0, null),
             new mframe_t(ai_stand, 0, null),
@@ -90,8 +163,7 @@ namespace Quake2 {
             new mframe_t(ai_stand, 0, null),
 
             new mframe_t(ai_stand, 0, null),
-            // new mframe_t(ai_stand, 0, soldier_cock),
-            new mframe_t(ai_stand, 0, null),
+            new mframe_t(ai_stand, 0, soldier_cock),
             new mframe_t(ai_stand, 0, null),
             new mframe_t(ai_stand, 0, null),
             new mframe_t(ai_stand, 0, null),
@@ -130,16 +202,72 @@ namespace Quake2 {
                 return;
             }
 
-            // if ((self->monsterinfo.currentmove == &soldier_move_stand3) ||
-            //     (random() < 0.8))
-            // {
-            //     self->monsterinfo.currentmove = &soldier_move_stand1;
-            // }
-            // else
-            // {
+            if ((self.monsterinfo.currentmove == soldier_move_stand3) ||
+                (QShared.frandk() < 0.8))
+            {
+                self.monsterinfo.currentmove = soldier_move_stand1;
+            }
+            else
+            {
                 self.monsterinfo.currentmove = soldier_move_stand3;
-            // }
+            }
         }
+
+        private static void soldier_walk1_random(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (QShared.frandk() > 0.1)
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_walk101;
+            }
+        }
+
+        private static mframe_t[] soldier_frames_walk1 = {
+            new mframe_t(ai_walk, 3, null),
+            new mframe_t(ai_walk, 6, null),
+            new mframe_t(ai_walk, 2, null),
+            new mframe_t(ai_walk, 2, soldier_footstep),
+            new mframe_t(ai_walk, 2, null),
+            new mframe_t(ai_walk, 1, null),
+            new mframe_t(ai_walk, 6, null),
+            new mframe_t(ai_walk, 5, null),
+            new mframe_t(ai_walk, 3, soldier_footstep),
+            new mframe_t(ai_walk, -1, soldier_walk1_random),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null),
+            new mframe_t(ai_walk, 0, null)
+        };
+
+        private static mmove_t soldier_move_walk1 = new mmove_t(
+            QuakeGameSoldier.FRAME_walk101,
+            QuakeGameSoldier.FRAME_walk133,
+            soldier_frames_walk1,
+            null
+        );
 
         private static mframe_t[] soldier_frames_walk2 = {
             new mframe_t(ai_walk, 4, soldier_footstep),
@@ -168,14 +296,623 @@ namespace Quake2 {
                 return;
             }
 
-            // if (random() < 0.5)
+            if (QShared.frandk() < 0.5)
+            {
+                self.monsterinfo.currentmove = soldier_move_walk1;
+            }
+            else
+            {
+                self.monsterinfo.currentmove = soldier_move_walk2;
+            }
+        }
+
+
+        private static mframe_t[] soldier_frames_start_run = {
+            new mframe_t(ai_run, 7, null),
+            new mframe_t(ai_run, 5, null)
+        };
+
+        private static mmove_t soldier_move_start_run = new mmove_t(
+            QuakeGameSoldier.FRAME_run01,
+            QuakeGameSoldier.FRAME_run02,
+            soldier_frames_start_run,
+            soldier_run_f
+        );
+
+        private static mframe_t[]  soldier_frames_run = {
+            new mframe_t(ai_run, 10, null),
+            new mframe_t(ai_run, 11, soldier_footstep),
+            new mframe_t(ai_run, 11, null),
+            new mframe_t(ai_run, 16, null),
+            new mframe_t(ai_run, 10, soldier_footstep),
+            new mframe_t(ai_run, 15, null)
+        };
+
+        private static mmove_t soldier_move_run = new mmove_t(
+            QuakeGameSoldier.FRAME_run03,
+            QuakeGameSoldier.FRAME_run08,
+            soldier_frames_run,
+            null
+        );
+
+        private void soldier_run(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if ((self.monsterinfo.aiflags & AI_STAND_GROUND) != 0)
+            {
+                self.monsterinfo.currentmove = soldier_move_stand1;
+                return;
+            }
+
+            if ((self.monsterinfo.currentmove == soldier_move_walk1) ||
+                (self.monsterinfo.currentmove == soldier_move_walk2) ||
+                (self.monsterinfo.currentmove == soldier_move_start_run))
+            {
+                self.monsterinfo.currentmove = soldier_move_run;
+            }
+            else
+            {
+                self.monsterinfo.currentmove = soldier_move_start_run;
+            }
+        }
+
+        private static void soldier_run_f(QuakeGame g, edict_t self)
+        {
+            g.soldier_run(self);
+        }
+
+        private static mframe_t[] soldier_frames_pain1 = {
+            new mframe_t(ai_move, -3, null),
+            new mframe_t(ai_move, 4, null),
+            new mframe_t(ai_move, 1, null),
+            new mframe_t(ai_move, 1, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_pain1 = new mmove_t(
+            QuakeGameSoldier.FRAME_pain101,
+            QuakeGameSoldier.FRAME_pain105,
+            soldier_frames_pain1,
+            soldier_run_f
+        );
+
+        private static mframe_t[] soldier_frames_pain2 = {
+            new mframe_t(ai_move, -13, null),
+            new mframe_t(ai_move, -1, null),
+            new mframe_t(ai_move, 2, null),
+            new mframe_t(ai_move, 4, null),
+            new mframe_t(ai_move, 2, null),
+            new mframe_t(ai_move, 3, null),
+            new mframe_t(ai_move, 2, null)
+        };
+
+        private static mmove_t soldier_move_pain2 = new mmove_t(
+            QuakeGameSoldier.FRAME_pain201,
+            QuakeGameSoldier.FRAME_pain207,
+            soldier_frames_pain2,
+            soldier_run_f
+        );
+
+        private static mframe_t[] soldier_frames_pain3 = {
+            new mframe_t(ai_move, -8, null),
+            new mframe_t(ai_move, 10, null),
+            new mframe_t(ai_move, -4, soldier_footstep),
+            new mframe_t(ai_move, -1, null),
+            new mframe_t(ai_move, -3, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 3, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 1, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 1, null),
+            new mframe_t(ai_move, 2, null),
+            new mframe_t(ai_move, 4, null),
+            new mframe_t(ai_move, 3, null),
+            new mframe_t(ai_move, 2, soldier_footstep)
+        };
+
+        private static mmove_t soldier_move_pain3 = new mmove_t(
+            QuakeGameSoldier.FRAME_pain301,
+            QuakeGameSoldier.FRAME_pain318,
+            soldier_frames_pain3,
+            soldier_run_f
+        );
+
+        private static mframe_t[] soldier_frames_pain4 = {
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, -10, null),
+            new mframe_t(ai_move, -6, null),
+            new mframe_t(ai_move, 8, null),
+            new mframe_t(ai_move, 4, null),
+            new mframe_t(ai_move, 1, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 2, null),
+            new mframe_t(ai_move, 5, null),
+            new mframe_t(ai_move, 2, null),
+            new mframe_t(ai_move, -1, null),
+            new mframe_t(ai_move, -1, null),
+            new mframe_t(ai_move, 3, null),
+            new mframe_t(ai_move, 2, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_pain4 = new mmove_t(
+            QuakeGameSoldier.FRAME_pain401,
+            QuakeGameSoldier.FRAME_pain417,
+            soldier_frames_pain4,
+            soldier_run_f
+        );
+
+        private void soldier_pain(edict_t self, edict_t _other /* unused */,
+                float _kick /* unused */, int _damage /* unused */)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.health < (self.max_health / 2))
+            {
+                self.s.skinnum |= 1;
+            }
+
+            if (level.time < self.pain_debounce_time)
+            {
+                if ((self.velocity[2] > 100) &&
+                    ((self.monsterinfo.currentmove == soldier_move_pain1) ||
+                    (self.monsterinfo.currentmove == soldier_move_pain2) ||
+                    (self.monsterinfo.currentmove == soldier_move_pain3)))
+                {
+                    self.monsterinfo.currentmove = soldier_move_pain4;
+                }
+
+                return;
+            }
+
+            self.pain_debounce_time = level.time + 3;
+
+            // var n = self.s.skinnum | 1;
+
+            // if (n == 1)
             // {
-            //     self.monsterinfo.currentmove = &soldier_move_walk1;
+            //     gi.sound(self, CHAN_VOICE, sound_pain_light, 1, ATTN_NORM, 0);
+            // }
+            // else if (n == 3)
+            // {
+            //     gi.sound(self, CHAN_VOICE, sound_pain, 1, ATTN_NORM, 0);
             // }
             // else
             // {
-                self.monsterinfo.currentmove = soldier_move_walk2;
+            //     gi.sound(self, CHAN_VOICE, sound_pain_ss, 1, ATTN_NORM, 0);
             // }
+
+            if (self.velocity[2] > 100)
+            {
+                self.monsterinfo.currentmove = soldier_move_pain4;
+                return;
+            }
+
+            if (skill!.Int == SKILL_HARDPLUS)
+            {
+                return; /* no pain anims in nightmare */
+            }
+
+            var r = QShared.frandk();
+
+            if (r < 0.33)
+            {
+                self.monsterinfo.currentmove = soldier_move_pain1;
+            }
+            else if (r < 0.66)
+            {
+                self.monsterinfo.currentmove = soldier_move_pain2;
+            }
+            else
+            {
+                self.monsterinfo.currentmove = soldier_move_pain3;
+            }
+        }
+
+        private static void soldier_fire6(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            // soldier_fire(self, 5);
+        }
+
+        private static void soldier_fire7(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            // soldier_fire(self, 6);
+        }
+
+        private static void soldier_dead(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            self.mins = new Vector3(-16, -16, -24);
+            self.maxs = new Vector3( 16, 16, -8);
+            self.movetype = movetype_t.MOVETYPE_TOSS;
+            self.svflags |= QGameFlags.SVF_DEADMONSTER;
+            self.nextthink = 0;
+            g.gi.linkentity(self);
+        }
+
+        private static mframe_t[] soldier_frames_death1 = {
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, -10, null),
+            new mframe_t(ai_move, -10, null),
+            new mframe_t(ai_move, -10, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, soldier_fire6),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, soldier_fire7),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_death1 = new mmove_t(
+            QuakeGameSoldier.FRAME_death101,
+            QuakeGameSoldier.FRAME_death136,
+            soldier_frames_death1,
+            soldier_dead
+        );
+
+        private static mframe_t[] soldier_frames_death2 = {
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_death2 = new mmove_t(
+            QuakeGameSoldier.FRAME_death201,
+            QuakeGameSoldier.FRAME_death235,
+            soldier_frames_death2,
+            soldier_dead
+        );
+
+        private static mframe_t[] soldier_frames_death3 = {
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+        };
+
+        private static mmove_t soldier_move_death3 = new mmove_t(
+            QuakeGameSoldier.FRAME_death301,
+            QuakeGameSoldier.FRAME_death345,
+            soldier_frames_death3,
+            soldier_dead
+        );
+
+        private static mframe_t[] soldier_frames_death4 = {
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_death4 = new mmove_t(
+            QuakeGameSoldier.FRAME_death401,
+            QuakeGameSoldier.FRAME_death453,
+            soldier_frames_death4,
+            soldier_dead
+        );
+
+        private static mframe_t[] soldier_frames_death5 = {
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, -5, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_death5 = new mmove_t(
+            QuakeGameSoldier.FRAME_death501,
+            QuakeGameSoldier.FRAME_death524,
+            soldier_frames_death5,
+            soldier_dead
+        );
+
+        private static mframe_t[] soldier_frames_death6 = {
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null),
+            new mframe_t(ai_move, 0, null)
+        };
+
+        private static mmove_t soldier_move_death6 = new mmove_t(
+            QuakeGameSoldier.FRAME_death601,
+            QuakeGameSoldier.FRAME_death610,
+            soldier_frames_death6,
+            soldier_dead
+        );
+
+        private void soldier_die(edict_t self, edict_t _inflictor /* unused */,
+                edict_t _attacker /* unused */, int damage,
+                in Vector3 point)
+        {
+
+            /* check for gib */
+            if (self.health <= self.gib_health)
+            {
+                // gi.sound(self, CHAN_VOICE, gi.soundindex("misc/udeath.wav"), 1, ATTN_NORM, 0);
+
+                // for (n = 0; n < 3; n++)
+                // {
+                //     ThrowGib(self, "models/objects/gibs/sm_meat/tris.md2",
+                //             damage, GIB_ORGANIC);
+                // }
+
+                // ThrowGib(self, "models/objects/gibs/chest/tris.md2",
+                //         damage, GIB_ORGANIC);
+                // ThrowHead(self, "models/objects/gibs/head2/tris.md2",
+                //         damage, GIB_ORGANIC);
+                self.deadflag = DEAD_DEAD;
+                return;
+            }
+
+            if (self.deadflag == DEAD_DEAD)
+            {
+                return;
+            }
+
+            /* regular death */
+            self.deadflag = DEAD_DEAD;
+            self.takedamage = (int)damage_t.DAMAGE_YES;
+            self.s.skinnum |= 1;
+
+            // if (self.s.skinnum == 1)
+            // {
+            //     gi.sound(self, CHAN_VOICE, sound_death_light, 1, ATTN_NORM, 0);
+            // }
+            // else if (self->s.skinnum == 3)
+            // {
+            //     gi.sound(self, CHAN_VOICE, sound_death, 1, ATTN_NORM, 0);
+            // }
+            // else
+            // {
+            //     gi.sound(self, CHAN_VOICE, sound_death_ss, 1, ATTN_NORM, 0);
+            // }
+
+            if (MathF.Abs((self.s.origin[2] + self.viewheight) - point[2]) <= 4)
+            {
+                /* head shot */
+                self.monsterinfo.currentmove = soldier_move_death3;
+                return;
+            }
+
+            var n = QShared.randk() % 5;
+
+            if (n == 0)
+            {
+                self.monsterinfo.currentmove = soldier_move_death1;
+            }
+            else if (n == 1)
+            {
+                self.monsterinfo.currentmove = soldier_move_death2;
+            }
+            else if (n == 2)
+            {
+                self.monsterinfo.currentmove = soldier_move_death4;
+            }
+            else if (n == 3)
+            {
+                self.monsterinfo.currentmove = soldier_move_death5;
+            }
+            else
+            {
+                self.monsterinfo.currentmove = soldier_move_death6;
+            }
         }
 
 
@@ -207,8 +944,8 @@ namespace Quake2 {
 
             self.mass = 100;
 
-            // self->pain = soldier_pain;
-            // self->die = soldier_die;
+            self.pain = soldier_pain;
+            self.die = soldier_die;
 
             self.monsterinfo.stand = soldier_stand;
             self.monsterinfo.walk = soldier_walk;

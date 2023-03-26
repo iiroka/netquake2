@@ -145,6 +145,144 @@ namespace Quake2 {
             return choice[QShared.randk() % num_choices];
         }
 
+        private void Think_Delay(edict_t ent)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            G_UseTargets(ent, ent.activator);
+            G_FreeEdict(ent);
+        }
+
+        /*
+        * The global "activator" should be set to
+        * the entity that initiated the firing.
+        *
+        * If self.delay is set, a DelayedUse entity
+        * will be created that will actually do the
+        * SUB_UseTargets after that many seconds have passed.
+        *
+        * Centerprints any self.message to the activator.
+        *
+        * Search for (string)targetname in all entities that
+        * match (string)self.target and call their .use function
+        */
+        private void G_UseTargets(edict_t ent, edict_t? activator)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            /* check for a delay */
+            if (ent.delay > 0)
+            {
+                /* create a temp object to fire at a later time */
+                var t = G_Spawn();
+                t.classname = "DelayedUse";
+                t.nextthink = level.time + ent.delay;
+                t.think = Think_Delay;
+                t.activator = activator;
+
+                if (activator == null)
+                {
+                    gi.dprintf("Think_Delay with no activator\n");
+                }
+
+                t.message = ent.message;
+                t.target = ent.target;
+                t.killtarget = ent.killtarget;
+                return;
+            }
+
+            /* print the message */
+            if (activator != null && (ent.message != null) && (activator.svflags & QGameFlags.SVF_MONSTER) == 0)
+            {
+                // gi.centerprintf(activator, "%s", ent->message);
+
+                // if (ent->noise_index)
+                // {
+                //     gi.sound(activator, CHAN_AUTO, ent->noise_index, 1, ATTN_NORM, 0);
+                // }
+                // else
+                // {
+                //     gi.sound(activator, CHAN_AUTO, gi.soundindex(
+                //                     "misc/talk1.wav"), 1, ATTN_NORM, 0);
+                // }
+            }
+
+            /* kill killtargets */
+            if (ent.killtarget != null)
+            {
+                edict_t? t = null;
+
+                while ((t = G_Find(t, "targetname", ent.killtarget)) != null)
+                {
+                    /* decrement secret count if target_secret is removed */
+                    if (t.classname == "target_secret")
+                    {
+                        level.total_secrets--;
+                    }
+                    /* same deal with target_goal, but also turn off CD music if applicable */
+                    else if (t.classname == "target_goal")
+                    {
+                        level.total_goals--;
+
+                        // if (level.found_goals >= level.total_goals)
+                        // {
+                        //     gi.configstring (CS_CDTRACK, "0");
+                        // }
+                    }
+
+                    G_FreeEdict(t);
+
+                    if (!ent.inuse)
+                    {
+                        gi.dprintf("entity was removed while using killtargets\n");
+                        return;
+                    }
+                }
+            }
+
+            /* fire targets */
+            if (ent.target != null)
+            {
+                edict_t? t = null;
+
+                while ((t = G_Find(t, "targetname", ent.target)) != null)
+                {
+                    /* doors fire area portals in a specific way */
+                    if (t.classname == "func_areaportal" &&
+                        (ent.classname == "func_door" ||
+                        ent.classname == "func_door_rotating"))
+                    {
+                        continue;
+                    }
+
+                    if (t == ent)
+                    {
+                        gi.dprintf("WARNING: Entity used itself.\n");
+                    }
+                    else
+                    {
+                        if (t.use != null)
+                        {
+                            t.use!(t, ent, activator);
+                        }
+                    }
+
+                    if (!ent.inuse)
+                    {
+                        gi.dprintf("entity was removed while using targets\n");
+                        return;
+                    }
+                }
+            }
+        }
+
+
         static readonly Vector3 VEC_UP = new Vector3(0, -1, 0);
         static readonly Vector3 MOVEDIR_UP = new Vector3(0, 0, 1);
         static readonly Vector3 VEC_DOWN = new Vector3(0, -2, 0);

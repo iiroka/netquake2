@@ -209,6 +209,7 @@ namespace Quake2 {
             {
                 return;
             }
+            Console.WriteLine("door_hit_top");
 
             // if (!(self->flags & FL_TEAMSLAVE))
             // {
@@ -241,7 +242,6 @@ namespace Quake2 {
             {
                 return;
             }
-            Console.WriteLine($"door_go_up {self.classname} {activator.classname}");
 
             if (self.moveinfo.state == STATE_UP)
             {
@@ -282,7 +282,7 @@ namespace Quake2 {
                 // AngleMove_Calc(self, door_hit_top);
             }
 
-            // G_UseTargets(self, activator);
+            G_UseTargets(self, activator);
             // door_use_areaportals(self, true);
         }
 

@@ -123,7 +123,6 @@ namespace Quake2 {
             }
 
             var e2 = (edict_t)trace.ent;
-            Console.WriteLine($"SV_Impact {e1.classname} {e2.classname}");
 
             if (e1.touch != null && (e1.solid != solid_t.SOLID_NOT))
             {

@@ -655,7 +655,10 @@ namespace Quake2 {
 
         private delegate void touch_delegate(edict_t self, edict_t other, QShared.cplane_t? plane,
                     in QShared.csurface_t? surf);
-        private delegate void use_delegate(edict_t self, edict_t other, edict_t activator);
+        private delegate void use_delegate(edict_t self, edict_t other, edict_t? activator);
+        private delegate void pain_delegate(edict_t self, edict_t other, float kick, int damage);
+        private delegate void die_delegate(edict_t self,  edict_t inflictor, edict_t attacker,
+                    int damage, in Vector3 point);
 
         private class edict_t : edict_s
         {
@@ -705,9 +708,8 @@ namespace Quake2 {
             // void (*blocked)(edict_t *self, edict_t *other);
             public touch_delegate? touch;
             public use_delegate? use;
-            // void (*pain)(edict_t *self, edict_t *other, float kick, int damage);
-            // void (*die)(edict_t *self, edict_t *inflictor, edict_t *attacker,
-            //         int damage, vec3_t point);
+            public pain_delegate? pain;
+            public die_delegate? die;
 
             public float touch_debounce_time;
             public float pain_debounce_time;
@@ -849,9 +851,8 @@ namespace Quake2 {
                 // // void (*blocked)(edict_t *self, edict_t *other);
                 this.touch = null;
                 this.use = null;
-                // // void (*pain)(edict_t *self, edict_t *other, float kick, int damage);
-                // // void (*die)(edict_t *self, edict_t *inflictor, edict_t *attacker,
-                // //         int damage, vec3_t point);
+                this.pain = null;
+                this.die = null;
                 this.touch_debounce_time = 0;
                 this.pain_debounce_time = 0;
                 this.damage_debounce_time = 0;

@@ -30,19 +30,180 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        private void Killed(edict_t targ, edict_t inflictor, edict_t attacker,
+                int damage, in Vector3 point)
+        {
+            if (targ == null || inflictor == null || attacker == null)
+            {
+                return;
+            }
 
+            if (targ.health < -999)
+            {
+                targ.health = -999;
+            }
+
+            targ.enemy = attacker;
+
+            if ((targ.svflags & QGameFlags.SVF_MONSTER) != 0 && (targ.deadflag != DEAD_DEAD))
+            {
+                if ((targ.monsterinfo.aiflags & AI_GOOD_GUY) == 0)
+                {
+                    level.killed_monsters++;
+
+                    if (coop!.Bool && attacker.client != null)
+                    {
+                        ((gclient_t)attacker.client).resp.score++;
+                    }
+
+                    /* medics won't heal monsters that they kill themselves */
+                    if (attacker.classname != null && attacker.classname == "monster_medic")
+                    {
+                        targ.owner = attacker;
+                    }
+                }
+            }
+
+            if ((targ.movetype == movetype_t.MOVETYPE_PUSH) ||
+                (targ.movetype == movetype_t.MOVETYPE_STOP) ||
+                (targ.movetype == movetype_t.MOVETYPE_NONE))
+            {
+                /* doors, triggers, etc */
+                targ.die!(targ, inflictor, attacker, damage, point);
+                return;
+            }
+
+            if ((targ.svflags & QGameFlags.SVF_MONSTER) != 0 && (targ.deadflag != DEAD_DEAD))
+            {
+                // targ.touch = NULL;
+                // monster_death_use(targ);
+            }
+
+            targ.die!(targ, inflictor, attacker, damage, point);
+        }
+
+        private void M_ReactToDamage(edict_t targ, edict_t attacker)
+        {
+            if (targ == null || attacker == null)
+            {
+                return;
+            }
+
+            if (targ.health <= 0)
+            {
+                return;
+            }
+
+            if ((attacker.client == null) && (attacker.svflags & QGameFlags.SVF_MONSTER) != 0)
+            {
+                return;
+            }
+
+            if ((attacker == targ) || (attacker == targ.enemy))
+            {
+                return;
+            }
+
+            /* if we are a good guy monster and our attacker is a player
+            or another good guy, do not get mad at them */
+            if ((targ.monsterinfo.aiflags & AI_GOOD_GUY) != 0)
+            {
+                if (attacker.client != null || (attacker.monsterinfo.aiflags & AI_GOOD_GUY) != 0)
+                {
+                    return;
+                }
+            }
+
+            /* if attacker is a client, get mad at
+            them because he's good and we're not */
+            // if (attacker.client != null)
+            // {
+            //     targ.monsterinfo.aiflags &= ~AI_SOUND_TARGET;
+
+            //     /* this can only happen in coop (both new and old
+            //     enemies are clients)  only switch if can't see
+            //     the current enemy */
+            //     if (targ.enemy != null && targ.enemy.client != null)
+            //     {
+            //         if (visible(targ, targ->enemy))
+            //         {
+            //             targ->oldenemy = attacker;
+            //             return;
+            //         }
+
+            //         targ->oldenemy = targ->enemy;
+            //     }
+
+            //     targ->enemy = attacker;
+
+            //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+            //     {
+            //         FoundTarget(targ);
+            //     }
+
+            //     return;
+            // }
+
+            // /* it's the same base (walk/swim/fly) type and a
+            // different classname and it's not a tank
+            // (they spray too much), get mad at them */
+            // if (((targ->flags & (FL_FLY | FL_SWIM)) ==
+            //     (attacker->flags & (FL_FLY | FL_SWIM))) &&
+            //     (strcmp(targ->classname, attacker->classname) != 0) &&
+            //     (strcmp(attacker->classname, "monster_tank") != 0) &&
+            //     (strcmp(attacker->classname, "monster_supertank") != 0) &&
+            //     (strcmp(attacker->classname, "monster_makron") != 0) &&
+            //     (strcmp(attacker->classname, "monster_jorg") != 0))
+            // {
+            //     if (targ->enemy && targ->enemy->client)
+            //     {
+            //         targ->oldenemy = targ->enemy;
+            //     }
+
+            //     targ->enemy = attacker;
+
+            //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+            //     {
+            //         FoundTarget(targ);
+            //     }
+            // }
+            // /* if they *meant* to shoot us, then shoot back */
+            // else if (attacker->enemy == targ)
+            // {
+            //     if (targ->enemy && targ->enemy->client)
+            //     {
+            //         targ->oldenemy = targ->enemy;
+            //     }
+
+            //     targ->enemy = attacker;
+
+            //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+            //     {
+            //         FoundTarget(targ);
+            //     }
+            // }
+            // /* otherwise get mad at whoever they are mad
+            // at (help our buddy) unless it is us! */
+            // else if (attacker->enemy)
+            // {
+            //     if (targ->enemy && targ->enemy->client)
+            //     {
+            //         targ->oldenemy = targ->enemy;
+            //     }
+
+            //     targ->enemy = attacker->enemy;
+
+            //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
+            //     {
+            //         FoundTarget(targ);
+            //     }
+            // }
+        }
+        
         private void T_Damage(edict_t targ, edict_t inflictor, edict_t attacker,
                 in Vector3 idir, in Vector3 point, in Vector3 normal, int damage,
                 int knockback, int dflags, int mod)
         {
-            Console.WriteLine($"T_Damage {targ.classname} {inflictor.classname} {attacker.classname}");
-            // gclient_t *client;
-            // int take;
-            // int save;
-            // int asave;
-            // int psave;
-            // int te_sparks;
-
             if (targ == null || inflictor == null || attacker == null)
             {
                 return;
@@ -145,8 +306,8 @@ namespace Quake2 {
             //     }
             // }
 
-            // take = damage;
-            // save = 0;
+            var take = damage;
+            var save = 0;
 
             // /* check for godmode */
             // if ((targ->flags & FL_GODMODE) && !(dflags & DAMAGE_NO_PROTECTION))
@@ -180,9 +341,9 @@ namespace Quake2 {
             // /* treat cheat/powerup savings the same as armor */
             // asave += save;
 
-            // /* do the damage */
-            // if (take)
-            // {
+            /* do the damage */
+            if (take > 0)
+            {
             //     if ((targ->svflags & SVF_MONSTER) || (client))
             //     {
             //         SpawnDamage(TE_BLOOD, point, normal);
@@ -192,27 +353,27 @@ namespace Quake2 {
             //         SpawnDamage(te_sparks, point, normal);
             //     }
 
-            //     targ->health = targ->health - take;
+                targ.health = targ.health - take;
 
-            //     if (targ->health <= 0)
-            //     {
+                if (targ.health <= 0)
+                {
             //         if ((targ->svflags & SVF_MONSTER) || (client))
             //         {
             //             targ->flags |= FL_NO_KNOCKBACK;
             //         }
 
-            //         Killed(targ, inflictor, attacker, take, point);
-            //         return;
-            //     }
-            // }
+                    Killed(targ, inflictor, attacker, take, point);
+                    return;
+                }
+            }
 
-            // if (targ->svflags & SVF_MONSTER)
-            // {
-            //     M_ReactToDamage(targ, attacker);
+            if ((targ.svflags & QGameFlags.SVF_MONSTER) != 0)
+            {
+                M_ReactToDamage(targ, attacker);
 
             //     if (!(targ->monsterinfo.aiflags & AI_DUCKED) && (take))
             //     {
-            //         targ->pain(targ, attacker, knockback, take);
+                    targ.pain!(targ, attacker, knockback, take);
 
             //         /* nightmare mode monsters don't go into pain frames often */
             //         if (skill->value == SKILL_HARDPLUS)
@@ -220,21 +381,21 @@ namespace Quake2 {
             //             targ->pain_debounce_time = level.time + 5;
             //         }
             //     }
-            // }
-            // else if (client)
-            // {
+            }
+            else if (client != null)
+            {
             //     if (!(targ->flags & FL_GODMODE) && (take))
             //     {
             //         targ->pain(targ, attacker, knockback, take);
             //     }
-            // }
-            // else if (take)
-            // {
-            //     if (targ->pain)
-            //     {
-            //         targ->pain(targ, attacker, knockback, take);
-            //     }
-            // }
+            }
+            else if (take > 0)
+            {
+                if (targ.pain != null)
+                {
+                    targ.pain(targ, attacker, knockback, take);
+                }
+            }
 
             // /* add to the damage inflicted on a player this frame
             // the total will be turned into screen blends and view
