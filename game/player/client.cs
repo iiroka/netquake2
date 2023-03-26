@@ -483,9 +483,6 @@ namespace Quake2 {
             /* clear playerstate values */
             ent.client.ps = new QShared.player_state_t();
             ent.client.ps.pmove = new QShared.pmove_state_t();
-            ent.client.ps.pmove.origin = new short[3];
-            ent.client.ps.pmove.velocity = new short[3];
-            ent.client.ps.pmove.delta_angles = new short[3];
 
             client!.ps.pmove.origin = new short[3]{
                 (short)(spawn_origin.X * 8),

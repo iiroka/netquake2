@@ -57,7 +57,7 @@ namespace Quake2 {
                 var frame = (frame_t)MemberwiseClone();
                 frame.areabits = new byte[areabits.Length];
                 Array.Copy(areabits, frame.areabits, areabits.Length);
-                frame.playerstate = (QShared.player_state_t)playerstate.Clone();
+                frame.playerstate.Copy(playerstate);
                 return frame;
             }
 

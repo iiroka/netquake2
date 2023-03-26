@@ -159,9 +159,6 @@ namespace Quake2 {
             {
                 ops = new QShared.player_state_t();
                 ops.pmove = new QShared.pmove_state_t();
-                ops.pmove.origin = new short[3];
-                ops.pmove.velocity = new short[3];
-                ops.pmove.delta_angles = new short[3];
             }
             else
             {
@@ -544,7 +541,7 @@ namespace Quake2 {
             frame.areabytes = common.CM_WriteAreaBits(ref frame.areabits, clientarea);
 
             /* grab the current player_state_t */
-            frame.ps = (QShared.player_state_t)clent.client.ps.Clone();
+            frame.ps.Copy(clent.client.ps);
 
             SV_FatPVS(org);
             byte[] clientphs = common.CM_ClusterPHS(clientcluster);

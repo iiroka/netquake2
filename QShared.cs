@@ -262,6 +262,12 @@ namespace Quake2 {
             public short[] delta_angles;      /* add to command angles to get view direction
                                         * changed by spawns, rotating objects, and teleporters */
 
+            public pmove_state_t() {
+                origin = new short[3];
+                velocity = new short[3];
+                delta_angles = new short[3];
+            }                                        
+
             public bool Equals(pmove_state_t other)
             {         
                 if (this.origin != null ^ other.origin != null)
@@ -290,6 +296,18 @@ namespace Quake2 {
                           this.delta_angles[1] == other.delta_angles[1] &&
                           this.delta_angles[2] == other.delta_angles[2]));
             }
+
+            public void Copy(pmove_state_t other)
+            {
+                this.pm_type = other.pm_type;
+                this.pm_flags = other.pm_flags;
+                this.pm_time = other.pm_time;
+                this.gravity = other.gravity;
+                Array.Copy(other.origin, this.origin, 3);
+                Array.Copy(other.velocity, this.velocity, 3);
+                Array.Copy(other.delta_angles, this.delta_angles, 3);
+            }
+
         }
 
         /* gi.BoxEdicts() can return a list of either solid or trigger entities */
@@ -924,7 +942,7 @@ namespace Quake2 {
         * to rendered a view.  There will only be 10 player_state_t sent each second,
         * but the number of pmove_state_t changes will be reletive to client
         * frame rates */
-        public class player_state_t : ICloneable
+        public class player_state_t
         {
             public pmove_state_t pmove;        /* for prediction */
 
@@ -938,18 +956,32 @@ namespace Quake2 {
             public int gunindex;
             public int gunframe;
 
-            public float[] blend = new float[4];             /* rgba full screen effect */
+            public float[] blend;             /* rgba full screen effect */
             public float fov;                  /* horizontal field of view */
             public int rdflags;                /* refdef flags */
 
-            public short[] stats = new short[MAX_STATS];     /* fast status bar updates */
+            public short[] stats;     /* fast status bar updates */
 
-            public object Clone()
+            public player_state_t() {
+                pmove = new pmove_state_t();
+                blend = new float[4];
+                stats = new short[MAX_STATS];
+            }
+
+            public void Copy(player_state_t other)
             {
-                var state = (player_state_t)MemberwiseClone();
-                Array.Copy(blend, state.blend, 4);
-                Array.Copy(stats, state.stats, MAX_STATS);
-                return state;
+                this.pmove.Copy(other.pmove);
+                this.viewangles = other.viewangles;
+                this.viewoffset = other.viewoffset;
+                this.kick_angles = other.kick_angles;
+                this.gunangles = other.gunangles;
+                this.gunoffset = other.gunoffset;
+                this.gunindex = other.gunindex;
+                this.gunframe = other.gunframe;
+                this.fov = other.fov;
+                this.rdflags = other.rdflags;
+                Array.Copy(other.blend, this.blend, 4);
+                Array.Copy(other.stats, this.stats, MAX_STATS);
             }
 
         }

@@ -490,9 +490,8 @@ namespace Quake2 {
             /* clear to old value before delta parsing */
             if (oldframe != null)
             {
-                state = (QShared.player_state_t)oldframe.playerstate.Clone();
+                state.Copy(oldframe.playerstate);
             }
-
             else
             {
                 state = new QShared.player_state_t();
@@ -623,6 +622,7 @@ namespace Quake2 {
             frame_t? old = null;
 
             cl.frame = new frame_t();
+            cl.frame.playerstate = new QShared.player_state_t();
 
             cl.frame.serverframe = msg.ReadLong();
             cl.frame.deltaframe = msg.ReadLong();
@@ -915,6 +915,7 @@ namespace Quake2 {
                 }
 
                 /* weapon file */
+                ci.weaponmodel = new model_s?[cl_weaponmodels.Length];
                 for (int i = 0; i < cl_weaponmodels.Length; i++)
                 {
                     var weapon_filename = $"players/{model_name}/{cl_weaponmodels[i]}";
