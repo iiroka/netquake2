@@ -97,7 +97,7 @@ namespace Quake2 {
         }
 
 
-        private static mframe_t[] soldier_frames_stand1 = {
+        private static readonly mframe_t[] soldier_frames_stand1 = {
             new mframe_t(ai_stand, 0, soldier_idle),
             new mframe_t(ai_stand, 0, null),
             new mframe_t(ai_stand, 0, null),
@@ -132,14 +132,14 @@ namespace Quake2 {
             new mframe_t(ai_stand, 0, null)
         };
 
-        private static mmove_t soldier_move_stand1 = new mmove_t(
+        private static readonly mmove_t soldier_move_stand1 = new mmove_t(
             QuakeGameSoldier.FRAME_stand101,
             QuakeGameSoldier.FRAME_stand130,
             soldier_frames_stand1,
             soldier_stand_f
         );
 
-        private static mframe_t[] soldier_frames_stand3 = {
+        private static readonly mframe_t[] soldier_frames_stand3 = {
             new mframe_t(ai_stand, 0, null),
             new mframe_t(ai_stand, 0, null),
             new mframe_t(ai_stand, 0, null),
@@ -184,7 +184,7 @@ namespace Quake2 {
             new mframe_t(ai_stand, 0, null)
         };
 
-        private static mmove_t soldier_move_stand3 = new mmove_t(
+        private static readonly mmove_t soldier_move_stand3 = new mmove_t(
             QuakeGameSoldier.FRAME_stand301,
             QuakeGameSoldier.FRAME_stand339,
             soldier_frames_stand3,
@@ -226,7 +226,7 @@ namespace Quake2 {
             }
         }
 
-        private static mframe_t[] soldier_frames_walk1 = {
+        private static readonly mframe_t[] soldier_frames_walk1 = {
             new mframe_t(ai_walk, 3, null),
             new mframe_t(ai_walk, 6, null),
             new mframe_t(ai_walk, 2, null),
@@ -262,14 +262,14 @@ namespace Quake2 {
             new mframe_t(ai_walk, 0, null)
         };
 
-        private static mmove_t soldier_move_walk1 = new mmove_t(
+        private static readonly mmove_t soldier_move_walk1 = new mmove_t(
             QuakeGameSoldier.FRAME_walk101,
             QuakeGameSoldier.FRAME_walk133,
             soldier_frames_walk1,
             null
         );
 
-        private static mframe_t[] soldier_frames_walk2 = {
+        private static readonly mframe_t[] soldier_frames_walk2 = {
             new mframe_t(ai_walk, 4, soldier_footstep),
             new mframe_t(ai_walk, 4, null),
             new mframe_t(ai_walk, 9, null),
@@ -282,7 +282,7 @@ namespace Quake2 {
             new mframe_t(ai_walk, 7, null)
         };
 
-        private static mmove_t soldier_move_walk2 = new mmove_t(
+        private static readonly mmove_t soldier_move_walk2 = new mmove_t(
             QuakeGameSoldier.FRAME_walk209,
             QuakeGameSoldier.FRAME_walk218,
             soldier_frames_walk2,
@@ -307,19 +307,19 @@ namespace Quake2 {
         }
 
 
-        private static mframe_t[] soldier_frames_start_run = {
+        private static readonly mframe_t[] soldier_frames_start_run = {
             new mframe_t(ai_run, 7, null),
             new mframe_t(ai_run, 5, null)
         };
 
-        private static mmove_t soldier_move_start_run = new mmove_t(
+        private static readonly mmove_t soldier_move_start_run = new mmove_t(
             QuakeGameSoldier.FRAME_run01,
             QuakeGameSoldier.FRAME_run02,
             soldier_frames_start_run,
             soldier_run_f
         );
 
-        private static mframe_t[]  soldier_frames_run = {
+        private static readonly mframe_t[]  soldier_frames_run = {
             new mframe_t(ai_run, 10, null),
             new mframe_t(ai_run, 11, soldier_footstep),
             new mframe_t(ai_run, 11, null),
@@ -328,7 +328,7 @@ namespace Quake2 {
             new mframe_t(ai_run, 15, null)
         };
 
-        private static mmove_t soldier_move_run = new mmove_t(
+        private static readonly mmove_t soldier_move_run = new mmove_t(
             QuakeGameSoldier.FRAME_run03,
             QuakeGameSoldier.FRAME_run08,
             soldier_frames_run,
@@ -365,7 +365,7 @@ namespace Quake2 {
             g.soldier_run(self);
         }
 
-        private static mframe_t[] soldier_frames_pain1 = {
+        private static readonly mframe_t[] soldier_frames_pain1 = {
             new mframe_t(ai_move, -3, null),
             new mframe_t(ai_move, 4, null),
             new mframe_t(ai_move, 1, null),
@@ -373,14 +373,14 @@ namespace Quake2 {
             new mframe_t(ai_move, 0, null)
         };
 
-        private static mmove_t soldier_move_pain1 = new mmove_t(
+        private static readonly mmove_t soldier_move_pain1 = new mmove_t(
             QuakeGameSoldier.FRAME_pain101,
             QuakeGameSoldier.FRAME_pain105,
             soldier_frames_pain1,
             soldier_run_f
         );
 
-        private static mframe_t[] soldier_frames_pain2 = {
+        private static readonly mframe_t[] soldier_frames_pain2 = {
             new mframe_t(ai_move, -13, null),
             new mframe_t(ai_move, -1, null),
             new mframe_t(ai_move, 2, null),
@@ -390,14 +390,14 @@ namespace Quake2 {
             new mframe_t(ai_move, 2, null)
         };
 
-        private static mmove_t soldier_move_pain2 = new mmove_t(
+        private static readonly mmove_t soldier_move_pain2 = new mmove_t(
             QuakeGameSoldier.FRAME_pain201,
             QuakeGameSoldier.FRAME_pain207,
             soldier_frames_pain2,
             soldier_run_f
         );
 
-        private static mframe_t[] soldier_frames_pain3 = {
+        private static readonly mframe_t[] soldier_frames_pain3 = {
             new mframe_t(ai_move, -8, null),
             new mframe_t(ai_move, 10, null),
             new mframe_t(ai_move, -4, soldier_footstep),
@@ -418,14 +418,14 @@ namespace Quake2 {
             new mframe_t(ai_move, 2, soldier_footstep)
         };
 
-        private static mmove_t soldier_move_pain3 = new mmove_t(
+        private static readonly mmove_t soldier_move_pain3 = new mmove_t(
             QuakeGameSoldier.FRAME_pain301,
             QuakeGameSoldier.FRAME_pain318,
             soldier_frames_pain3,
             soldier_run_f
         );
 
-        private static mframe_t[] soldier_frames_pain4 = {
+        private static readonly mframe_t[] soldier_frames_pain4 = {
             new mframe_t(ai_move, 0, null),
             new mframe_t(ai_move, 0, null),
             new mframe_t(ai_move, 0, null),
@@ -445,7 +445,7 @@ namespace Quake2 {
             new mframe_t(ai_move, 0, null)
         };
 
-        private static mmove_t soldier_move_pain4 = new mmove_t(
+        private static readonly mmove_t soldier_move_pain4 = new mmove_t(
             QuakeGameSoldier.FRAME_pain401,
             QuakeGameSoldier.FRAME_pain417,
             soldier_frames_pain4,
@@ -522,6 +522,496 @@ namespace Quake2 {
             }
         }
 
+        private static readonly int[] blaster_flash =
+        {
+            QShared.MZ2_SOLDIER_BLASTER_1,
+            QShared.MZ2_SOLDIER_BLASTER_2,
+            QShared.MZ2_SOLDIER_BLASTER_3,
+            QShared.MZ2_SOLDIER_BLASTER_4,
+            QShared.MZ2_SOLDIER_BLASTER_5,
+            QShared.MZ2_SOLDIER_BLASTER_6,
+            QShared.MZ2_SOLDIER_BLASTER_7,
+            QShared.MZ2_SOLDIER_BLASTER_8
+        };
+
+        private static readonly int[] shotgun_flash =
+        {
+            QShared.MZ2_SOLDIER_SHOTGUN_1,
+            QShared.MZ2_SOLDIER_SHOTGUN_2,
+            QShared.MZ2_SOLDIER_SHOTGUN_3,
+            QShared.MZ2_SOLDIER_SHOTGUN_4,
+            QShared.MZ2_SOLDIER_SHOTGUN_5,
+            QShared.MZ2_SOLDIER_SHOTGUN_6,
+            QShared.MZ2_SOLDIER_SHOTGUN_7,
+            QShared.MZ2_SOLDIER_SHOTGUN_8
+        };
+
+        private static readonly int[] machinegun_flash =
+        {
+            QShared.MZ2_SOLDIER_MACHINEGUN_1,
+            QShared.MZ2_SOLDIER_MACHINEGUN_2,
+            QShared.MZ2_SOLDIER_MACHINEGUN_3,
+            QShared.MZ2_SOLDIER_MACHINEGUN_4,
+            QShared.MZ2_SOLDIER_MACHINEGUN_5,
+            QShared.MZ2_SOLDIER_MACHINEGUN_6,
+            QShared.MZ2_SOLDIER_MACHINEGUN_7,
+            QShared.MZ2_SOLDIER_MACHINEGUN_8
+        };
+
+        private void soldier_fire(edict_t self, int flash_number)
+        {
+            // vec3_t start;
+            // vec3_t forward, right, up;
+            // vec3_t aim;
+            // vec3_t dir;
+            // vec3_t end;
+            // float r, u;
+            // int flash_index;
+
+            if (self == null)
+            {
+                return;
+            }
+
+            int flash_index;
+            if (self.s.skinnum < 2)
+            {
+                flash_index = blaster_flash[flash_number];
+            }
+            else if (self.s.skinnum < 4)
+            {
+                flash_index = shotgun_flash[flash_number];
+            }
+            else
+            {
+                flash_index = machinegun_flash[flash_number];
+            }
+
+            var forward = new Vector3();
+            var right = new Vector3();
+            var _up = new Vector3();
+            QShared.AngleVectors(self.s.angles, ref forward, ref right, ref _up);
+            var start = new Vector3();
+            G_ProjectSource(self.s.origin, QShared.monster_flash_offset[flash_index],
+                    forward, right, ref start);
+
+            var aim = new Vector3();
+            if ((flash_number == 5) || (flash_number == 6))
+            {
+                aim = forward;
+            }
+            else
+            {
+                var end = self.enemy!.s.origin;
+                end[2] += self.enemy.viewheight;
+                aim = end - start;
+                vectoangles(aim, out var dir);
+                var up = new Vector3();
+                QShared.AngleVectors(dir, ref forward, ref right, ref up);
+
+                var r = QShared.crandk() * 1000;
+                var u = QShared.crandk() * 500;
+                QShared.VectorMA(start, 8192, forward, out end);
+                QShared.VectorMA(end, r, right, out end);
+                QShared.VectorMA(end, u, up, out end);
+
+                aim = end - start;
+                aim = Vector3.Normalize(aim);
+            }
+
+            if (self.s.skinnum <= 1)
+            {
+                // monster_fire_blaster(self, start, aim, 5, 600, flash_index, EF_BLASTER);
+            }
+            else if (self.s.skinnum <= 3)
+            {
+                // monster_fire_shotgun(self, start, aim, 2, 1,
+                //         DEFAULT_SHOTGUN_HSPREAD, DEFAULT_SHOTGUN_VSPREAD,
+                //         DEFAULT_SHOTGUN_COUNT, flash_index);
+            }
+            else
+            {
+                if ((self.monsterinfo.aiflags & AI_HOLD_FRAME) == 0)
+                {
+                    self.monsterinfo.pausetime = level.time + (3 + QShared.randk() % 8) * FRAMETIME;
+                }
+
+                // monster_fire_bullet(self, start, aim, 2, 4,
+                //         DEFAULT_BULLET_HSPREAD, DEFAULT_BULLET_VSPREAD,
+                //         flash_index);
+
+                if (level.time >= self.monsterinfo.pausetime)
+                {
+                    self.monsterinfo.aiflags &= ~AI_HOLD_FRAME;
+                }
+                else
+                {
+                    self.monsterinfo.aiflags |= AI_HOLD_FRAME;
+                }
+            }
+        }
+
+        /* ATTACK1 (blaster/shotgun) */
+        private static void soldier_fire1(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            g.soldier_fire(self, 0);
+        }
+
+        private static void soldier_attack1_refire1(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.s.skinnum > 1)
+            {
+                return;
+            }
+
+            if (self.enemy!.health <= 0)
+            {
+                return;
+            }
+
+            if (((g.skill!.Int == SKILL_HARDPLUS) &&
+                (QShared.frandk() < 0.5)) || (g.range(self, self.enemy) == RANGE_MELEE))
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak102;
+            }
+            else
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak110;
+            }
+        }
+
+        private static void soldier_attack1_refire2(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.s.skinnum < 2)
+            {
+                return;
+            }
+
+            if (self.enemy!.health <= 0)
+            {
+                return;
+            }
+
+            if (((g.skill!.Int == SKILL_HARDPLUS) &&
+                (QShared.frandk() < 0.5)) || (g.range(self, self.enemy) == RANGE_MELEE))
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak102;
+            }
+        }
+
+        private static readonly mframe_t[] soldier_frames_attack1 = {
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_fire1),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_attack1_refire1),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_cock),
+            new mframe_t(ai_charge, 0, soldier_attack1_refire2),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null)
+        };
+
+        private static readonly mmove_t soldier_move_attack1 = new mmove_t(
+            QuakeGameSoldier.FRAME_attak101,
+            QuakeGameSoldier.FRAME_attak112,
+            soldier_frames_attack1,
+            soldier_run_f
+        );
+
+        /* ATTACK2 (blaster/shotgun) */
+        private static void soldier_fire2(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            g.soldier_fire(self, 1);
+        }
+
+        private static void soldier_attack2_refire1(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.s.skinnum > 1)
+            {
+                return;
+            }
+
+            if (self.enemy!.health <= 0)
+            {
+                return;
+            }
+
+            if (((g.skill!.Int == SKILL_HARDPLUS) &&
+                (QShared.frandk() < 0.5)) || (g.range(self, self.enemy) == RANGE_MELEE))
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak204;
+            }
+            else
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak216;
+            }
+        }
+
+        private static void soldier_attack2_refire2(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.s.skinnum < 2)
+            {
+                return;
+            }
+
+            if (self.enemy!.health <= 0)
+            {
+                return;
+            }
+
+            if (((g.skill!.Int == SKILL_HARDPLUS) &&
+                (QShared.frandk() < 0.5)) || (g.range(self, self.enemy) == RANGE_MELEE))
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak204;
+            }
+        }
+
+        private static readonly mframe_t[] soldier_frames_attack2 = {
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_fire2),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_attack2_refire1),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_cock),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_attack2_refire2),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null)
+        };
+
+        private static readonly mmove_t soldier_move_attack2 = new mmove_t(
+            QuakeGameSoldier.FRAME_attak201,
+            QuakeGameSoldier.FRAME_attak218,
+            soldier_frames_attack2,
+            soldier_run_f
+        );
+
+        /* ATTACK3 (duck and shoot) */
+        private static void soldier_duck_down(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if ((self.monsterinfo.aiflags & AI_DUCKED) != 0)
+            {
+                return;
+            }
+
+            self.monsterinfo.aiflags |= AI_DUCKED;
+            self.maxs[2] -= 32;
+            self.takedamage = (int)damage_t.DAMAGE_YES;
+            self.monsterinfo.pausetime = g.level.time + 1;
+            g.gi.linkentity(self);
+        }
+
+        private static void soldier_duck_up(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            self.monsterinfo.aiflags &= ~AI_DUCKED;
+            self.maxs[2] += 32;
+            self.takedamage = (int)damage_t.DAMAGE_AIM;
+            g.gi.linkentity(self);
+        }
+
+        private static void soldier_fire3(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            soldier_duck_down(g, self);
+            g.soldier_fire(self, 2);
+        }
+
+        private static void soldier_attack3_refire(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if ((g.level.time + 0.4) < self.monsterinfo.pausetime)
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_attak303;
+            }
+        }
+
+        private static readonly mframe_t[] soldier_frames_attack3 = {
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_fire3),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_attack3_refire),
+            new mframe_t(ai_charge, 0, soldier_duck_up),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null)
+        };
+
+        private static readonly mmove_t soldier_move_attack3 = new mmove_t(
+            QuakeGameSoldier.FRAME_attak301,
+            QuakeGameSoldier.FRAME_attak309,
+            soldier_frames_attack3,
+            soldier_run_f
+        );
+
+        /* ATTACK4 (machinegun) */
+        private static void soldier_fire4(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            g.soldier_fire(self, 3);
+        }
+
+        private static readonly mframe_t[] soldier_frames_attack4 = {
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_footstep),
+            new mframe_t(ai_charge, 0, soldier_fire4),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, null),
+            new mframe_t(ai_charge, 0, soldier_footstep)
+        };
+
+        private static readonly mmove_t soldier_move_attack4 = new mmove_t(
+            QuakeGameSoldier.FRAME_attak401,
+            QuakeGameSoldier.FRAME_attak406,
+            soldier_frames_attack4,
+            soldier_run_f
+        );
+
+        /* ATTACK6 (run & shoot) */
+        private static void soldier_fire8(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            g.soldier_fire(self, 7);
+        }
+
+        private static void soldier_attack6_refire(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.enemy!.health <= 0)
+            {
+                return;
+            }
+
+            if (g.range(self, self.enemy) < RANGE_MID)
+            {
+                return;
+            }
+
+            if (g.skill!.Int == SKILL_HARDPLUS)
+            {
+                self.monsterinfo.nextframe = QuakeGameSoldier.FRAME_runs03;
+            }
+        }
+
+        private static readonly mframe_t[] soldier_frames_attack6 = {
+            new mframe_t(ai_charge, 10, null),
+            new mframe_t(ai_charge, 4, null),
+            new mframe_t(ai_charge, 12, soldier_footstep),
+            new mframe_t(ai_charge, 11, soldier_fire8),
+            new mframe_t(ai_charge, 13, null),
+            new mframe_t(ai_charge, 18, null),
+            new mframe_t(ai_charge, 15, soldier_footstep),
+            new mframe_t(ai_charge, 14, null),
+            new mframe_t(ai_charge, 11, null),
+            new mframe_t(ai_charge, 8, soldier_footstep),
+            new mframe_t(ai_charge, 11, null),
+            new mframe_t(ai_charge, 12, null),
+            new mframe_t(ai_charge, 12, soldier_footstep),
+            new mframe_t(ai_charge, 17, soldier_attack6_refire)
+        };
+
+        private static readonly mmove_t soldier_move_attack6 = new mmove_t(
+            QuakeGameSoldier.FRAME_runs01,
+            QuakeGameSoldier.FRAME_runs14,
+            soldier_frames_attack6,
+            soldier_run_f
+        );
+
+        private void soldier_attack(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.s.skinnum < 4)
+            {
+                if (QShared.frandk() < 0.5)
+                {
+                    self.monsterinfo.currentmove = soldier_move_attack1;
+                }
+                else
+                {
+                    self.monsterinfo.currentmove = soldier_move_attack2;
+                }
+            }
+            else
+            {
+                self.monsterinfo.currentmove = soldier_move_attack4;
+            }
+        }
+
         private static void soldier_fire6(QuakeGame g, edict_t self)
         {
             if (self == null)
@@ -529,7 +1019,7 @@ namespace Quake2 {
                 return;
             }
 
-            // soldier_fire(self, 5);
+            g.soldier_fire(self, 5);
         }
 
         private static void soldier_fire7(QuakeGame g, edict_t self)
@@ -539,7 +1029,7 @@ namespace Quake2 {
                 return;
             }
 
-            // soldier_fire(self, 6);
+            g.soldier_fire(self, 6);
         }
 
         private static void soldier_dead(QuakeGame g, edict_t self)
@@ -951,7 +1441,7 @@ namespace Quake2 {
             self.monsterinfo.walk = soldier_walk;
             self.monsterinfo.run = soldier_run;
             // self->monsterinfo.dodge = soldier_dodge;
-            // self->monsterinfo.attack = soldier_attack;
+            self.monsterinfo.attack = soldier_attack;
             // self->monsterinfo.melee = NULL;
             // self->monsterinfo.sight = soldier_sight;
 

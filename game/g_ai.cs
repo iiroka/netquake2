@@ -152,6 +152,33 @@ namespace Quake2 {
             // }
         }
 
+        /*
+        * Turns towards target and advances
+        * Use this call with a distance of 0
+        * to replace ai_face
+        */
+        private static void ai_charge(QuakeGame g, edict_t self, float dist)
+        {
+            if (self == null || g == null)
+            {
+                return;
+            }
+
+            var v = new Vector3();
+            if(self.enemy != null)
+            {
+                v = self.enemy.s.origin - self.s.origin;
+            }
+
+            self.ideal_yaw = g.vectoyaw(v);
+            g.M_ChangeYaw(self);
+
+            if (dist != 0)
+            {
+                g.M_walkmove(self, self.s.angles[QShared.YAW], dist);
+            }
+        }
+
         /* ============================================================================ */
 
         /*

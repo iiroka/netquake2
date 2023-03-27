@@ -338,6 +338,59 @@ namespace Quake2 {
             return yaw;
         }
 
+        private void vectoangles(in Vector3 value1, out Vector3 angles)
+        {
+            float forward;
+            float yaw, pitch;
+
+            if ((value1[1] == 0) && (value1[0] == 0))
+            {
+                yaw = 0;
+
+                if (value1[2] > 0)
+                {
+                    pitch = 90;
+                }
+                else
+                {
+                    pitch = 270;
+                }
+            }
+            else
+            {
+                if (value1[0] != 0)
+                {
+                    yaw = (int)(MathF.Atan2(value1[1], value1[0]) * 180 / MathF.PI);
+                }
+                else if (value1[1] > 0)
+                {
+                    yaw = 90;
+                }
+                else
+                {
+                    yaw = -90;
+                }
+
+                if (yaw < 0)
+                {
+                    yaw += 360;
+                }
+
+                forward = MathF.Sqrt(value1[0] * value1[0] + value1[1] * value1[1]);
+                pitch = (int)(MathF.Atan2(value1[2], forward) * 180 / MathF.PI);
+
+                if (pitch < 0)
+                {
+                    pitch += 360;
+                }
+            }
+
+            angles = new Vector3();
+            angles[QShared.PITCH] = -pitch;
+            angles[QShared.YAW] = yaw;
+            angles[QShared.ROLL] = 0;
+        }
+
         private void G_InitEdict(ref edict_t e)
         {
             e.inuse = true;
