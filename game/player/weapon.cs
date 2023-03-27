@@ -4,6 +4,9 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        private const int PLAYER_NOISE_SELF = 0;
+        private const int PLAYER_NOISE_IMPACT = 1;
+
         private void P_ProjectSource(edict_t ent, in Vector3 distance,
                 in Vector3 forward, in Vector3 right, ref Vector3 result)
         {
@@ -45,6 +48,110 @@ namespace Quake2 {
             // }
         }
 
+        /*
+        * Each player can have two noise objects associated with it:
+        * a personal noise (jumping, pain, weapon firing), and a weapon
+        * target noise (bullet wall impacts)
+        *
+        * Monsters that don't directly see the player can move
+        * to a noise in hopes of seeing the player from there.
+        */
+        private edict_t? PlayerNoise_Spawn(edict_t who, int type)
+        {
+            if (who == null)
+            {
+                return null;
+            }
+
+            var noise = G_SpawnOptional();
+            if (noise == null)
+            {
+                return null;
+            }
+
+            noise.classname = "player_noise";
+            noise.spawnflags = type;
+            noise.mins = new Vector3(-8, -8, -8);
+            noise.maxs = new Vector3(8, 8, 8);
+            noise.owner = who;
+            noise.svflags = QGameFlags.SVF_NOCLIENT;
+
+            return noise;
+        }
+
+        private void PlayerNoise_Verify(edict_t who)
+        {
+            // edict_t *e;
+            // edict_t *n1;
+            // edict_t *n2;
+
+            if (who == null)
+            {
+                return;
+            }
+
+            var n1 = who.mynoise;
+            var n2 = who.mynoise2;
+
+            if (n1 != null && !n1.inuse)
+            {
+                n1 = null;
+            }
+
+            if (n2 != null && !n2.inuse)
+            {
+                n2 = null;
+            }
+
+            if (n1 != null && n2 != null)
+            {
+                return;
+            }
+
+            for (var ei = 1 + game.maxclients; ei <  global_num_ecicts; ei++)
+            {
+                var e = g_edicts[ei];
+                if (!e.inuse || e.classname != "player_noise")
+                {
+                    continue;
+                }
+
+                if (e.owner != null && e.owner != who)
+                {
+                    continue;
+                }
+
+                e.owner = who;
+
+                if (n2 == null && (e.spawnflags == PLAYER_NOISE_IMPACT || n1 != null))
+                {
+                    n2 = e;
+                }
+                else
+                {
+                    n1 = e;
+                }
+
+                if (n1 != null && n2 != null)
+                {
+                    break;
+                }
+            }
+
+            if (n1 == null)
+            {
+                n1 = PlayerNoise_Spawn(who, PLAYER_NOISE_SELF);
+            }
+
+            if (n2 == null)
+            {
+                n2 = PlayerNoise_Spawn(who, PLAYER_NOISE_IMPACT);
+            }
+
+            who.mynoise = n1;
+            who.mynoise2 = n2;
+        }
+
         private void PlayerNoise(edict_t who, in Vector3 where, int type)
         {
             // edict_t *noise;
@@ -73,46 +180,48 @@ namespace Quake2 {
                 return;
             }
 
-            // PlayerNoise_Verify(who);
+            PlayerNoise_Verify(who);
 
-            // if ((type == PNOISE_SELF) || (type == PNOISE_WEAPON))
-            // {
-            //     if (level.framenum <= (level.sound_entity_framenum + 3))
-            //     {
-            //         return;
-            //     }
+            edict_t? noise;
+            if ((type == PNOISE_SELF) || (type == PNOISE_WEAPON))
+            {
+                if (level.framenum <= (level.sound_entity_framenum + 3))
+                {
+                    return;
+                }
 
-            //     if (!who->mynoise)
-            //     {
-            //         return;
-            //     }
+                if (who.mynoise == null)
+                {
+                    return;
+                }
 
-            //     noise = who->mynoise;
-            //     level.sound_entity = noise;
-            //     level.sound_entity_framenum = level.framenum;
-            // }
-            // else
-            // {
-            //     if (level.framenum <= (level.sound2_entity_framenum + 3))
-            //     {
-            //         return;
-            //     }
+                noise = who.mynoise;
+                level.sound_entity = noise;
+                level.sound_entity_framenum = level.framenum;
+            }
+            else
+            {
+                if (level.framenum <= (level.sound2_entity_framenum + 3))
+                {
+                    return;
+                }
 
-            //     if (!who->mynoise2)
-            //     {
-            //         return;
-            //     }
+                if (who.mynoise2 == null)
+                {
+                    return;
+                }
 
-            //     noise = who->mynoise2;
-            //     level.sound2_entity = noise;
-            //     level.sound2_entity_framenum = level.framenum;
-            // }
+                noise = who.mynoise2;
+                level.sound2_entity = noise;
+                level.sound2_entity_framenum = level.framenum;
+            }
 
-            // VectorCopy(where, noise->s.origin);
-            // VectorSubtract(where, noise->maxs, noise->absmin);
-            // VectorAdd(where, noise->maxs, noise->absmax);
-            // noise->last_sound_time = level.time;
-            // gi.linkentity(noise);
+
+            noise.s.origin = where;
+            noise.absmin = where - noise.maxs;
+            noise.absmax = where + noise.maxs;
+            noise.last_sound_time = level.time;
+            gi.linkentity(noise);
         }
 
         /*
@@ -176,7 +285,7 @@ namespace Quake2 {
 
             client.weaponstate = weaponstate_t.WEAPON_ACTIVATING;
             client.ps.gunframe = 0;
-            client.ps.gunindex = gi.modelindex(client.pers.weapon.view_model);
+            client.ps.gunindex = gi.modelindex(client.pers.weapon.view_model!);
 
             client.anim_priority = ANIM_PAIN;
 
@@ -465,7 +574,7 @@ namespace Quake2 {
 
             // gi.multicast(ent->s.origin, MULTICAST_PVS);
 
-            // PlayerNoise(ent, start, PNOISE_WEAPON);
+            PlayerNoise(ent, start, PNOISE_WEAPON);
         }
 
         private void Weapon_Blaster_Fire(edict_t ent)

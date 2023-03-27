@@ -60,7 +60,7 @@ namespace Quake2 {
 
             if (self.owner != null && self.owner.client != null)
             {
-            //     PlayerNoise(self->owner, self->s.origin, PNOISE_IMPACT);
+                PlayerNoise((edict_t)self.owner!, self.s.origin, PNOISE_IMPACT);
             }
 
             if (other.takedamage != 0)

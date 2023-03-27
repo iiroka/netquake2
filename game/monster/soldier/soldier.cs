@@ -949,7 +949,7 @@ namespace Quake2 {
 
             self.monsterinfo.stand = soldier_stand;
             self.monsterinfo.walk = soldier_walk;
-            // self->monsterinfo.run = soldier_run;
+            self.monsterinfo.run = soldier_run;
             // self->monsterinfo.dodge = soldier_dodge;
             // self->monsterinfo.attack = soldier_attack;
             // self->monsterinfo.melee = NULL;

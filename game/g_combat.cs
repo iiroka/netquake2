@@ -115,10 +115,10 @@ namespace Quake2 {
             }
 
             /* if attacker is a client, get mad at
-            them because he's good and we're not */
-            // if (attacker.client != null)
-            // {
-            //     targ.monsterinfo.aiflags &= ~AI_SOUND_TARGET;
+               them because he's good and we're not */
+            if (attacker.client != null)
+            {
+                targ.monsterinfo.aiflags &= ~AI_SOUND_TARGET;
 
             //     /* this can only happen in coop (both new and old
             //     enemies are clients)  only switch if can't see
@@ -134,15 +134,15 @@ namespace Quake2 {
             //         targ->oldenemy = targ->enemy;
             //     }
 
-            //     targ->enemy = attacker;
+                targ.enemy = attacker;
 
             //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
             //     {
             //         FoundTarget(targ);
             //     }
 
-            //     return;
-            // }
+                return;
+            }
 
             // /* it's the same base (walk/swim/fly) type and a
             // different classname and it's not a tank

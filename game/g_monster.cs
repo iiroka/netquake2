@@ -30,6 +30,17 @@ namespace Quake2 {
     partial class QuakeGame
     {
 
+        private void AttackFinished(edict_t self, float time)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            self.monsterinfo.attack_finished = level.time + time;
+        }
+
+
         private void M_CheckGround(edict_t ent)
         {
             if (ent == null)
@@ -150,7 +161,7 @@ namespace Quake2 {
                 return;
             }
 
-            ref var move = ref self.monsterinfo.currentmove!;
+            var move = self.monsterinfo.currentmove!;
             self.nextthink = level.time + FRAMETIME;
 
             if ((self.monsterinfo.nextframe != 0) &&
@@ -343,10 +354,10 @@ namespace Quake2 {
             self.deadflag = DEAD_NO;
             self.svflags &= ~QGameFlags.SVF_DEADMONSTER;
 
-            // if (!self.monsterinfo.checkattack)
-            // {
-            //     self.monsterinfo.checkattack = M_CheckAttack;
-            // }
+            if (self.monsterinfo.checkattack == null)
+            {
+                self.monsterinfo.checkattack = M_CheckAttack;
+            }
 
             self.s.old_origin = self.s.origin;
 

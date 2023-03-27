@@ -557,25 +557,22 @@ namespace Quake2 {
                 }
             }
 
-            // if (entity.flags & RF_GLOW)
-            // {
-            //     /* bonus items will pulse with time */
-            //     float scale;
-            //     float min;
+            if ((entity.flags & QShared.RF_GLOW) != 0)
+            {
+                /* bonus items will pulse with time */
+                float scale = 0.1f * MathF.Sin(gl3_newrefdef.time * 7);
 
-            //     scale = 0.1 * sin(gl3_newrefdef.time * 7);
+                for (int i = 0; i < 3; i++)
+                {
+                    float min = shadelight[i] * 0.8f;
+                    shadelight[i] += scale;
 
-            //     for (i = 0; i < 3; i++)
-            //     {
-            //         min = shadelight[i] * 0.8;
-            //         shadelight[i] += scale;
-
-            //         if (shadelight[i] < min)
-            //         {
-            //             shadelight[i] = min;
-            //         }
-            //     }
-            // }
+                    if (shadelight[i] < min)
+                    {
+                        shadelight[i] = min;
+                    }
+                }
+            }
 
             // Note: gl_overbrightbits are now applied in shader.
 

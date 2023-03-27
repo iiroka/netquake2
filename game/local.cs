@@ -67,10 +67,35 @@ namespace Quake2 {
         private const int DEAD_DEAD = 2;
         private const int DEAD_RESPAWNABLE = 3;
 
+        /* range */
+        private const int RANGE_MELEE = 0;
+        private const int RANGE_NEAR = 1;
+        private const int RANGE_MID = 2;
+        private const int RANGE_FAR = 3;
+
+
+        /* monster attack state */
+        private const int AS_STRAIGHT = 1;
+        private const int AS_SLIDING = 2;
+        private const int AS_MELEE = 3;
+        private const int AS_MISSILE = 4;
+
+        /* armor types */
+        private const int ARMOR_NONE = 0;
+        private const int ARMOR_JACKET = 1;
+        private const int ARMOR_COMBAT = 2;
+        private const int ARMOR_BODY = 3;
+        private const int ARMOR_SHARD = 4;
+
         /* handedness values */
         private const int RIGHT_HANDED = 0;
         private const int LEFT_HANDED = 1;
         private const int CENTER_HANDED = 2;
+
+        /* noise types for PlayerNoise */
+        private const int PNOISE_SELF = 0;
+        private const int PNOISE_WEAPON = 1;
+        private const int PNOISE_IMPACT = 2;
 
         /* edict->movetype values */
         private enum movetype_t
@@ -88,6 +113,17 @@ namespace Quake2 {
             MOVETYPE_BOUNCE
         }
 
+
+        private class gitem_armor_t : item_info
+        {
+            public int base_count;
+            public int max_count;
+            public float normal_protection;
+            public float energy_protection;
+            public int armor;
+        }
+
+
         /* monster ai flags */
         private const int AI_STAND_GROUND = 0x00000001;
         private const int AI_TEMP_STAND_GROUND = 0x00000002;
@@ -104,15 +140,6 @@ namespace Quake2 {
         private const int AI_COMBAT_POINT = 0x00001000;
         private const int AI_MEDIC = 0x00002000;
         private const int AI_RESURRECTING = 0x00004000;
-
-        private struct gitem_armor_t
-        {
-            public int base_count;
-            public int max_count;
-            public float normal_protection;
-            public float energy_protection;
-            public int armor;
-        }
 
         private const int IT_WEAPON = 1;  /* use makes active weapon */
         private const int IT_AMMO = 2;
@@ -137,18 +164,21 @@ namespace Quake2 {
 
         private delegate void edict_delegate(edict_t ent);
         private delegate void edict_game_delegate(QuakeGame g, edict_t ent);
+        private delegate bool pickup_delegate(QuakeGame g, edict_t ent, edict_t other);
  
+        private interface item_info {}
+
         private class gitem_t : ICloneable
         {
             public int index;
             public string? classname { get; init; } /* spawning name */
-            // qboolean (*pickup)(struct edict_s *ent, struct edict_s *other);
+            public pickup_delegate? pickup;
             // void (*use)(struct edict_s *ent, struct gitem_s *item);
             // void (*drop)(struct edict_s *ent, struct gitem_s *item);
             public edict_game_delegate? weaponthink  { get; init; }
             // char *pickup_sound;
             public string? world_model { get; init; }
-            // int world_model_flags;
+            public int world_model_flags { get; init; }
             public string? view_model { get; init; }
 
             /* client side info */
@@ -162,8 +192,8 @@ namespace Quake2 {
 
             // int weapmodel; /* weapon model index (for weapons) */
 
-            // void *info;
-            // int tag;
+            public item_info? info { get; init; }
+            public int tag { get; init; }
 
             // char *precaches; /* string of all models, sounds, and images this item will use */
 
@@ -332,6 +362,8 @@ namespace Quake2 {
             }
         };
 
+        private delegate bool checkattack_delegate(edict_t self);
+
         private struct monsterinfo_t
         {
             public mmove_t? currentmove;
@@ -348,15 +380,15 @@ namespace Quake2 {
             public edict_delegate? attack;
             public edict_delegate? melee;
             // void (*sight)(edict_t *self, edict_t *other);
-            // qboolean (*checkattack)(edict_t *self);
+            public checkattack_delegate? checkattack;
 
             public float pausetime;
             public float attack_finished;
 
-            // vec3_t saved_goal;
+            public Vector3 saved_goal;
             public float search_time;
             public float trail_time;
-            // vec3_t last_sighting;
+            public Vector3 last_sighting;
             public int attack_state;
             // int lefty;
             public float idle_time;

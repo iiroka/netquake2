@@ -118,12 +118,6 @@ namespace Quake2 {
                 if (name[0] == '*')
                 {
                     var mod = server.common.CM_InlineModel(name);
-                    if (ent.classname == "func_door") {
-                        Console.WriteLine("=== setmodel DOOR ===");
-                        Console.WriteLine($" mins: {mod.mins}");
-                        Console.WriteLine($" maxs: {mod.maxs}");
-                        Console.WriteLine($" model: {name}");
-                    }
                     ent.mins = mod.mins;
                     ent.maxs = mod.maxs;
                     server.SV_LinkEdict(ent);
