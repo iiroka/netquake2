@@ -83,6 +83,16 @@ namespace Quake2 {
             data[indx + 3] = (byte)(c >> 24);
         }
 
+        public void WriteFloat(float f)
+        {
+            var indx = GetSpace(4);
+            var v = BitConverter.SingleToUInt32Bits(f);
+            data[indx + 0] = (byte)(v & 0xff);
+            data[indx + 1] = (byte)((v >> 8) & 0xff);
+            data[indx + 2] = (byte)((v >> 16) & 0xff);
+            data[indx + 3] = (byte)(v >> 24);
+        }
+
         public void Write(in byte[] buf)
         {
             var indx = GetSpace(buf.Length);
@@ -152,6 +162,31 @@ namespace Quake2 {
         public void WriteAngle16(float f)
         {
             WriteShort(QShared.ANGLE2SHORT(f));
+        }
+
+        public void WriteDir(in Vector3 dir)
+        {
+            if (dir == null)
+            {
+                WriteByte(0);
+                return;
+            }
+
+            var bestd = 0f;
+            var best = 0;
+
+            for (var i = 0; i < QShared.bytedirs.Length; i++)
+            {
+                var d = Vector3.Dot(dir, QShared.bytedirs[i]);
+
+                if (d > bestd)
+                {
+                    bestd = d;
+                    best = i;
+                }
+            }
+
+            WriteByte(best);
         }
 
         public void WriteDeltaUsercmd(in QShared.usercmd_t from, in QShared.usercmd_t cmd)

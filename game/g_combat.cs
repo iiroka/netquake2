@@ -167,37 +167,38 @@ namespace Quake2 {
             //         FoundTarget(targ);
             //     }
             // }
-            // /* if they *meant* to shoot us, then shoot back */
-            // else if (attacker->enemy == targ)
-            // {
-            //     if (targ->enemy && targ->enemy->client)
-            //     {
-            //         targ->oldenemy = targ->enemy;
-            //     }
+            /* if they *meant* to shoot us, then shoot back */
+            // else 
+            if (attacker.enemy == targ)
+            {
+                if (targ.enemy != null && targ.enemy.client != null)
+                {
+                    targ.oldenemy = targ.enemy;
+                }
 
-            //     targ->enemy = attacker;
+                targ.enemy = attacker;
 
-            //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
-            //     {
-            //         FoundTarget(targ);
-            //     }
-            // }
-            // /* otherwise get mad at whoever they are mad
-            // at (help our buddy) unless it is us! */
-            // else if (attacker->enemy)
-            // {
-            //     if (targ->enemy && targ->enemy->client)
-            //     {
-            //         targ->oldenemy = targ->enemy;
-            //     }
+                if ((targ.monsterinfo.aiflags & AI_DUCKED) == 0)
+                {
+                    FoundTarget(targ);
+                }
+            }
+            /* otherwise get mad at whoever they are mad
+            at (help our buddy) unless it is us! */
+            else if (attacker.enemy != null)
+            {
+                if (targ.enemy != null && targ.enemy.client != null)
+                {
+                    targ.oldenemy = targ.enemy;
+                }
 
-            //     targ->enemy = attacker->enemy;
+                targ.enemy = attacker.enemy;
 
-            //     if (!(targ->monsterinfo.aiflags & AI_DUCKED))
-            //     {
-            //         FoundTarget(targ);
-            //     }
-            // }
+                if ((targ.monsterinfo.aiflags & AI_DUCKED) == 0)
+                {
+                    FoundTarget(targ);
+                }
+            }
         }
         
         private void T_Damage(edict_t targ, edict_t inflictor, edict_t attacker,

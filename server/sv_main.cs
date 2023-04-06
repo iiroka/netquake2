@@ -130,10 +130,10 @@ namespace Quake2 {
 
         private void SV_RunGameFrame()
         {
-            // if (host_speeds->value)
-            // {
-            //     time_before_game = Sys_Milliseconds();
-            // }
+            if (common.host_speeds!.Bool)
+            {
+                common.time_before_game = common.Sys_Milliseconds();
+            }
 
             /* we always need to bump framenum, even if we
             don't run the world, otherwise the delta
@@ -159,17 +159,15 @@ namespace Quake2 {
                 }
             }
 
-            // if (host_speeds->value)
-            // {
-            //     time_after_game = Sys_Milliseconds();
-            // }
+            if (common.host_speeds!.Bool)
+            {
+                common.time_after_game = common.Sys_Milliseconds();
+            }
         }
 
         public void Frame(int usec)
         {
-        // #ifndef DEDICATED_ONLY
-        //     time_before_game = time_after_game = 0;
-        // #endif
+            common.time_before_game = common.time_after_game = 0;
 
             /* if server is not active, do nothing */
             if (!svs.initialized)

@@ -837,7 +837,7 @@ namespace Quake2 {
             if (pm.s.pm_type == QShared.pmtype_t.PM_SPECTATOR)
             {
                 // PM_FlyMove(false);
-                // PM_SnapPosition();
+                PM_SnapPosition(ref pm);
                 return;
             }
 

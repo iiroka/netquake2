@@ -252,15 +252,14 @@ namespace Quake2 {
             }
 
             int step = pm.s.origin[2] - (int)(cl.predicted_origin.Z * 8);
-            // VectorCopy(pm.s.velocity, tmp);
 
-            // if (((step > 126 && step < 130))
-            //     && !VectorCompare(tmp, vec3_origin)
-            //     && (pm.s.pm_flags & PMF_ON_GROUND))
-            // {
-            //     cl.predicted_step = step * 0.125f;
-            //     cl.predicted_step_time = cls.realtime - (int)(cls.nframetime * 500);
-            // }
+            if (((step > 126 && step < 130))
+                && (pm.s.velocity[0] != 0 || pm.s.velocity[1] != 0 || pm.s.velocity[2] != 0)
+                && (pm.s.pm_flags & QShared.PMF_ON_GROUND) != 0)
+            {
+                cl.predicted_step = step * 0.125f;
+                cl.predicted_step_time = (uint)(cls.realtime - (int)(cls.nframetime * 500));
+            }
 
             /* copy results out for rendering */
             cl.predicted_origin.X = pm.s.origin[0] * 0.125f;

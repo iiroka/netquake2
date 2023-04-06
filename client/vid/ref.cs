@@ -184,7 +184,7 @@ namespace Quake2 {
         void DrawStretchPic (Silk.NET.Windowing.IWindow window, int x, int y, int w, int h, string name);
         void DrawCharScaled(Silk.NET.Windowing.IWindow window, int x, int y, int num, float scale);
         // void	(EXPORT *DrawTileClear) (int x, int y, int w, int h, char *name);
-        // void	(EXPORT *DrawFill) (int x, int y, int w, int h, int c);
+        void DrawFill(Silk.NET.Windowing.IWindow window, int x, int y, int w, int h, int c);
         // void	(EXPORT *DrawFadeScreen) (void);
 
         // // Draw images for cinematic rendering (which can have a different palette). Note that calls

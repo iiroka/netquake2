@@ -52,7 +52,7 @@ namespace Quake2 {
         * Looped sounds are always atten 3 / vol 1, and the use function toggles it on/off.
         * Multiple identical looping sounds will just increase volume without any speed cost.
         */
-        private void Use_Target_Speaker(edict_t ent, edict_t _other, edict_t _activator)
+        private void Use_Target_Speaker(edict_t ent, edict_t _other, edict_t? _activator)
         {
             // int chan;
 
@@ -144,6 +144,71 @@ namespace Quake2 {
             /* must link the entity so we get areas and clusters so
             the server can determine who to send updates to */
             g.gi.linkentity(ent);
+        }
+
+        /* ========================================================== */
+
+        /*
+        * QUAKED target_explosion (1 0 0) (-8 -8 -8) (8 8 8)
+        * Spawns an explosion temporary entity when used.
+        *
+        * "delay"		wait this long before going off
+        * "dmg"		how much radius damage should be done, defaults to 0
+        */
+        private void target_explosion_explode(edict_t self)
+        {
+            // float save;
+
+            if (self == null)
+            {
+                return;
+            }
+
+            gi.WriteByte(svc_temp_entity);
+            gi.WriteByte((int)QShared.temp_event_t.TE_EXPLOSION1);
+            gi.WritePosition(self.s.origin);
+            gi.multicast(self.s.origin, QShared.multicast_t.MULTICAST_PHS);
+
+            // T_RadiusDamage(self, self->activator, self->dmg, NULL,
+            //         self->dmg + 40, MOD_EXPLOSIVE);
+
+            var save = self.delay;
+            self.delay = 0;
+            G_UseTargets(self, self.activator);
+            self.delay = save;
+        }
+
+        private void use_target_explosion(edict_t self, edict_t _other /* unused */, edict_t? activator)
+        {
+            if (self == null)
+            {
+                return;
+            }
+            self.activator = activator;
+
+            if (activator == null)
+            {
+                return;
+            }
+
+            if (self.delay == 0)
+            {
+                target_explosion_explode(self);
+                return;
+            }
+
+            self.think = target_explosion_explode;
+            self.nextthink = level.time + self.delay;
+        }
+
+        private static void SP_target_explosion(QuakeGame g, edict_t ent) {
+            if (ent == null || g == null)
+            {
+                return;
+            }
+
+            ent.use = g.use_target_explosion;
+            ent.svflags = QGameFlags.SVF_NOCLIENT;
         }
 
     }

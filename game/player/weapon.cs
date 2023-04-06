@@ -7,6 +7,8 @@ namespace Quake2 {
         private const int PLAYER_NOISE_SELF = 0;
         private const int PLAYER_NOISE_IMPACT = 1;
 
+        private int _weapon_is_silenced = 0;
+
         private void P_ProjectSource(edict_t ent, in Vector3 distance,
                 in Vector3 forward, in Vector3 right, ref Vector3 result)
         {
@@ -559,20 +561,20 @@ namespace Quake2 {
 
             fire_blaster(ent, start, forward, damage, 1000, effect, hyper);
 
-            // /* send muzzle flash */
-            // gi.WriteByte(svc_muzzleflash);
-            // gi.WriteShort(ent - g_edicts);
+            /* send muzzle flash */
+            gi.WriteByte(svc_muzzleflash);
+            gi.WriteShort(ent.index);
 
-            // if (hyper)
-            // {
-            //     gi.WriteByte(MZ_HYPERBLASTER | is_silenced);
-            // }
-            // else
-            // {
-            //     gi.WriteByte(MZ_BLASTER | is_silenced);
-            // }
+            if (hyper)
+            {
+                gi.WriteByte(QShared.MZ_HYPERBLASTER | _weapon_is_silenced);
+            }
+            else
+            {
+                gi.WriteByte(QShared.MZ_BLASTER | _weapon_is_silenced);
+            }
 
-            // gi.multicast(ent->s.origin, MULTICAST_PVS);
+            gi.multicast(ent.s.origin, QShared.multicast_t.MULTICAST_PVS);
 
             PlayerNoise(ent, start, PNOISE_WEAPON);
         }

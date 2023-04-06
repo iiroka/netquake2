@@ -739,11 +739,11 @@ namespace Quake2 {
                 return false;
             }
 
-            // /* see if anything we moved has touched a trigger */
-            // for (p = pushed_p - 1; p >= pushed; p--)
-            // {
-            //     G_TouchTriggers(p->ent);
-            // }
+            /* see if anything we moved has touched a trigger */
+            for (int p = pushed_i - 1; p >= 0; p--)
+            {
+                G_TouchTriggers(pushed[p].ent!);
+            }
 
             return true;
         }
@@ -957,12 +957,12 @@ namespace Quake2 {
             //             gi.soundindex("misc/h2ohit1.wav"), 1, 1, 0);
             // }
 
-            // /* move teamslaves */
-            // for (slave = ent->teamchain; slave; slave = slave->teamchain)
-            // {
-            //     VectorCopy(ent->s.origin, slave->s.origin);
-            //     gi.linkentity(slave);
-            // }
+            /* move teamslaves */
+            for (var slave = ent.teamchain; slave != null; slave = slave.teamchain)
+            {
+                slave.s.origin = ent.s.origin;
+                gi.linkentity(slave);
+            }
         }
 
         /* ================================================================== */

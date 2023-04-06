@@ -71,6 +71,46 @@ namespace Quake2 {
         private string crosshair_pic = "";
         private int crosshair_width, crosshair_height;
 
+        private struct graphsamp_t {
+            public float value;
+            public int color;
+        }
+
+        private int current = 0;
+        private graphsamp_t[] values = new graphsamp_t[2024];
+
+        private void SCR_DebugGraph(float value, int color)
+        {
+            values[current & 2023].value = value;
+            values[current & 2023].color = color;
+            current++;
+        }
+
+        private void SCR_DrawDebugGraph()
+        {
+            /* draw the graph */
+            int w = scr_vrect.width;
+
+            int x = scr_vrect.x;
+            int y = scr_vrect.y + scr_vrect.height;
+            vid.Draw_Fill(x, y - scr_graphheight!.Int, w, scr_graphheight!.Int, 8);
+
+            for (int a = 0; a < w; a++)
+            {
+                int i = (current - 1 - a + 1024) & 1023;
+                float v = values[i].value;
+                int color = values[i].color;
+                v = v * scr_graphscale!.Float + scr_graphshift!.Float;
+
+                if (v < 0)
+                {
+                    v += scr_graphheight!.Float * (1 + (int)(-v / scr_graphheight!.Float));
+                }
+
+                int h = (int)v % scr_graphheight.Int;
+                vid.Draw_Fill(x + w - 1 - a, y - h, 1, h, color);
+            }
+        }
         /*
         * Sets scr_vrect, the coordinates of the rendered window
         */
@@ -124,6 +164,19 @@ namespace Quake2 {
             scr_initialized = true;
         }
 
+
+        private void SCR_DrawNet()
+        {
+            // float scale = SCR_GetMenuScale();
+            var scale = 1.0f;
+
+            if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < CMD_BACKUP - 1)
+            {
+                return;
+            }
+
+            vid.Draw_PicScaled((int)(scr_vrect.x + 64 * scale), scr_vrect.y, "net", scale);
+        }
 
         private void SCR_DrawConsole()
         {
@@ -778,19 +831,18 @@ namespace Quake2 {
                         }
                     }
 
-            //         SCR_DrawNet();
+                    SCR_DrawNet();
             //         SCR_CheckDrawCenterString();
 
-            //         if (scr_timegraph->value)
-            //         {
-            //             SCR_DebugGraph(cls.rframetime * 300, 0);
-            //         }
+                    if (scr_timegraph!.Bool)
+                    {
+                        SCR_DebugGraph(cls.rframetime * 300, 0);
+                    }
 
-            //         if (scr_debuggraph->value || scr_timegraph->value ||
-            //             scr_netgraph->value)
-            //         {
-            //             SCR_DrawDebugGraph();
-            //         }
+                    if (scr_debuggraph!.Bool || scr_timegraph!.Bool || scr_netgraph!.Bool)
+                    {
+                        SCR_DrawDebugGraph();
+                    }
 
             //         SCR_DrawPause();
 

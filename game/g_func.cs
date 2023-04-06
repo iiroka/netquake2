@@ -389,8 +389,7 @@ namespace Quake2 {
             {
                 if (t.classname == "func_areaportal")
                 {
-                    Console.WriteLine("SetAreaPortalState");
-                    // gi.SetAreaPortalState(t.style, open);
+                    gi.SetAreaPortalState(t.style, open);
                 }
             }
         }
@@ -401,7 +400,6 @@ namespace Quake2 {
             {
                 return;
             }
-            Console.WriteLine("door_hit_top");
 
             // if (!(self->flags & FL_TEAMSLAVE))
             // {
@@ -782,6 +780,92 @@ namespace Quake2 {
             {
                 ent.think = g.Think_SpawnDoorTrigger;
             }
+        }
+
+        /* ==================================================================== */
+
+        /*
+        * QUAKED func_timer (0.3 0.1 0.6) (-8 -8 -8) (8 8 8) START_ON
+        *
+        * "wait"	base time between triggering all targets, default is 1
+        * "random"	wait variance, default is 0
+        *
+        * so, the basic time between firing is a random time
+        * between (wait - random) and (wait + random)
+        *
+        * "delay"			delay before first firing when turned on, default is 0
+        * "pausetime"		additional delay used only the very first time
+        *                  and only if spawned with START_ON
+        *
+        * These can used but not touched.
+        */
+        private void func_timer_think(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            G_UseTargets(self, self.activator);
+            self.nextthink = level.time + self.wait + QShared.crandk() * self.random;
+        }
+
+        private void func_timer_use(edict_t self, edict_t _other /* unused */, edict_t? activator)
+        {
+            if (self == null || activator == null)
+            {
+                return;
+            }
+
+            self.activator = activator;
+
+            /* if on, turn it off */
+            if (self.nextthink != 0)
+            {
+                self.nextthink = 0;
+                return;
+            }
+
+            /* turn it on */
+            if (self.delay != 0)
+            {
+                self.nextthink = level.time + self.delay;
+            }
+            else
+            {
+                func_timer_think(self);
+            }
+        }
+
+        private static void SP_func_timer(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (self.wait == 0)
+            {
+                self.wait = 1;
+            }
+
+            self.use = g.func_timer_use;
+            self.think = g.func_timer_think;
+
+            if (self.random >= self.wait)
+            {
+                self.random = self.wait - FRAMETIME;
+                g.gi.dprintf($"func_timer at {self.s.origin} has random >= wait\n");
+            }
+
+            if ((self.spawnflags & 1) != 0)
+            {
+                self.nextthink = g.level.time + 1 + g.st.pausetime + self.delay +
+                                self.wait + QShared.crandk() * self.random;
+                self.activator = self;
+            }
+
+            self.svflags = QGameFlags.SVF_NOCLIENT;
         }
 
     }

@@ -29,6 +29,9 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        private const int HEALTH_IGNORE_MAX = 1;
+        private const int HEALTH_TIMED = 2;
+
 
         private static gitem_armor_t jacketarmor_info = new gitem_armor_t(){
             base_count = 25, max_count = 50, normal_protection= .30f, energy_protection = .00f, armor = ARMOR_JACKET};
@@ -1439,6 +1442,96 @@ namespace Quake2 {
         };  
 
         private gitem_t[] itemlist = new gitem_t[0];
+
+        /*
+        * QUAKED item_health (.3 .3 1) (-16 -16 -16) (16 16 16)
+        */
+        private static void SP_item_health(QuakeGame g, edict_t self)
+        {
+            if (self == null || g == null)
+            {
+                return;
+            }
+
+            if (g.deathmatch!.Bool && (g.dmflags!.Int & QShared.DF_NO_HEALTH) != 0)
+            {
+                g.G_FreeEdict(self);
+                return;
+            }
+
+            self.model = "models/items/healing/medium/tris.md2";
+            self.count = 10;
+            g.SpawnItem(self, g.FindItem("Health")!);
+            // gi.soundindex("items/n_health.wav");
+        }
+
+        /*
+        * QUAKED item_health_small (.3 .3 1) (-16 -16 -16) (16 16 16)
+        */
+        private static void SP_item_health_small(QuakeGame g, edict_t self)
+        {
+            if (self == null || g == null)
+            {
+                return;
+            }
+
+            if (g.deathmatch!.Bool && (g.dmflags!.Int & QShared.DF_NO_HEALTH) != 0)
+            {
+                g.G_FreeEdict(self);
+                return;
+            }
+
+            self.model = "models/items/healing/stimpack/tris.md2";
+            self.count = 2;
+            g.SpawnItem(self, g.FindItem("Health")!);
+            self.style = HEALTH_IGNORE_MAX;
+            // gi.soundindex("items/s_health.wav");
+        }
+
+        /*
+        * QUAKED item_health_large (.3 .3 1) (-16 -16 -16) (16 16 16)
+        */
+        private static void SP_item_health_large(QuakeGame g, edict_t self)
+        {
+            if (self == null || g == null)
+            {
+                return;
+            }
+
+            if (g.deathmatch!.Bool && (g.dmflags!.Int & QShared.DF_NO_HEALTH) != 0)
+            {
+                g.G_FreeEdict(self);
+                return;
+            }
+
+            self.model = "models/items/healing/large/tris.md2";
+            self.count = 25;
+            g.SpawnItem(self, g.FindItem("Health")!);
+            // gi.soundindex("items/l_health.wav");
+        }
+
+        /*
+        * QUAKED item_health_mega (.3 .3 1) (-16 -16 -16) (16 16 16)
+        */
+        private static void SP_item_health_mega(QuakeGame g, edict_t self)
+        {
+            if (self == null || g == null)
+            {
+                return;
+            }
+
+            if (g.deathmatch!.Bool && (g.dmflags!.Int & QShared.DF_NO_HEALTH) != 0)
+            {
+                g.G_FreeEdict(self);
+                return;
+            }
+
+            self.model = "models/items/mega_h/tris.md2";
+            self.count = 100;
+            g.SpawnItem(self, g.FindItem("Health")!);
+            // gi.soundindex("items/m_health.wav");
+            self.style = HEALTH_IGNORE_MAX | HEALTH_TIMED;
+        }
 
         private void InitItems()
         {

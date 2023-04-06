@@ -141,7 +141,7 @@ namespace Quake2 {
         // int (*pointcontents)(vec3_t point);
         // qboolean (*inPVS)(vec3_t p1, vec3_t p2);
         // qboolean (*inPHS)(vec3_t p1, vec3_t p2);
-        // void (*SetAreaPortalState)(int portalnum, qboolean open);
+        void SetAreaPortalState(int portalnum, bool open);
         // qboolean (*AreasConnected)(int area1, int area2);
 
         // /* an entity will never be sent to a client or used for collision
@@ -152,18 +152,18 @@ namespace Quake2 {
         int BoxEdicts(in Vector3 mins, in Vector3 maxs, edict_s[] list, int areatype);
         void Pmove(ref QShared.pmove_t pmove); /* player movement code common with client prediction */
 
-        // /* network messaging */
-        // void (*multicast)(vec3_t origin, multicast_t to);
+        /* network messaging */
+        void multicast(in Vector3 origin, QShared.multicast_t to);
         // void (*unicast)(edict_t *ent, qboolean reliable);
-        // void (*WriteChar)(int c);
-        // void (*WriteByte)(int c);
-        // void (*WriteShort)(int c);
-        // void (*WriteLong)(int c);
-        // void (*WriteFloat)(float f);
-        // void (*WriteString)(char *s);
-        // void (*WritePosition)(vec3_t pos); /* some fractional bits */
-        // void (*WriteDir)(vec3_t pos); /* single byte encoded, very coarse */
-        // void (*WriteAngle)(float f);
+        void WriteChar(int c);
+        void WriteByte(int c);
+        void WriteShort(int c);
+        void WriteLong(int c);
+        void WriteFloat(float f);
+        void WriteString(string s);
+        void WritePosition(in Vector3 pos); /* some fractional bits */
+        void WriteDir(in Vector3 pos); /* single byte encoded, very coarse */
+        void WriteAngle(float f);
 
         // /* managed memory allocation */
         // void *(*TagMalloc)(int size, int tag);

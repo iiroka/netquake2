@@ -368,14 +368,14 @@ namespace Quake2 {
         //     // Reset power shield / power screen sound counter.
         //     num_power_sounds = 0;
 
-        //     if (!cl_timedemo->value)
-        //     {
+            if (!common.cl_timedemo!.Bool)
+            {
                 // Don't throttle too much when connecting / loading.
                 if ((cls.state == connstate_t.ca_connected) && (packetdelta > 100000))
                 {
                     packetframe = true;
                 }
-        //     }
+            }
 
         //     // Run HTTP downloads more often while connecting.
         // #ifdef USE_CURL
@@ -431,18 +431,18 @@ namespace Quake2 {
                     CL_PrepRefresh();
                 }
 
-        //         /* update the screen */
-        //         if (host_speeds->value)
-        //         {
-        //             time_before_ref = Sys_Milliseconds();
-        //         }
+                /* update the screen */
+                if (common.host_speeds!.Bool)
+                {
+                    common.time_before_ref = common.Sys_Milliseconds();
+                }
 
                 SCR_UpdateScreen();
 
-        //         if (host_speeds->value)
-        //         {
-        //             time_after_ref = Sys_Milliseconds();
-        //         }
+                if (common.host_speeds!.Bool)
+                {
+                    common.time_after_ref = common.Sys_Milliseconds();
+                }
 
         //         /* update audio */
         //         S_Update(cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);

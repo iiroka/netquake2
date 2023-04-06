@@ -100,15 +100,9 @@ namespace Quake2 {
 
         private void CL_AddParticles()
         {
-            // cparticle_t *p, *next;
             float alpha;
             float time, time2;
-            // vec3_t org;
-            // int color;
-            // cparticle_t *active, *tail;
 
-            // active = NULL;
-            // tail = NULL;
             cparticle_t? active = null;
             cparticle_t? tail = null;
             cparticle_t? p = null;

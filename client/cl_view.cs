@@ -384,7 +384,7 @@ namespace Quake2 {
             } else if (cl.frame.valid && (cl_paused?.Bool ?? false) && (gl1_stereo?.Bool ?? false)) {
                 // We need to adjust the refdef in stereo mode when paused.
                 // vec3_t tmp;
-                // CL_CalcViewValues();
+                CL_CalcViewValues();
                 // VectorScale( cl.v_right, stereo_separation, tmp );
                 // VectorAdd( cl.refdef.vieworg, tmp, cl.refdef.vieworg );
 

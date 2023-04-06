@@ -75,13 +75,13 @@ namespace Quake2 {
                 {
                     self.ideal_yaw = g.vectoyaw(self.enemy.s.origin - self.s.origin);
 
-            //         if ((self->s.angles[YAW] != self->ideal_yaw) &&
-            //             self->monsterinfo.aiflags & AI_TEMP_STAND_GROUND)
-            //         {
-            //             self->monsterinfo.aiflags &=
-            //                 ~(AI_STAND_GROUND | AI_TEMP_STAND_GROUND);
-            //             self->monsterinfo.run(self);
-            //         }
+                    if ((self.s.angles[QShared.YAW] != self.ideal_yaw) &&
+                        (self.monsterinfo.aiflags & AI_TEMP_STAND_GROUND) != 0)
+                    {
+                        self.monsterinfo.aiflags &=
+                            ~(AI_STAND_GROUND | AI_TEMP_STAND_GROUND);
+                        self.monsterinfo.run!(self);
+                    }
 
                     g.M_ChangeYaw(self);
                     g.ai_checkattack(self);
@@ -105,19 +105,19 @@ namespace Quake2 {
                 return;
             }
 
-            // if (!(self->spawnflags & 1) && (self->monsterinfo.idle) &&
-            //     (level.time > self->monsterinfo.idle_time))
-            // {
-            //     if (self->monsterinfo.idle_time)
-            //     {
-            //         self->monsterinfo.idle(self);
-            //         self->monsterinfo.idle_time = level.time + 15 + random() * 15;
-            //     }
-            //     else
-            //     {
-            //         self->monsterinfo.idle_time = level.time + random() * 15;
-            //     }
-            // }
+            if ((self.spawnflags & 1) == 0 && (self.monsterinfo.idle != null) &&
+                (g.level.time > self.monsterinfo.idle_time))
+            {
+                if (self.monsterinfo.idle_time != 0)
+                {
+                    self.monsterinfo.idle(self);
+                    self.monsterinfo.idle_time = g.level.time + 15 + QShared.frandk() * 15;
+                }
+                else
+                {
+                    self.monsterinfo.idle_time = g.level.time + QShared.frandk() * 15;
+                }
+            }
         }
 
         /*
@@ -799,15 +799,13 @@ namespace Quake2 {
         */
         private bool ai_checkattack(edict_t self)
         {
-            // vec3_t temp;
-            // qboolean hesDeadJim;
-
             if (self == null)
             {
                 _ai_enemy_vis = false;
 
                 return false;
             }
+
 
             /* this causes monsters to run blindly
             to the combat point w/o firing */
@@ -1082,6 +1080,7 @@ namespace Quake2 {
                 /* give ourself more time since we got this far */
                 self.monsterinfo.search_time = g.level.time + 5;
 
+                Console.WriteLine("AI_PURSUE_NEXT");
             //     if (self->monsterinfo.aiflags & AI_PURSUE_TEMP)
             //     {
             //         self->monsterinfo.aiflags &= ~AI_PURSUE_TEMP;

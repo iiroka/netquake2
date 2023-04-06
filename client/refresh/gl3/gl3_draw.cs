@@ -241,6 +241,47 @@ namespace Quake2 {
         // }
 
 
+        /*
+        * Fills a box of pixels with a single color
+        */
+        public unsafe void DrawFill(Silk.NET.Windowing.IWindow window, int x, int y, int w, int h, int c)
+        {
+            var gl = GL.GetApi(window);
+            if ((uint)c > 255)
+            {
+                ri.Sys_Error(QShared.ERR_FATAL, "Draw_Fill: bad color");
+            }
+
+            UInt32 color = d_8to24table[c];
+
+            float[] vBuf = {
+            //  X,   Y
+                x,   y+h,
+                x,   y,
+                x+w, y+h,
+                x+w, y
+            };
+
+            gl3state.uniCommonData.color.X = (float)(color & 0xFF) * (1.0f/255.0f);
+            gl3state.uniCommonData.color.Y = (float)((color >> 8) & 0xFF) * (1.0f/255.0f);
+            gl3state.uniCommonData.color.Z = (float)((color >> 16) & 0xFF) * (1.0f/255.0f);
+            gl3state.uniCommonData.color.W = 1.0f;
+
+            GL3_UpdateUBOCommon(gl);
+
+            GL3_UseProgram(gl, gl3state.si2Dcolor.shaderProgram);
+            GL3_BindVAO(gl, vao2Dcolor);
+
+            GL3_BindVBO(gl, vbo2D);
+            fixed (void* d = vBuf)
+            {            
+                gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vBuf.Length * sizeof(float)), d, BufferUsageARB.StreamDraw);
+            }
+
+            gl.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
+        }
+
+
         private void GL3_Draw_GetPalette()
         {
             /* get the palette */

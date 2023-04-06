@@ -135,6 +135,42 @@ namespace Quake2 {
                 return server.SV_AreaEdicts(mins, maxs, list, areatype);
             }
 
+            public void SetAreaPortalState(int portalnum, bool open)
+            {
+                server.common.CM_SetAreaPortalState(portalnum, open);
+            }
+
+            public void WriteChar(int c) {
+                server.sv.multicast.WriteChar(c);
+            }
+            public void WriteByte(int c){
+                server.sv.multicast.WriteByte(c);
+            }
+            public void WriteShort(int c){
+                server.sv.multicast.WriteShort(c);
+            }
+            public void WriteLong(int c){
+                server.sv.multicast.WriteLong(c);
+            }
+            public void WriteFloat(float f){
+                server.sv.multicast.WriteFloat(f);
+            }
+            public void WriteString(string s){
+                server.sv.multicast.WriteString(s);
+            }
+            public void WritePosition(in Vector3 pos) {
+                server.sv.multicast.WritePos(pos);
+            }
+            public void WriteDir(in Vector3 pos){
+                server.sv.multicast.WriteDir(pos);
+            }
+            public void WriteAngle(float f) {
+                server.sv.multicast.WriteAngle(f);
+            }
+            public void multicast(in Vector3 origin, QShared.multicast_t to) {
+                server.SV_Multicast(origin, to);
+            }
+
         }
 
         /*
@@ -164,64 +200,6 @@ namespace Quake2 {
 
             common.Com_Printf("-------- game initialization -------\n");
 
-        //     /* load a new game dll */
-        //     import.multicast = SV_Multicast;
-        //     import.unicast = PF_Unicast;
-        //     import.bprintf = SV_BroadcastPrintf;
-        //     import.dprintf = PF_dprintf;
-        //     import.cprintf = PF_cprintf;
-        //     import.centerprintf = PF_centerprintf;
-        //     import.error = PF_error;
-
-        //     import.linkentity = SV_LinkEdict;
-        //     import.unlinkentity = SV_UnlinkEdict;
-        //     import.BoxEdicts = SV_AreaEdicts;
-        //     import.trace = SV_Trace;
-        //     import.pointcontents = SV_PointContents;
-        //     import.setmodel = PF_setmodel;
-        //     import.inPVS = PF_inPVS;
-        //     import.inPHS = PF_inPHS;
-        //     import.Pmove = Pmove;
-
-        //     import.modelindex = SV_ModelIndex;
-        //     import.soundindex = SV_SoundIndex;
-        //     import.imageindex = SV_ImageIndex;
-
-        //     import.configstring = PF_Configstring;
-        //     import.sound = PF_StartSound;
-        //     import.positioned_sound = SV_StartSound;
-
-        //     import.WriteChar = PF_WriteChar;
-        //     import.WriteByte = PF_WriteByte;
-        //     import.WriteShort = PF_WriteShort;
-        //     import.WriteLong = PF_WriteLong;
-        //     import.WriteFloat = PF_WriteFloat;
-        //     import.WriteString = PF_WriteString;
-        //     import.WritePosition = PF_WritePos;
-        //     import.WriteDir = PF_WriteDir;
-        //     import.WriteAngle = PF_WriteAngle;
-
-        //     import.TagMalloc = Z_TagMalloc;
-        //     import.TagFree = Z_Free;
-        //     import.FreeTags = Z_FreeTags;
-
-        //     import.cvar = Cvar_Get;
-        //     import.cvar_set = Cvar_Set;
-        //     import.cvar_forceset = Cvar_ForceSet;
-
-        //     import.argc = Cmd_Argc;
-        //     import.argv = Cmd_Argv;
-        //     import.args = Cmd_Args;
-        //     import.AddCommandString = Cbuf_AddText;
-
-        // #ifndef DEDICATED_ONLY
-        //     import.DebugGraph = SCR_DebugGraph;
-        // #endif
-
-        //     import.SetAreaPortalState = CM_SetAreaPortalState;
-            // import.AreasConnected = CM_AreasConnected;
-
-        //     ge = (game_export_t *)Sys_GetGameAPI(&import);
             ge = new QuakeGame(new GameExports(this));
 
             if (ge == null)

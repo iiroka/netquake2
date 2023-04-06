@@ -59,15 +59,13 @@ namespace Quake2 {
                 return;
             }
 
-            // if (self->pathtarget)
-            // {
-            //     char *savetarget;
-
-            //     savetarget = self->target;
-            //     self->target = self->pathtarget;
-            //     G_UseTargets(self, other);
-            //     self->target = savetarget;
-            // }
+            if (self.pathtarget != null)
+            {
+                var savetarget = self.target;
+                self.target = self.pathtarget;
+                G_UseTargets(self, other);
+                self.target = savetarget;
+            }
 
             edict_t? next = null;
             if (self.target != null)
@@ -75,15 +73,15 @@ namespace Quake2 {
                 next = G_PickTarget(self.target);
             }
 
-            // if ((next) && (next->spawnflags & 1))
-            // {
-            //     VectorCopy(next->s.origin, v);
-            //     v[2] += next->mins[2];
-            //     v[2] -= other->mins[2];
-            //     VectorCopy(v, other->s.origin);
-            //     next = G_PickTarget(next->target);
-            //     other->s.event = EV_OTHER_TELEPORT;
-            // }
+            if ((next != null) && (next.spawnflags & 1) != 0)
+            {
+                var v = next.s.origin;
+                v[2] += next.mins[2];
+                v[2] -= other.mins[2];
+                other.s.origin = v;
+                next = G_PickTarget(next.target!);
+                other.s.ev = (int)QShared.entity_event_t.EV_OTHER_TELEPORT;
+            }
 
             other.goalentity = other.movetarget = next;
 

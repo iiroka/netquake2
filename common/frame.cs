@@ -34,11 +34,15 @@ namespace Quake2 {
         public cvar_t? host_speeds;
         public cvar_t? cl_maxfps;
         public cvar_t? cl_async;
+        public cvar_t? cl_timedemo;
 
         private QClient client;
         private QServer server;
 
         public int curtime;
+
+        public int time_before_game, time_after_game;
+        public int time_before_ref, time_after_ref;
 
         public QCommon()
         {
@@ -143,7 +147,7 @@ namespace Quake2 {
         // #ifndef DEDICATED_ONLY
         //     busywait = Cvar_Get("busywait", "1", CVAR_ARCHIVE);
             cl_async = Cvar_Get("cl_async", "1", cvar_t.CVAR_ARCHIVE);
-        //     cl_timedemo = Cvar_Get("timedemo", "0", 0);
+            cl_timedemo = Cvar_Get("timedemo", "0", 0);
             dedicated = Cvar_Get("dedicated", "0", cvar_t.CVAR_NOSET);
             vid_maxfps = Cvar_Get("vid_maxfps", "300", cvar_t.CVAR_ARCHIVE);
             host_speeds = Cvar_Get("host_speeds", "0", 0);
@@ -398,8 +402,8 @@ namespace Quake2 {
             clienttimedelta += usec;
             servertimedelta += usec;
 
-            // if (!cl_timedemo->value)
-            // {
+            if (!cl_timedemo!.Bool)
+            {
                 if (cl_async!.Bool)
                 {
                     // Render frames.
@@ -430,7 +434,7 @@ namespace Quake2 {
                         packetframe = false;
                     }
                 }
-            // }
+            }
 
             // // Dedicated server terminal console.
             // do {
@@ -470,20 +474,18 @@ namespace Quake2 {
             }
 
 
-            // if (host_speeds->value)
-            // {
-            //     int all, sv, gm, cl, rf;
-
-            //     time_after = Sys_Milliseconds();
-            //     all = time_after - time_before;
-            //     sv = time_between - time_before;
-            //     cl = time_after - time_between;
-            //     gm = time_after_game - time_before_game;
-            //     rf = time_after_ref - time_before_ref;
-            //     sv -= gm;
-            //     cl -= rf;
-            //     Com_Printf("all:%3i sv:%3i gm:%3i cl:%3i rf:%3i\n", all, sv, gm, cl, rf);
-            // }
+            if (host_speeds!.Bool)
+            {
+                time_after = Sys_Milliseconds();
+                var all = time_after - time_before;
+                var sv = time_between - time_before;
+                var cl = time_after - time_between;
+                var gm = time_after_game - time_before_game;
+                var rf = time_after_ref - time_before_ref;
+                sv -= gm;
+                cl -= rf;
+                Com_Printf($"all:{all} sv:{sv} gm:{gm} cl:{cl} rf:{rf}\n");
+            }
 
 
             // Reset deltas and mark frame.

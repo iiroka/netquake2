@@ -475,6 +475,11 @@ namespace Quake2 {
             re?.EndFrame(window!);
         }
 
+        public void Draw_Fill(int x, int y, int w, int h, int c)
+        {
+            re?.DrawFill(window!, x, y, w, h, c);
+        }
+
 
     }
 }

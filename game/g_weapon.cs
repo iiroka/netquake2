@@ -84,20 +84,20 @@ namespace Quake2 {
             }
             else
             {
-            //     gi.WriteByte(svc_temp_entity);
-            //     gi.WriteByte(TE_BLASTER);
-            //     gi.WritePosition(self->s.origin);
+                gi.WriteByte(svc_temp_entity);
+                gi.WriteByte((int)QShared.temp_event_t.TE_BLASTER);
+                gi.WritePosition(self.s.origin);
 
-            //     if (!plane)
-            //     {
-            //         gi.WriteDir(vec3_origin);
-            //     }
-            //     else
-            //     {
-            //         gi.WriteDir(plane->normal);
-            //     }
+                if (plane == null)
+                {
+                    gi.WriteDir(Vector3.Zero);
+                }
+                else
+                {
+                    gi.WriteDir(plane.normal);
+                }
 
-            //     gi.multicast(self->s.origin, MULTICAST_PVS);
+                gi.multicast(self.s.origin, QShared.multicast_t.MULTICAST_PVS);
             }
 
             G_FreeEdict(self);

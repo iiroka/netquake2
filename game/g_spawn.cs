@@ -33,10 +33,10 @@ namespace Quake2 {
         private delegate void SpawnFunc(QuakeGame g, edict_t? e);
 
         private readonly IDictionary<string, SpawnFunc> spawns = new Dictionary<string, SpawnFunc>(){
-            // {"item_health", SP_item_health},
-            // {"item_health_small", SP_item_health_small},
-            // {"item_health_large", SP_item_health_large},
-            // {"item_health_mega", SP_item_health_mega},
+            {"item_health", SP_item_health},
+            {"item_health_small", SP_item_health_small},
+            {"item_health_large", SP_item_health_large},
+            {"item_health_mega", SP_item_health_mega},
 
             {"info_player_start", SP_info_player_start},
             // {"info_player_deathmatch", SP_info_player_deathmatch},
@@ -56,13 +56,13 @@ namespace Quake2 {
             // {"func_clock", SP_func_clock},
             // {"func_wall", SP_func_wall},
             // {"func_object", SP_func_object},
-            // {"func_timer", SP_func_timer},
+            {"func_timer", SP_func_timer},
             // {"func_explosive", SP_func_explosive},
             // {"func_killbox", SP_func_killbox},
 
             // {"trigger_always", SP_trigger_always},
-            // {"trigger_once", SP_trigger_once},
-            // {"trigger_multiple", SP_trigger_multiple},
+            {"trigger_once", SP_trigger_once},
+            {"trigger_multiple", SP_trigger_multiple},
             // {"trigger_relay", SP_trigger_relay},
             // {"trigger_push", SP_trigger_push},
             // {"trigger_hurt", SP_trigger_hurt},
@@ -74,7 +74,7 @@ namespace Quake2 {
 
             // {"target_temp_entity", SP_target_temp_entity},
             {"target_speaker", SP_target_speaker},
-            // {"target_explosion", SP_target_explosion},
+            {"target_explosion", SP_target_explosion},
             // {"target_changelevel", SP_target_changelevel},
             // {"target_secret", SP_target_secret},
             // {"target_goal", SP_target_goal},
@@ -179,7 +179,7 @@ namespace Quake2 {
                     continue;
                 }
 
-                if (itemlist[i].classname.Equals(ent.classname))
+                if (itemlist[i].classname!.Equals(ent.classname))
                 {
                     /* found it */
                     SpawnItem(ent, itemlist[i]);
