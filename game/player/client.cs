@@ -555,10 +555,10 @@ namespace Quake2 {
                 client.resp.spectator = false;
             // }
 
-            // if (!KillBox(ent))
-            // {
-            //     /* could't spawn in? */
-            // }
+            if (!KillBox(ent))
+            {
+                /* could't spawn in? */
+            }
 
             gi.linkentity(ent);
 

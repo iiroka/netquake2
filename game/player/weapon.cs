@@ -547,10 +547,7 @@ namespace Quake2 {
             //     damage *= 4;
             // }
 
-            var forward = new Vector3();
-            var right = new Vector3();
-            var up = new Vector3();
-            QShared.AngleVectors(((gclient_t)ent.client!).v_angle, ref forward, ref right, ref up);
+            QShared.AngleVectors(((gclient_t)ent.client!).v_angle, out var forward, out var right, out var up);
             var offset = new Vector3(24, 8, ent.viewheight - 8);
             offset += g_offset;
             var start = new Vector3();

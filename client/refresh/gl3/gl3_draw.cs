@@ -166,6 +166,11 @@ namespace Quake2 {
             }
         }
 
+        public image_s? DrawFindPic(Silk.NET.Windowing.IWindow window, string name)
+        {
+            return GL3_Draw_FindPic(GL.GetApi(window), name);
+        }
+
 
         public void DrawGetPicSize (Silk.NET.Windowing.IWindow window, out int w, out int h, string name)
         {

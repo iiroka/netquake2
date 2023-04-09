@@ -740,7 +740,7 @@ namespace Quake2 {
                 cl.refdef.viewangles += QShared.LerpAngles(ops.kick_angles, ps.kick_angles, lerp);
             }
 
-            QShared.AngleVectors(cl.refdef.viewangles, ref cl.v_forward, ref cl.v_right, ref cl.v_up);
+            QShared.AngleVectors(cl.refdef.viewangles, out cl.v_forward, out cl.v_right, out cl.v_up);
 
             /* interpolate field of view */
             float ifov = ops.fov + lerp * (ps.fov - ops.fov);

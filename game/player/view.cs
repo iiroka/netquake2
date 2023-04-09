@@ -435,7 +435,7 @@ namespace Quake2 {
                 return;
             }
 
-            QShared.AngleVectors(current_client.v_angle, ref _view_forward, ref _view_right, ref _view_up);
+            QShared.AngleVectors(current_client.v_angle, out _view_forward, out _view_right, out _view_up);
 
             // /* burn from lava, etc */
             // P_WorldEffects();

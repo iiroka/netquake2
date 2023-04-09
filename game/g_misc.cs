@@ -31,6 +31,36 @@ namespace Quake2 {
     {
         private const int START_OFF = 1;
 
+        private void BecomeExplosion1(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            gi.WriteByte(svc_temp_entity);
+            gi.WriteByte((int)QShared.temp_event_t.TE_EXPLOSION1);
+            gi.WritePosition(self.s.origin);
+            gi.multicast(self.s.origin, QShared.multicast_t.MULTICAST_PVS);
+
+            G_FreeEdict(self);
+        }
+
+        private void BecomeExplosion2(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            gi.WriteByte(svc_temp_entity);
+            gi.WriteByte((int)QShared.temp_event_t.TE_EXPLOSION2);
+            gi.WritePosition(self.s.origin);
+            gi.multicast(self.s.origin, QShared.multicast_t.MULTICAST_PVS);
+
+            G_FreeEdict(self);
+        }
+
         /* ===================================================== */
 
         /*
@@ -153,6 +183,185 @@ namespace Quake2 {
                     g.gi.configstring(QShared.CS_LIGHTS + self.style, "m");
                 }
             }
+        }
+
+        /* ===================================================== */
+
+        /*
+        * QUAKED misc_explobox (0 .5 .8) (-16 -16 0) (16 16 40)
+        * Large exploding box.  You can override its mass (100),
+        * health (80), and dmg (150).
+        */
+
+        private void barrel_touch(edict_t self, edict_t other, QShared.cplane_t? _plane /* unused */, in QShared.csurface_t? _surf /*unused */)
+        {
+            if (self == null || other == null)
+            {
+                return;
+            }
+
+            if ((other.groundentity == null) || (other.groundentity == self))
+            {
+                return;
+            }
+
+            var ratio = (float)other.mass / (float)self.mass;
+            var v = self.s.origin - other.s.origin;
+            M_walkmove(self, vectoyaw(v), 20 * ratio * FRAMETIME);
+        }
+
+        private void barrel_explode(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            T_RadiusDamage(self, self.activator, self.dmg, null,
+                    self.dmg + 40, MOD_BARREL);
+            var save = self.s.origin;
+            QShared.VectorMA(self.absmin, 0.5f, self.size, out self.s.origin);
+
+            /* a few big chunks */
+            var spd = 1.5f * (float)self.dmg / 200.0f;
+            var org = new Vector3();
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris1/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris1/tris.md2", spd, org);
+
+            /* bottom corners */
+            spd = 1.75f * (float)self.dmg / 200.0f;
+            org = self.absmin;
+            // ThrowDebris(self, "models/objects/debris3/tris.md2", spd, org);
+            org = self.absmin;
+            // VectorCopy(self->absmin, org);
+            org[0] += self.size[0];
+            // ThrowDebris(self, "models/objects/debris3/tris.md2", spd, org);
+            org = self.absmin;
+            org[1] += self.size[1];
+            // ThrowDebris(self, "models/objects/debris3/tris.md2", spd, org);
+            org = self.absmin;
+            org[0] += self.size[0];
+            org[1] += self.size[1];
+            // ThrowDebris(self, "models/objects/debris3/tris.md2", spd, org);
+
+            /* a bunch of little chunks */
+            spd = 2 * self.dmg / 200;
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+            org[0] = self.s.origin[0] + QShared.crandk() * self.size[0];
+            org[1] = self.s.origin[1] + QShared.crandk() * self.size[1];
+            org[2] = self.s.origin[2] + QShared.crandk() * self.size[2];
+            // ThrowDebris(self, "models/objects/debris2/tris.md2", spd, org);
+
+            self.s.origin = save;
+
+            if (self.groundentity != null)
+            {
+                BecomeExplosion2(self);
+            }
+            else
+            {
+                BecomeExplosion1(self);
+            }
+        }
+
+        private void barrel_delay(edict_t self, edict_t _inflictor /* unused */, edict_t attacker,
+                int _damage /* unused */, in Vector3 _point /* unused */)
+        {
+            if (self == null || attacker == null)
+            {
+                return;
+            }
+
+            self.takedamage = (int)damage_t.DAMAGE_NO;
+            self.nextthink = level.time + 2 * FRAMETIME;
+            self.think = barrel_explode;
+            self.activator = attacker;
+        }
+
+        private static void SP_misc_explobox(QuakeGame g, edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            if (g.deathmatch!.Bool)
+            {
+                /* auto-remove for deathmatch */
+                g.G_FreeEdict(self);
+                return;
+            }
+
+            g.gi.modelindex("models/objects/debris1/tris.md2");
+            g.gi.modelindex("models/objects/debris2/tris.md2");
+            g.gi.modelindex("models/objects/debris3/tris.md2");
+
+            self.solid = solid_t.SOLID_BBOX;
+            self.movetype = movetype_t.MOVETYPE_STEP;
+
+            self.model = "models/objects/barrels/tris.md2";
+            self.s.modelindex = g.gi.modelindex(self.model!);
+            self.mins = new Vector3(-16, -16, 0);
+            self.maxs = new Vector3(16, 16, 40);
+
+            if (self.mass == 0)
+            {
+                self.mass = 400;
+            }
+
+            if (self.health == 0)
+            {
+                self.health = 10;
+            }
+
+            if (self.dmg == 0)
+            {
+                self.dmg = 150;
+            }
+
+            self.die = g.barrel_delay;
+            self.takedamage = (int)damage_t.DAMAGE_YES;
+            self.monsterinfo.aiflags = AI_NOSTEP;
+
+            self.touch = g.barrel_touch;
+
+            self.think = g.M_droptofloor;
+            self.nextthink = g.level.time + 2 * FRAMETIME;
+
+            g.gi.linkentity(self);
         }
 
     }

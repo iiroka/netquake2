@@ -470,6 +470,11 @@ namespace Quake2 {
             re?.DrawCharScaled(window!, x, y, num, scale);
         }
 
+        public image_s? Draw_FindPic(string name)
+        {
+            return re?.DrawFindPic(window!, name) ?? null;
+        }
+
         public void R_EndFrame()
         {
             re?.EndFrame(window!);

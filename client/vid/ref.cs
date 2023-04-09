@@ -177,7 +177,7 @@ namespace Quake2 {
 
         void RenderFrame (Silk.NET.Windowing.IWindow window, in refdef_t fd);
 
-        // struct image_s * (EXPORT *DrawFindPic)(char *name);
+        image_s? DrawFindPic(Silk.NET.Windowing.IWindow window, string name);
 
         void DrawGetPicSize (Silk.NET.Windowing.IWindow window, out int w, out int h, string name);	// will return 0 0 if not found
         void DrawPicScaled (Silk.NET.Windowing.IWindow window, int x, int y, string pic, float factor);

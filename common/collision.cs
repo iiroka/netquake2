@@ -1015,7 +1015,7 @@ namespace Quake2 {
             Vector3 forward = new Vector3(), right = new Vector3(), up = new Vector3();
             if (rotated)
             {
-                QShared.AngleVectors(angles, ref forward, ref right, ref up);
+                QShared.AngleVectors(angles, out forward, out right, out up);
 
                 var temp = start_l;
                 start_l.X = Vector3.Dot(temp, forward);
@@ -1034,7 +1034,7 @@ namespace Quake2 {
             if (rotated && (trace.fraction != 1.0))
             {
                 var a = Vector3.Negate(angles);
-                QShared.AngleVectors(a, ref forward, ref right, ref up);
+                QShared.AngleVectors(a, out forward, out right, out up);
 
                 var temp = trace.plane.normal;
                 trace.plane.normal.X = Vector3.Dot(temp, forward);

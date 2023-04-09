@@ -587,10 +587,7 @@ namespace Quake2 {
                 flash_index = machinegun_flash[flash_number];
             }
 
-            var forward = new Vector3();
-            var right = new Vector3();
-            var _up = new Vector3();
-            QShared.AngleVectors(self.s.angles, ref forward, ref right, ref _up);
+            QShared.AngleVectors(self.s.angles, out var forward, out var right, out var _up);
             var start = new Vector3();
             G_ProjectSource(self.s.origin, QShared.monster_flash_offset[flash_index],
                     forward, right, ref start);
@@ -606,8 +603,7 @@ namespace Quake2 {
                 end[2] += self.enemy.viewheight;
                 aim = end - start;
                 vectoangles(aim, out var dir);
-                var up = new Vector3();
-                QShared.AngleVectors(dir, ref forward, ref right, ref up);
+                QShared.AngleVectors(dir, out forward, out right, out var up);
 
                 var r = QShared.crandk() * 1000;
                 var u = QShared.crandk() * 500;
@@ -1442,7 +1438,7 @@ namespace Quake2 {
             self.monsterinfo.run = soldier_run;
             // self->monsterinfo.dodge = soldier_dodge;
             self.monsterinfo.attack = soldier_attack;
-            // self->monsterinfo.melee = NULL;
+            self.monsterinfo.melee = null;
             // self->monsterinfo.sight = soldier_sight;
 
             gi.linkentity(self);

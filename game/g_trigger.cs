@@ -144,10 +144,7 @@ namespace Quake2 {
 
             if (self.movedir != Vector3.Zero)
             {
-                var forward = new Vector3();
-                var t1 = new Vector3();
-                var t2 = new Vector3();
-                QShared.AngleVectors(other.s.angles, ref forward, ref t1, ref t2);
+                QShared.AngleVectors(other.s.angles, out var forward, out var t1, out var t2);
 
                 if (Vector3.Dot(forward, self.movedir) < 0)
                 {

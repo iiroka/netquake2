@@ -56,7 +56,7 @@ namespace Quake2 {
             else
             {
                 ref var item = ref itemlist[client.ammo_index];
-                // ent.client.ps.stats[QShared.STAT_AMMO_ICON] = gi.imageindex(item.icon);
+                ent.client.ps.stats[QShared.STAT_AMMO_ICON] = (short)gi.imageindex(item.icon!);
                 ent.client.ps.stats[QShared.STAT_AMMO] =
                     (short)client.pers.inventory[client.ammo_index];
             }
@@ -78,7 +78,7 @@ namespace Quake2 {
             //     }
             // }
 
-            // index = ArmorIndex(ent);
+            var index = ArmorIndex(ent);
 
             // if (power_armor_type && (!index || (level.framenum & 8)))
             // {
@@ -86,26 +86,27 @@ namespace Quake2 {
             //     ent->client->ps.stats[STAT_ARMOR_ICON] = gi.imageindex("i_powershield");
             //     ent->client->ps.stats[STAT_ARMOR] = cells;
             // }
-            // else if (index)
-            // {
-            //     item = GetItemByIndex(index);
-            //     ent->client->ps.stats[STAT_ARMOR_ICON] = gi.imageindex(item->icon);
-            //     ent->client->ps.stats[STAT_ARMOR] = ent->client->pers.inventory[index];
-            // }
             // else
-            // {
-            //     ent->client->ps.stats[STAT_ARMOR_ICON] = 0;
-            //     ent->client->ps.stats[STAT_ARMOR] = 0;
-            // }
+             if (index != 0)
+            {
+                ref var item = ref itemlist[index];
+                ent.client.ps.stats[QShared.STAT_ARMOR_ICON] = (short)gi.imageindex(item.icon!);
+                ent.client.ps.stats[QShared.STAT_ARMOR] = (short)client.pers.inventory[index];
+            }
+            else
+            {
+                ent.client.ps.stats[QShared.STAT_ARMOR_ICON] = 0;
+                ent.client.ps.stats[QShared.STAT_ARMOR] = 0;
+            }
 
-            // /* pickup message */
-            // if (level.time > ent->client->pickup_msg_time)
-            // {
-            //     ent->client->ps.stats[STAT_PICKUP_ICON] = 0;
-            //     ent->client->ps.stats[STAT_PICKUP_STRING] = 0;
-            // }
+            /* pickup message */
+            if (level.time > client.pickup_msg_time)
+            {
+                ent.client.ps.stats[QShared.STAT_PICKUP_ICON] = 0;
+                ent.client.ps.stats[QShared.STAT_PICKUP_STRING] = 0;
+            }
 
-            // /* timers */
+            /* timers */
             // if (ent->client->quad_framenum > level.framenum)
             // {
             //     ent->client->ps.stats[STAT_TIMER_ICON] = gi.imageindex("p_quad");

@@ -143,7 +143,7 @@ namespace Quake2 {
 
         private void CL_SmokeAndFlash(in Vector3 origin)
         {
-            var ex = CL_AllocExplosion();
+            ref var ex = ref CL_AllocExplosion();
             ex.ent.origin = origin;
             ex.type = exptype_t.ex_misc;
             ex.frames = 4;
@@ -151,7 +151,7 @@ namespace Quake2 {
             ex.start = cl.frame.servertime - 100.0f;
             ex.ent.model = cl_mod_smoke;
 
-            ex = CL_AllocExplosion();
+            ex = ref CL_AllocExplosion();
             ex.ent.origin = origin;
             ex.type = exptype_t.ex_flash;
             ex.ent.flags = QShared.RF_FULLBRIGHT;
@@ -331,7 +331,7 @@ namespace Quake2 {
                     dir = msg.ReadDir(common);
                     CL_BlasterParticles(pos, dir);
 
-                    var ex = CL_AllocExplosion();
+                    ref var ex = ref CL_AllocExplosion();
                     ex.ent.origin = pos;
                     ex.ent.angles.X = MathF.Acos(dir.Z) / MathF.PI * 180;
 
@@ -376,7 +376,7 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_GRENADE_EXPLOSION:
                 case (int)QShared.temp_event_t.TE_GRENADE_EXPLOSION_WATER: {
                     pos = msg.ReadPos();
-                    var ex = CL_AllocExplosion();
+                    ref var ex = ref CL_AllocExplosion();
                     ex.ent.origin = pos;
                     ex.type = exptype_t.ex_poly;
                     ex.ent.flags = QShared.RF_FULLBRIGHT | QShared.RF_NOSHADOW;
@@ -433,7 +433,7 @@ namespace Quake2 {
                 case (int)QShared.temp_event_t.TE_ROCKET_EXPLOSION:
                 case (int)QShared.temp_event_t.TE_ROCKET_EXPLOSION_WATER: {
                     pos = msg.ReadPos();
-                    var ex = CL_AllocExplosion();
+                    ref var ex = ref CL_AllocExplosion();
                     ex.ent.origin = pos;
                     ex.type = exptype_t.ex_poly;
                     ex.ent.flags = QShared.RF_FULLBRIGHT | QShared.RF_NOSHADOW;
@@ -460,10 +460,10 @@ namespace Quake2 {
 
                     ex.frames = 15;
 
-                //     if ((type != TE_EXPLOSION1_BIG) && (type != TE_EXPLOSION1_NP))
-                //     {
-                //         CL_ExplosionParticles(pos);
-                //     }
+                    if ((type != (int)QShared.temp_event_t.TE_EXPLOSION1_BIG) && (type != (int)QShared.temp_event_t.TE_EXPLOSION1_NP))
+                    {
+                        CL_ExplosionParticles(pos);
+                    }
 
                 //     if (type == TE_ROCKET_EXPLOSION_WATER)
                 //     {

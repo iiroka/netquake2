@@ -787,7 +787,7 @@ namespace Quake2 {
                 }
             }
 
-            QShared.AngleVectors(pm.viewangles, ref pml.forward, ref pml.right, ref pml.up);
+            QShared.AngleVectors(pm.viewangles, out pml.forward, out pml.right, out pml.up);
         }
 
         private void PM_CalculateViewHeightForDemo(ref QShared.pmove_t pm)
@@ -940,7 +940,7 @@ namespace Quake2 {
 
                     angles.SetPitch(angles.Pitch() / 3);
 
-                    QShared.AngleVectors(angles, ref pml.forward, ref pml.right, ref pml.up);
+                    QShared.AngleVectors(angles, out pml.forward, out pml.right, out pml.up);
 
                     PM_AirMove(ref pm);
                 // }

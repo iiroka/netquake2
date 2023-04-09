@@ -30,6 +30,97 @@ namespace Quake2 {
 
     partial class QuakeGame
     {
+        /*
+        * Returns true if the inflictor can
+        * directly damage the target.  Used for
+        * explosions and melee attacks.
+        */
+        private bool CanDamage(edict_t targ, edict_t inflictor)
+        {
+            // vec3_t dest;
+            // trace_t trace;
+
+            if (targ == null || inflictor == null)
+            {
+                return false;
+            }
+
+            /* bmodels need special checking because their origin is 0,0,0 */
+            if (targ.movetype == movetype_t.MOVETYPE_PUSH)
+            {
+                var dest1 = targ.absmin + targ.absmax;
+                dest1 = 0.5f * dest1;
+                var trace1 = gi.trace(inflictor.s.origin, Vector3.Zero, Vector3.Zero,
+                        dest1, inflictor, QShared.MASK_SOLID);
+
+                if (trace1.fraction == 1.0)
+                {
+                    return true;
+                }
+
+                if (trace1.ent == targ)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
+            var trace = gi.trace(inflictor.s.origin, Vector3.Zero, Vector3.Zero,
+                    targ.s.origin, inflictor, QShared.MASK_SOLID);
+
+            if (trace.fraction == 1.0)
+            {
+                return true;
+            }
+
+            var dest = targ.s.origin;
+            dest[0] += 15.0f;
+            dest[1] += 15.0f;
+            trace = gi.trace(inflictor.s.origin, Vector3.Zero, Vector3.Zero,
+                    dest, inflictor, QShared.MASK_SOLID);
+
+            if (trace.fraction == 1.0)
+            {
+                return true;
+            }
+
+            dest = targ.s.origin;
+            dest[0] += 15.0f;
+            dest[1] -= 15.0f;
+            trace = gi.trace(inflictor.s.origin, Vector3.Zero, Vector3.Zero,
+                    dest, inflictor, QShared.MASK_SOLID);
+
+            if (trace.fraction == 1.0)
+            {
+                return true;
+            }
+
+            dest = targ.s.origin;
+            dest[0] -= 15.0f;
+            dest[1] += 15.0f;
+            trace = gi.trace(inflictor.s.origin, Vector3.Zero, Vector3.Zero,
+                    dest, inflictor, QShared.MASK_SOLID);
+
+            if (trace.fraction == 1.0)
+            {
+                return true;
+            }
+
+            dest = targ.s.origin;
+            dest[0] -= 15.0f;
+            dest[1] -= 15.0f;
+            trace = gi.trace(inflictor.s.origin, Vector3.Zero, Vector3.Zero,
+                    dest, inflictor, QShared.MASK_SOLID);
+
+            if (trace.fraction == 1.0)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void Killed(edict_t targ, edict_t inflictor, edict_t attacker,
                 int damage, in Vector3 point)
         {
@@ -75,7 +166,7 @@ namespace Quake2 {
 
             if ((targ.svflags & QGameFlags.SVF_MONSTER) != 0 && (targ.deadflag != DEAD_DEAD))
             {
-                // targ.touch = NULL;
+                targ.touch = null;
                 // monster_death_use(targ);
             }
 
@@ -120,9 +211,9 @@ namespace Quake2 {
             {
                 targ.monsterinfo.aiflags &= ~AI_SOUND_TARGET;
 
-            //     /* this can only happen in coop (both new and old
-            //     enemies are clients)  only switch if can't see
-            //     the current enemy */
+                /* this can only happen in coop (both new and old
+                enemies are clients)  only switch if can't see
+                the current enemy */
             //     if (targ.enemy != null && targ.enemy.client != null)
             //     {
             //         if (visible(targ, targ->enemy))
@@ -345,14 +436,14 @@ namespace Quake2 {
             /* do the damage */
             if (take > 0)
             {
-            //     if ((targ->svflags & SVF_MONSTER) || (client))
-            //     {
+                if ((targ.svflags & QGameFlags.SVF_MONSTER) != 0 || (client != null))
+                {
             //         SpawnDamage(TE_BLOOD, point, normal);
-            //     }
-            //     else
-            //     {
+                }
+                else
+                {
             //         SpawnDamage(te_sparks, point, normal);
-            //     }
+                }
 
                 targ.health = targ.health - take;
 
@@ -398,17 +489,66 @@ namespace Quake2 {
                 }
             }
 
-            // /* add to the damage inflicted on a player this frame
-            // the total will be turned into screen blends and view
-            // angle kicks at the end of the frame */
-            // if (client)
-            // {
+            /* add to the damage inflicted on a player this frame
+            the total will be turned into screen blends and view
+            angle kicks at the end of the frame */
+            if (client != null)
+            {
             //     client->damage_parmor += psave;
             //     client->damage_armor += asave;
             //     client->damage_blood += take;
             //     client->damage_knockback += knockback;
             //     VectorCopy(point, client->damage_from);
-            // }
+            }
+        }
+
+        private void T_RadiusDamage(edict_t inflictor, edict_t? attacker, float damage,
+                edict_t? ignore, float radius, int mod)
+        {
+            // float points;
+            // edict_t *ent = NULL;
+            // vec3_t v;
+            // vec3_t dir;
+
+            if (inflictor == null || attacker == null)
+            {
+                return;
+            }
+
+            edict_t? ent = null;
+            while ((ent = findradius(ent, inflictor.s.origin, radius)) != null)
+            {
+                if (ent == ignore)
+                {
+                    continue;
+                }
+
+                if (ent.takedamage == 0)
+                {
+                    continue;
+                }
+
+                var v = ent.mins + ent.maxs;
+                QShared.VectorMA(ent.s.origin, 0.5f, v, out v);
+                v = inflictor.s.origin - v;
+                var points = damage - 0.5f * v.Length();
+
+                if (ent == attacker)
+                {
+                    points = points * 0.5f;
+                }
+
+                if (points > 0)
+                {
+                    if (CanDamage(ent, inflictor))
+                    {
+                        var dir = ent.s.origin - inflictor.s.origin;
+                        T_Damage(ent, inflictor, attacker, dir, inflictor.s.origin,
+                                Vector3.Zero, (int)points, (int)points, DAMAGE_RADIUS,
+                                mod);
+                    }
+                }
+            }
         }
 
     }

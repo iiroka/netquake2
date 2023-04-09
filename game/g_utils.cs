@@ -98,6 +98,49 @@ namespace Quake2 {
         }
 
         /*
+        * Returns entities that have origins
+        * within a spherical area
+        */
+        private edict_t? findradius(edict_t? from, in Vector3 org, float rad)
+        {
+            var from_i = 0;
+            if (from != null)
+            {
+
+                from_i = from.index + 1;
+            }
+
+            for ( ; from_i < global_num_ecicts; from_i++)
+            {
+                if (!g_edicts[from_i].inuse)
+                {
+                    continue;
+                }
+
+                if (g_edicts[from_i].solid == solid_t.SOLID_NOT)
+                {
+                    continue;
+                }
+
+                var eorg = new Vector3();
+                for (int j = 0; j < 3; j++)
+                {
+                    eorg[j] = org[j] - (g_edicts[from_i].s.origin[j] +
+                            (g_edicts[from_i].mins[j] + g_edicts[from_i].maxs[j]) * 0.5f);
+                }
+
+                if (eorg.Length() > rad)
+                {
+                    continue;
+                }
+
+                return g_edicts[from_i];
+            }
+
+            return null;
+        }
+
+        /*
         * Searches all active entities for
         * the next one that holds the matching
         * string at fieldofs (use the FOFS() macro)
@@ -300,9 +343,7 @@ namespace Quake2 {
             }
             else
             {
-                var t1 = new Vector3();
-                var t2 = new Vector3();
-                QShared.AngleVectors(angles, ref movedir, ref t1, ref t2);
+                QShared.AngleVectors(angles, out movedir, out var t1, out var t2);
             }
 
             angles = Vector3.Zero;
@@ -480,7 +521,7 @@ namespace Quake2 {
                     return;
                 }
             }
-
+        
             ed.Clear();
             ed.classname = "freed";
             ed.freetime = level.time;
@@ -524,6 +565,44 @@ namespace Quake2 {
 
                 hit.touch(hit, ent, null, null);
             }
+        }
+
+        /*
+        * Kills all entities that would touch the
+        * proposed new positioning of ent. Ent s
+        * hould be unlinked before calling this!
+        */
+        private bool KillBox(edict_t ent)
+        {
+            // trace_t tr;
+
+            if (ent == null)
+            {
+                return false;
+            }
+
+            while (true)
+            {
+                var tr = gi.trace(ent.s.origin, ent.mins, ent.maxs, ent.s.origin,
+                        null, QShared.MASK_PLAYERSOLID);
+
+                if (tr.ent == null)
+                {
+                    break;
+                }
+
+                /* nail it */
+                T_Damage((edict_t)tr.ent, ent, ent, Vector3.Zero, ent.s.origin, Vector3.Zero,
+                        100000, 0, DAMAGE_NO_PROTECTION, MOD_TELEFRAG);
+
+                /* if we didn't kill it, fail */
+                if (tr.ent.solid != solid_t.SOLID_NOT)
+                {
+                    return false;
+                }
+            }
+
+            return true; /* all clear */
         }
 
     }

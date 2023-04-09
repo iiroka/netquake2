@@ -278,10 +278,7 @@ namespace Quake2 {
                 return false;
             }
 
-            var forward = new Vector3();
-            var d1 = new Vector3();
-            var d2 = new Vector3();
-            QShared.AngleVectors(self.s.angles, ref forward, ref d1, ref d2);
+            QShared.AngleVectors(self.s.angles, out var forward, out var d1, out var d2);
 
             var vec = other.s.origin - self.s.origin;
             vec = Vector3.Normalize(vec);
@@ -1132,10 +1129,7 @@ namespace Quake2 {
                     var center = tr.fraction;
                     var d2 = d1 * ((center + 1) / 2);
                     self.s.angles[QShared.YAW] = self.ideal_yaw = g.vectoyaw(v);
-                    var v_forward = new Vector3();
-                    var v_right = new Vector3();
-                    var tmp = new Vector3();
-                    QShared.AngleVectors(self.s.angles, ref v_forward, ref v_right, ref tmp);
+                    QShared.AngleVectors(self.s.angles, out var v_forward, out var v_right, out var tmp);
 
                     v = new Vector3(d2, -16, 0);
                     var left_target = new Vector3();

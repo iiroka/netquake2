@@ -76,6 +76,38 @@ namespace Quake2 {
             return i;
         }        
 
+        /*
+        * Entity baselines are used to compress the update messages
+        * to the clients -- only the fields that differ from the
+        * baseline will be transmitted
+        */
+        private void SV_CreateBaseline()
+        {
+            // edict_t *svent;
+            // int entnum;
+
+            for (int entnum = 1; entnum < ge.num_edicts; entnum++)
+            {
+                var svent = ge.getEdict(entnum);
+
+                if (!svent.inuse)
+                {
+                    continue;
+                }
+
+                if (svent.s.modelindex == 0 && svent.s.sound == 0 && svent.s.effects == 0)
+                {
+                    continue;
+                }
+
+                svent.s.number = entnum;
+
+                /* take current state as baseline */
+                svent.s.old_origin = svent.s.origin;
+                sv.baselines[entnum].Copy(svent.s);
+            }
+        }
+
        /*
         * Change the server to a new map, taking all connected
         * clients along with it.
@@ -186,8 +218,8 @@ namespace Quake2 {
             sv.state = serverstate;
             common.ServerState = ((int)sv.state);
 
-            // /* create a baseline for more efficient communications */
-            // SV_CreateBaseline();
+            /* create a baseline for more efficient communications */
+            SV_CreateBaseline();
 
             // /* check for a savegame */
             // SV_CheckForSavegame(isautosave);

@@ -131,13 +131,13 @@ namespace Quake2 {
            and some internal server state */
         int modelindex(string name);
         // int (*soundindex)(char *name);
-        // int (*imageindex)(char *name);
+        int imageindex(string name);
 
         void setmodel(edict_s ent, string name);
 
         /* collision detection */
         QShared.trace_t trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
-                edict_s passent, int contentmask);
+                edict_s? passent, int contentmask);
         // int (*pointcontents)(vec3_t point);
         // qboolean (*inPVS)(vec3_t p1, vec3_t p2);
         // qboolean (*inPHS)(vec3_t p1, vec3_t p2);
@@ -172,8 +172,8 @@ namespace Quake2 {
 
         /* console variable interaction */
         cvar_t? cvar(string var_name, string? value, int flags);
-        // cvar_t *(*cvar_set)(char *var_name, char *value);
-        // cvar_t *(*cvar_forceset)(char *var_name, char *value);
+        cvar_t? cvar_set(string var_name, string value);
+        cvar_t? cvar_forceset(string var_name, string value);
 
         // /* ClientCommand and ServerCommand parameter access */
         // int (*argc)(void);

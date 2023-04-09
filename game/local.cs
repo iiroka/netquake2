@@ -165,7 +165,9 @@ namespace Quake2 {
         private delegate void edict_delegate(edict_t ent);
         private delegate void edict_game_delegate(QuakeGame g, edict_t ent);
         private delegate bool pickup_delegate(QuakeGame g, edict_t ent, edict_t other);
- 
+
+        private delegate void item_delegate(edict_t ent, gitem_t item);
+
         private interface item_info {}
 
         private class gitem_t : ICloneable
@@ -173,8 +175,8 @@ namespace Quake2 {
             public int index;
             public string? classname { get; init; } /* spawning name */
             public pickup_delegate? pickup;
-            // void (*use)(struct edict_s *ent, struct gitem_s *item);
-            // void (*drop)(struct edict_s *ent, struct gitem_s *item);
+            public item_delegate? use;
+            public item_delegate? drop;
             public edict_game_delegate? weaponthink  { get; init; }
             // char *pickup_sound;
             public string? world_model { get; init; }
@@ -184,7 +186,7 @@ namespace Quake2 {
             /* client side info */
             public string? icon { get; init; }
             public string? pickup_name { get; init; } /* for printing on pickup */
-            // int count_width; /* number of digits to display by icon */
+            public int count_width { get; init; } /* number of digits to display by icon */
 
             // int quantity; /* for ammo how much, for weapons how much is used per shot */
             // char *ammo; /* for weapons */
@@ -441,6 +443,14 @@ namespace Quake2 {
         private const int SKILL_HARD = 2;
         private const int SKILL_HARDPLUS = 3;
 
+        /* item spawnflags */
+        private const int ITEM_TRIGGER_SPAWN = 0x00000001;
+        private const int ITEM_NO_TOUCH = 0x00000002;
+        /* 6 bits reserved for editor flags */
+        /* 8 bits used as power cube id bits for coop games */
+        private const int DROPPED_ITEM = 0x00010000;
+        private const int DROPPED_PLAYER_ITEM = 0x00020000;
+        private const int ITEM_TARGETS_USED = 0x00040000;
 
         /* fields are needed for spawning from the entity
         string and saving / loading games */

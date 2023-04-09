@@ -1061,7 +1061,7 @@ namespace Quake2 {
             );
         }
 
-        public static void AngleVectors(in Vector3 angles, ref Vector3 forward, ref Vector3 right, ref Vector3 up)
+        public static void AngleVectors(in Vector3 angles, out Vector3 forward, out Vector3 right, out Vector3 up)
         {
             var angle = angles.Yaw() * (MathF.PI * 2 / 360);
             var sy = MathF.Sin(angle);
@@ -1073,17 +1073,17 @@ namespace Quake2 {
             var sr = MathF.Sin(angle);
             var cr = MathF.Cos(angle);
 
-            forward.X = cp * cy;
-            forward.Y = cp * sy;
-            forward.Z = -sp;
+            forward = new Vector3(cp * cy, cp * sy, -sp);
 
-            right.X = (-1 * sr * sp * cy + - 1 * cr * -sy);
-            right.Y = (-1 * sr * sp * sy + - 1 * cr * cy);
-            right.Z = -1 * sr * cp;
+            right = new Vector3(
+                -1 * sr * sp * cy + - 1 * cr * -sy,
+                -1 * sr * sp * sy + - 1 * cr * cy,
+                -1 * sr * cp);
 
-            up.X = (cr * sp * cy + - sr * -sy);
-            up.Y = (cr * sp * sy + - sr * cy);
-            up.Z = cr * cp;
+            up = new Vector3(
+                cr * sp * cy + - sr * -sy,
+                cr * sp * sy + - sr * cy,
+                cr * cp);
         }
 
         public static Vector3 ProjectPointOnPlane(in Vector3 p, in Vector3 normal)

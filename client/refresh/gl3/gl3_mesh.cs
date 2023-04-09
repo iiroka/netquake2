@@ -165,7 +165,7 @@ namespace Quake2 {
             /* move should be the delta back to the previous frame * backlerp */
             var delta = entity.oldorigin - entity.origin;
             var vectors = new Vector3[3];
-            QShared.AngleVectors(entity.angles, ref vectors[0], ref vectors[1], ref vectors[2]);
+            QShared.AngleVectors(entity.angles, out vectors[0], out vectors[1], out vectors[2]);
 
             var move = new Vector3();
             move.X = Vector3.Dot(delta, vectors[0]); /* forward */
@@ -403,7 +403,7 @@ namespace Quake2 {
             var angles = e.angles;
             angles.SetYaw(angles.Yaw());
             var vectors = new Vector3[3];
-            QShared.AngleVectors(angles, ref vectors[0], ref vectors[1], ref vectors[2]);
+            QShared.AngleVectors(angles, out vectors[0], out vectors[1], out vectors[2]);
 
             for (var i = 0; i < 8; i++)
             {
@@ -584,11 +584,9 @@ namespace Quake2 {
             //     shadelight[2] = 0.0;
             // }
 
-            // an = entity.angles[1] / 180 * M_PI;
-            // shadevector[0] = cos(-an);
-            // shadevector[1] = sin(-an);
-            // shadevector[2] = 1;
-            // VectorNormalize(shadevector);
+            var an = entity.angles[1] / 180 * MathF.PI;
+            var shadevector = new Vector3(MathF.Cos(-an), MathF.Sin(-an), 1);
+            shadevector = Vector3.Normalize(shadevector);
 
             /* locate the proper data */
             c_alias_polys += model.header.num_tris;
@@ -673,10 +671,10 @@ namespace Quake2 {
 
             GL3_Bind(gl, skin!.texnum);
 
-            // if (entity->flags & RF_TRANSLUCENT)
-            // {
-            //     glEnable(GL_BLEND);
-            // }
+            if ((entity.flags & QShared.RF_TRANSLUCENT) != 0)
+            {
+                gl.Enable(EnableCap.Blend);
+            }
 
 
             if ((entity.frame >= model.header.num_frames) ||
@@ -709,26 +707,32 @@ namespace Quake2 {
             //         glCullFace(GL_FRONT);
             }
 
-            // if (entity->flags & RF_TRANSLUCENT)
-            // {
-            //     glDisable(GL_BLEND);
-            // }
+            if ((entity.flags & QShared.RF_TRANSLUCENT) != 0)
+            {
+                gl.Disable(EnableCap.Blend);
+            }
 
             if ((entity.flags & QShared.RF_DEPTHHACK) != 0)
             {
                 gl.DepthRange(gl3depthmin, gl3depthmax);
             }
 
-            // if (gl_shadows->value && gl3config.stencil && !(entity->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL | RF_NOSHADOW)))
-            // {
+            if (gl_shadows!.Bool && gl3config.stencil && (entity.flags & (QShared.RF_TRANSLUCENT | QShared.RF_WEAPONMODEL | QShared.RF_NOSHADOW)) == 0)
+            {
             //     gl3_shadowinfo_t si = {0};
             //     VectorCopy(lightspot, si.lightspot);
             //     VectorCopy(shadevector, si.shadevector);
             //     si.paliashdr = paliashdr;
             //     si.entity = entity;
 
+            Console.WriteLine("== shadowModels ==");
             //     da_push(shadowModels, si);
-            // }
+            }
+        }
+
+        private void GL3_ResetShadowAliasModels()
+        {
+            // da_clear(shadowModels);
         }
 
     }

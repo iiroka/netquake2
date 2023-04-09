@@ -162,6 +162,9 @@ namespace Quake2 {
             }
 
             // TODO: Lots of stuff
+            if (gl3_newrefdef.num_dlights > 4) {
+                Console.WriteLine($"=== num_dlights {gl3_newrefdef.num_dlights}");
+            }
 
             GL3_UpdateUBOLights(gl);
         }
@@ -303,21 +306,20 @@ namespace Quake2 {
 
             /* add dynamic lights */
 
-            // for (lnum = 0; lnum < gl3_newrefdef.num_dlights; lnum++, dl++)
-            // {
-            //     dl = gl3_newrefdef.dlights;
-            //     VectorSubtract(currententity->origin,
-            //             dl->origin, dist);
-            //     add = dl->intensity - VectorLength(dist);
-            //     add *= (1.0f / 256.0f);
+            for (int lnum = 0; lnum < gl3_newrefdef.num_dlights; lnum++)
+            {
+                ref var dl = ref gl3_newrefdef.dlights[lnum];
+                var dist = currententity.Value.origin - dl.origin;
+                var add = dl.intensity - dist.Length();
+                add *= (1.0f / 256.0f);
 
-            //     if (add > 0)
-            //     {
-            //         VectorMA(color, add, dl->color, color);
-            //     }
-            // }
+                if (add > 0)
+                {
+                    QShared.VectorMA(color, add, dl.color, out color);
+                }
+            }
 
-            // VectorScale(color, r_modulate->value, color);
+            color = r_modulate!.Float * color;
         }
 
 

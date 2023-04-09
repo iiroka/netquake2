@@ -290,15 +290,115 @@ namespace Quake2 {
                 self.viewheight = 25;
             }
 
-            // if ((self.spawnflags & 2) != 0)
-            // {
-                // monster_triggered_start(self);
-            // }
-            // else
-            // {
+            if ((self.spawnflags & 2) != 0)
+            {
+                monster_triggered_start(self);
+            }
+            else
+            {
                 monster_start_go(self);
-            // }
-        }        
+            }
+        }
+
+        /*
+        * Using a monster makes it angry
+        * at the current activator
+        */
+        private void monster_use(edict_t self, edict_t _other /* unused */, edict_t? activator)
+        {
+            if (self == null || activator == null)
+            {
+                return;
+            }
+
+            if (self.enemy != null)
+            {
+                return;
+            }
+
+            if (self.health <= 0)
+            {
+                return;
+            }
+
+            if ((activator.flags & FL_NOTARGET) != 0)
+            {
+                return;
+            }
+
+            if (activator.client == null && (activator.monsterinfo.aiflags & AI_GOOD_GUY) == 0)
+            {
+                return;
+            }
+
+            /* delay reaction so if the monster is
+            teleported, its sound is still heard */
+            self.enemy = activator;
+            FoundTarget(self);
+        }
+
+        private void monster_triggered_spawn(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            self.s.origin[2] += 1;
+            KillBox(self);
+
+            self.solid = solid_t.SOLID_BBOX;
+            self.movetype = movetype_t.MOVETYPE_STEP;
+            self.svflags &= ~QGameFlags.SVF_NOCLIENT;
+            self.air_finished = level.time + 12;
+            gi.linkentity(self);
+
+            monster_start_go(self);
+
+            if (self.enemy != null && (self.spawnflags & 1) == 0 &&
+                (self.enemy.flags & FL_NOTARGET) == 0)
+            {
+                FoundTarget(self);
+            }
+            else
+            {
+                self.enemy = null;
+            }
+        }
+
+        private void monster_triggered_spawn_use(edict_t self, edict_t _other /* unused */, edict_t? activator)
+        {
+            if (self == null || activator == null)
+            {
+                return;
+            }
+
+            /* we have a one frame delay here so we
+            don't telefrag the guy who activated us */
+            self.think = monster_triggered_spawn;
+            self.nextthink = level.time + FRAMETIME;
+
+            if (activator.client != null)
+            {
+                self.enemy = activator;
+            }
+
+            self.use = monster_use;
+        }
+
+        private void monster_triggered_start(edict_t self)
+        {
+            if (self == null)
+            {
+                return;
+            }
+
+            self.solid = solid_t.SOLID_NOT;
+            self.movetype = movetype_t.MOVETYPE_NONE;
+            self.svflags |= QGameFlags.SVF_NOCLIENT;
+            self.nextthink = 0;
+            self.use = monster_triggered_spawn_use;
+        }         
 
         /* ================================================================== */
 

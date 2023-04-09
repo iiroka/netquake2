@@ -133,7 +133,7 @@ namespace Quake2 {
             /* precache status bar pics */
             common.Com_Printf("pics\r");
             SCR_UpdateScreen();
-            // SCR_TouchPics();
+            SCR_TouchPics();
             common.Com_Printf("                                     \r");
 
             CL_RegisterTEntModels();
@@ -189,11 +189,12 @@ namespace Quake2 {
             common.Com_Printf("images\r");
             SCR_UpdateScreen();
 
-            // for (i = 1; i < MAX_IMAGES && cl.configstrings[CS_IMAGES + i][0]; i++)
-            // {
-            //     cl.image_precache[i] = Draw_FindPic(cl.configstrings[CS_IMAGES + i]);
-            //     input.Update();
-            // }
+            cl.image_precache = new image_s[QShared.MAX_IMAGES];
+            for (int i = 1; i < QShared.MAX_IMAGES && !String.IsNullOrEmpty(cl.configstrings[QShared.CS_IMAGES + i]); i++)
+            {
+                cl.image_precache[i] = vid.Draw_FindPic(cl.configstrings[QShared.CS_IMAGES + i]);
+                input.Update();
+            }
 
             common.Com_Printf("                                     \r");
 

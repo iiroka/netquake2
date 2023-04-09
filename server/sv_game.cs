@@ -55,6 +55,16 @@ namespace Quake2 {
                 return server.common.Cvar_Get(var_name, value, flags);
             }
 
+            public cvar_t? cvar_set(string var_name, string value)
+            {
+                return server.common.Cvar_Set(var_name, value);
+            }
+
+            public cvar_t? cvar_forceset(string var_name, string value)
+            {
+                return server.common.Cvar_ForceSet(var_name, value);
+            }
+
             public void linkentity(edict_s ent)
             {
                 server.SV_LinkEdict(ent);
@@ -102,6 +112,11 @@ namespace Quake2 {
                 return server.SV_FindIndex(name, QShared.CS_MODELS, QShared.MAX_MODELS, true);
             }
 
+            public int imageindex(string name)
+            {
+                return server.SV_FindIndex(name, QShared.CS_IMAGES, QShared.MAX_IMAGES, true);
+            }
+
             public void setmodel(edict_s ent, string name)
             {
                 if (String.IsNullOrEmpty(name))
@@ -125,7 +140,7 @@ namespace Quake2 {
             }
 
             public QShared.trace_t trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
-                            edict_s passent, int contentmask)
+                            edict_s? passent, int contentmask)
             {
                 return server.SV_Trace(start, mins, maxs, end, passent, contentmask);
             }

@@ -823,7 +823,7 @@ namespace Quake2 {
                 return;
             }
 
-            // GL3_ResetShadowAliasModels();
+            GL3_ResetShadowAliasModels();
 
             /* draw non-transparent first */
             for (i = 0; i < gl3_newrefdef.num_entities; i++)
@@ -976,7 +976,7 @@ namespace Quake2 {
             /* build the transformation matrix for the given view angles */
             gl3_origin = gl3_newrefdef.vieworg;
 
-            QShared.AngleVectors(gl3_newrefdef.viewangles, ref vpn, ref vright, ref vup);
+            QShared.AngleVectors(gl3_newrefdef.viewangles, out vpn, out vright, out vup);
 
             /* current viewcluster */
             if ((gl3_newrefdef.rdflags & QShared.RDF_NOWORLDMODEL) == 0)
@@ -1153,6 +1153,33 @@ namespace Quake2 {
                 Left.M13 * Right.M41 + Left.M23 * Right.M42 + Left.M33 * Right.M43 + Left.M43 * Right.M44,
                 Left.M14 * Right.M41 + Left.M24 * Right.M42 + Left.M34 * Right.M43 + Left.M44 * Right.M44
             );
+        }
+
+        private Matrix4X4<float> HMM_Rotate(float Angle, in Vector3D<float> _Axis)
+        {
+            var Result = new Matrix4X4<float>();
+            
+            var Axis = Vector3D.Normalize(_Axis);
+            
+            float SinTheta = MathF.Sin(QShared.ToRadians(Angle));
+            float CosTheta = MathF.Cos(QShared.ToRadians(Angle));
+            float CosValue = 1.0f - CosTheta;
+            
+            Result.M11 = (Axis.X * Axis.X * CosValue) + CosTheta;
+            Result.M12 = (Axis.X * Axis.Y * CosValue) + (Axis.Z * SinTheta);
+            Result.M13 = (Axis.X * Axis.Z * CosValue) - (Axis.Y * SinTheta);
+            
+            Result.M21 = (Axis.Y * Axis.X * CosValue) - (Axis.Z * SinTheta);
+            Result.M22 = (Axis.Y * Axis.Y * CosValue) + CosTheta;
+            Result.M23 = (Axis.Y * Axis.Z * CosValue) + (Axis.X * SinTheta);
+            
+            Result.M31 = (Axis.Z * Axis.X * CosValue) + (Axis.Y * SinTheta);
+            Result.M32 = (Axis.Z * Axis.Y * CosValue) - (Axis.X * SinTheta);
+            Result.M33 = (Axis.Z * Axis.Z * CosValue) + CosTheta;
+
+            Result.M44 = 1;
+            
+            return Result;
         }
 
         private unsafe void SetupGL(GL gl)
@@ -1455,7 +1482,7 @@ namespace Quake2 {
 
             GL3_DrawParticles(gl);
 
-            // Ikn GL3_DrawAlphaSurfaces(gl);
+            GL3_DrawAlphaSurfaces(gl);
 
             // Note: R_Flash() is now GL3_Draw_Flash() and called from GL3_RenderFrame()
 

@@ -56,10 +56,7 @@ namespace Quake2 {
 
             var dl = CL_AllocDlight(i);
             dl.origin = cl_entities[i].current.origin;
-            var fv = new Vector3();
-            var rv = new Vector3();
-            var ignored = new Vector3();
-            QShared.AngleVectors(cl_entities[i].current.angles, ref fv, ref rv, ref ignored);
+            QShared.AngleVectors(cl_entities[i].current.angles, out var fv, out var rv, out var ignored);
             QShared.VectorMA(dl.origin, 18, fv, out dl.origin);
             QShared.VectorMA(dl.origin, 16, rv, out dl.origin);
 
@@ -116,15 +113,15 @@ namespace Quake2 {
             //         S_StartSound(NULL, i, CHAN_WEAPON, S_RegisterSound(
             //                     soundname), volume, ATTN_NORM, 0);
             //         break;
-            //     case MZ_SHOTGUN:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
+                case QShared.MZ_SHOTGUN:
+                    dl.color[0] = 1;
+                    dl.color[1] = 1;
+                    dl.color[2] = 0;
             //         S_StartSound(NULL, i, CHAN_WEAPON,
             //             S_RegisterSound("weapons/shotgf1b.wav"), volume, ATTN_NORM, 0);
             //         S_StartSound(NULL, i, CHAN_AUTO,
             //             S_RegisterSound("weapons/shotgr1b.wav"), volume, ATTN_NORM, 0.1f);
-            //         break;
+                    break;
             //     case MZ_SSHOTGUN:
             //         dl->color[0] = 1;
             //         dl->color[1] = 1;
@@ -309,6 +306,9 @@ namespace Quake2 {
             //         dl->color[2] = 1;
             //         dl->die = cl.time + 100;
             //         break;
+            default:
+                Console.WriteLine($"Unhandler MZ {weapon}");
+                break;
             }
         }
 
@@ -337,81 +337,82 @@ namespace Quake2 {
             }
 
             /* locate the origin */
-            // AngleVectors(cl_entities[ent].current.angles, forward, right, NULL);
-            // origin[0] = cl_entities[ent].current.origin[0] + forward[0] *
-            //             monster_flash_offset[flash_number][0] + right[0] *
-            //             monster_flash_offset[flash_number][1];
-            // origin[1] = cl_entities[ent].current.origin[1] + forward[1] *
-            //             monster_flash_offset[flash_number][0] + right[1] *
-            //             monster_flash_offset[flash_number][1];
-            // origin[2] = cl_entities[ent].current.origin[2] + forward[2] *
-            //             monster_flash_offset[flash_number][0] + right[2] *
-            //             monster_flash_offset[flash_number][1] +
-            //             monster_flash_offset[flash_number][2];
+            QShared.AngleVectors(cl_entities[ent].current.angles, out var forward, out var right, out var t1);
+            var origin = new Vector3();
+            origin[0] = cl_entities[ent].current.origin[0] + forward[0] *
+                        QShared.monster_flash_offset[flash_number][0] + right[0] *
+                        QShared.monster_flash_offset[flash_number][1];
+            origin[1] = cl_entities[ent].current.origin[1] + forward[1] *
+                        QShared.monster_flash_offset[flash_number][0] + right[1] *
+                        QShared.monster_flash_offset[flash_number][1];
+            origin[2] = cl_entities[ent].current.origin[2] + forward[2] *
+                        QShared.monster_flash_offset[flash_number][0] + right[2] *
+                        QShared.monster_flash_offset[flash_number][1] +
+                        QShared.monster_flash_offset[flash_number][2];
 
-            // dl = CL_AllocDlight(ent);
-            // VectorCopy(origin, dl->origin);
-            // dl->radius = 200.0f + (randk() & 31);
-            // dl->minlight = 32;
-            // dl->die = cl.time;
+            var dl = CL_AllocDlight(ent);
+            dl.origin = origin;
+            dl.radius = 200.0f + (QShared.randk() & 31);
+            dl.minlight = 32;
+            dl.die = cl.time;
 
-            // switch (flash_number)
-            // {
-            //     case MZ2_INFANTRY_MACHINEGUN_1:
-            //     case MZ2_INFANTRY_MACHINEGUN_2:
-            //     case MZ2_INFANTRY_MACHINEGUN_3:
-            //     case MZ2_INFANTRY_MACHINEGUN_4:
-            //     case MZ2_INFANTRY_MACHINEGUN_5:
-            //     case MZ2_INFANTRY_MACHINEGUN_6:
-            //     case MZ2_INFANTRY_MACHINEGUN_7:
-            //     case MZ2_INFANTRY_MACHINEGUN_8:
-            //     case MZ2_INFANTRY_MACHINEGUN_9:
-            //     case MZ2_INFANTRY_MACHINEGUN_10:
-            //     case MZ2_INFANTRY_MACHINEGUN_11:
-            //     case MZ2_INFANTRY_MACHINEGUN_12:
-            //     case MZ2_INFANTRY_MACHINEGUN_13:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
-            //         CL_ParticleEffect(origin, vec3_origin, 0, 40);
-            //         CL_SmokeAndFlash(origin);
+            switch (flash_number)
+            {
+                case QShared.MZ2_INFANTRY_MACHINEGUN_1:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_2:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_3:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_4:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_5:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_6:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_7:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_8:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_9:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_10:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_11:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_12:
+                case QShared.MZ2_INFANTRY_MACHINEGUN_13:
+                    dl.color[0] = 1;
+                    dl.color[1] = 1;
+                    dl.color[2] = 0;
+                    CL_ParticleEffect(origin, Vector3.Zero, 0, 40);
+                    CL_SmokeAndFlash(origin);
             //         S_StartSound(NULL, ent, CHAN_WEAPON,
             //             S_RegisterSound("infantry/infatck1.wav"), 1, ATTN_NORM, 0);
-            //         break;
+                    break;
 
-            //     case MZ2_SOLDIER_MACHINEGUN_1:
-            //     case MZ2_SOLDIER_MACHINEGUN_2:
-            //     case MZ2_SOLDIER_MACHINEGUN_3:
-            //     case MZ2_SOLDIER_MACHINEGUN_4:
-            //     case MZ2_SOLDIER_MACHINEGUN_5:
-            //     case MZ2_SOLDIER_MACHINEGUN_6:
-            //     case MZ2_SOLDIER_MACHINEGUN_7:
-            //     case MZ2_SOLDIER_MACHINEGUN_8:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
-            //         CL_ParticleEffect(origin, vec3_origin, 0, 40);
-            //         CL_SmokeAndFlash(origin);
+                case QShared.MZ2_SOLDIER_MACHINEGUN_1:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_2:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_3:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_4:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_5:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_6:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_7:
+                case QShared.MZ2_SOLDIER_MACHINEGUN_8:
+                    dl.color[0] = 1;
+                    dl.color[1] = 1;
+                    dl.color[2] = 0;
+                    CL_ParticleEffect(origin, Vector3.Zero, 0, 40);
+                    CL_SmokeAndFlash(origin);
             //         S_StartSound(NULL, ent, CHAN_WEAPON,
             //             S_RegisterSound("soldier/solatck3.wav"), 1, ATTN_NORM, 0);
-            //         break;
+                    break;
 
-            //     case MZ2_GUNNER_MACHINEGUN_1:
-            //     case MZ2_GUNNER_MACHINEGUN_2:
-            //     case MZ2_GUNNER_MACHINEGUN_3:
-            //     case MZ2_GUNNER_MACHINEGUN_4:
-            //     case MZ2_GUNNER_MACHINEGUN_5:
-            //     case MZ2_GUNNER_MACHINEGUN_6:
-            //     case MZ2_GUNNER_MACHINEGUN_7:
-            //     case MZ2_GUNNER_MACHINEGUN_8:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
-            //         CL_ParticleEffect(origin, vec3_origin, 0, 40);
-            //         CL_SmokeAndFlash(origin);
+                case QShared.MZ2_GUNNER_MACHINEGUN_1:
+                case QShared.MZ2_GUNNER_MACHINEGUN_2:
+                case QShared.MZ2_GUNNER_MACHINEGUN_3:
+                case QShared.MZ2_GUNNER_MACHINEGUN_4:
+                case QShared.MZ2_GUNNER_MACHINEGUN_5:
+                case QShared.MZ2_GUNNER_MACHINEGUN_6:
+                case QShared.MZ2_GUNNER_MACHINEGUN_7:
+                case QShared.MZ2_GUNNER_MACHINEGUN_8:
+                    dl.color[0] = 1;
+                    dl.color[1] = 1;
+                    dl.color[2] = 0;
+                    CL_ParticleEffect(origin, Vector3.Zero, 0, 40);
+                    CL_SmokeAndFlash(origin);
             //         S_StartSound(NULL, ent, CHAN_WEAPON,
             //             S_RegisterSound("gunner/gunatck2.wav"), 1, ATTN_NORM, 0);
-            //         break;
+                    break;
 
             //     case MZ2_ACTOR_MACHINEGUN_1:
             //     case MZ2_SUPERTANK_MACHINEGUN_1:
@@ -448,21 +449,21 @@ namespace Quake2 {
             //             S_RegisterSound("infantry/infatck1.wav"), 1, ATTN_NONE, 0);
             //         break;
 
-            //     case MZ2_SOLDIER_BLASTER_1:
-            //     case MZ2_SOLDIER_BLASTER_2:
-            //     case MZ2_SOLDIER_BLASTER_3:
-            //     case MZ2_SOLDIER_BLASTER_4:
-            //     case MZ2_SOLDIER_BLASTER_5:
-            //     case MZ2_SOLDIER_BLASTER_6:
-            //     case MZ2_SOLDIER_BLASTER_7:
-            //     case MZ2_SOLDIER_BLASTER_8:
-            //     case MZ2_TURRET_BLASTER:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
+                case QShared.MZ2_SOLDIER_BLASTER_1:
+                case QShared.MZ2_SOLDIER_BLASTER_2:
+                case QShared.MZ2_SOLDIER_BLASTER_3:
+                case QShared.MZ2_SOLDIER_BLASTER_4:
+                case QShared.MZ2_SOLDIER_BLASTER_5:
+                case QShared.MZ2_SOLDIER_BLASTER_6:
+                case QShared.MZ2_SOLDIER_BLASTER_7:
+                case QShared.MZ2_SOLDIER_BLASTER_8:
+                case QShared.MZ2_TURRET_BLASTER:
+                    dl.color[0] = 1;
+                    dl.color[1] = 1;
+                    dl.color[2] = 0;
             //         S_StartSound(NULL, ent, CHAN_WEAPON,
             //             S_RegisterSound("soldier/solatck2.wav"), 1, ATTN_NORM, 0);
-            //         break;
+                    break;
 
             //     case MZ2_FLYER_BLASTER_1:
             //     case MZ2_FLYER_BLASTER_2:
@@ -513,15 +514,15 @@ namespace Quake2 {
             //             S_RegisterSound("soldier/solatck1.wav"), 1, ATTN_NORM, 0);
             //         break;
 
-            //     case MZ2_TANK_BLASTER_1:
-            //     case MZ2_TANK_BLASTER_2:
-            //     case MZ2_TANK_BLASTER_3:
-            //         dl->color[0] = 1;
-            //         dl->color[1] = 1;
-            //         dl->color[2] = 0;
+                case QShared.MZ2_TANK_BLASTER_1:
+                case QShared.MZ2_TANK_BLASTER_2:
+                case QShared.MZ2_TANK_BLASTER_3:
+                    dl.color[0] = 1;
+                    dl.color[1] = 1;
+                    dl.color[2] = 0;
             //         S_StartSound(NULL, ent, CHAN_WEAPON,
             //             S_RegisterSound("tank/tnkatck3.wav"), 1, ATTN_NORM, 0);
-            //         break;
+                    break;
 
             //     case MZ2_TANK_MACHINEGUN_1:
             //     case MZ2_TANK_MACHINEGUN_2:
@@ -763,7 +764,10 @@ namespace Quake2 {
             //         dl->color[2] = 0;
             //         dl->die = cl.time + 200;
             //         break;
-            // }
+            default:
+                Console.WriteLine($"Unhandler MZ2 {flash_number}");
+                break;
+            }
         }        
 
 

@@ -182,6 +182,7 @@ namespace Quake2 {
                 return null;
             }
 
+
             /* call the apropriate loader */
             var id = BitConverter.ToInt32(buf);
             gl3model_t? mod = null;
@@ -192,6 +193,7 @@ namespace Quake2 {
                     break;
 
                 case QCommon.IDSPRITEHEADER:
+                    Console.WriteLine("==== IDSPRITEHEADER =====");
             //         GL3_LoadSP2(mod, buf, modfilelen);
                     break;
 
@@ -809,15 +811,15 @@ namespace Quake2 {
                         qref.GL3_SubdivideSurface(ref surfaces[surfnum], this); /* cut up polygon for warps */
                     }
 
-                    // if (r_fixsurfsky?.Bool ?? false)
-                    // {
-                    //     if ((outd.texinfo.flags & QCommon.SURF_SKY) != 0)
-                    //     {
-                    //         outd.flags |= SURF_DRAWSKY;
-                    //     }
-                    // }
+                    if (qref.r_fixsurfsky?.Bool ?? false)
+                    {
+                        if ((outd.texinfo.flags & QCommon.SURF_SKY) != 0)
+                        {
+                            outd.flags |= SURF_DRAWSKY;
+                        }
+                    }
 
-                    // /* create lightmaps and polygons */
+                    /* create lightmaps and polygons */
                     if ((outd.texinfo.flags & (QCommon.SURF_SKY | QCommon.SURF_TRANS33 | QCommon.SURF_TRANS66 | QCommon.SURF_WARP)) == 0)
                     {
                         qref.GL3_LM_CreateSurfaceLightmap(gl, ref surfaces[surfnum]);

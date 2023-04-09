@@ -425,10 +425,7 @@ namespace Quake2 {
                 }
             }
 
-            var forward = new Vector3();
-            var left = new Vector3();
-            var up = new Vector3();
-            QShared.AngleVectors(ent.s.angles, ref forward, ref left, ref up);
+            QShared.AngleVectors(ent.s.angles, out var forward, out var left, out var up);
 
             for (int i = 0; i < 8; i++)
             {
@@ -601,10 +598,7 @@ namespace Quake2 {
 
             /* we need this for pushing things later */
             var org = -amove;
-            var forward = new Vector3();
-            var right = new Vector3();
-            var up = new Vector3();
-            QShared.AngleVectors(org, ref forward, ref right, ref up);
+            QShared.AngleVectors(org, out var forward, out var right, out var up);
 
             /* save the pusher's original position */
             pushed[pushed_i].ent = pusher;

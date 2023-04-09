@@ -259,18 +259,17 @@ namespace Quake2 {
 
             var image = TextureAnimation(currententity, fa.texinfo!);
 
-            // if (fa->flags & SURF_DRAWTURB)
-            // {
-            //     GL3_Bind(image->texnum);
-
-            //     GL3_EmitWaterPolys(fa);
-
-            //     return;
-            // }
-            // else
-            // {
+            if ((fa.flags & SURF_DRAWTURB) != 0)
+            {
                 GL3_Bind(gl, image.texnum);
-            // }
+                GL3_EmitWaterPolys(gl, fa);
+
+                return;
+            }
+            else
+            {
+                GL3_Bind(gl, image.texnum);
+            }
 
             var lmScales = new Vector4[MAX_LIGHTMAPS_PER_SURFACE];
             lmScales[0] = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -338,7 +337,7 @@ namespace Quake2 {
 
                 if ((s.flags & SURF_DRAWTURB) != 0)
                 {
-                //     // GL3_EmitWaterPolys(s);
+                    GL3_EmitWaterPolys(gl, s);
                 }
                 else if ((s.texinfo.flags & QCommon.SURF_FLOWING) != 0)
                 {
@@ -453,14 +452,14 @@ namespace Quake2 {
 
             // psurf = &currentmodel->surfaces[currentmodel->firstmodelsurface];
 
-            // if (currententity->flags & RF_TRANSLUCENT)
-            // {
-            //     glEnable(GL_BLEND);
-            //     /* TODO: should I care about the 0.25 part? we'll just set alpha to 0.33 or 0.66 depending on surface flag..
-            //     glColor4f(1, 1, 1, 0.25);
-            //     R_TexEnv(GL_MODULATE);
-            //     */
-            // }
+            if ((currententity.flags & QShared.RF_TRANSLUCENT) != 0)
+            {
+                gl.Enable(EnableCap.Blend);
+                /* TODO: should I care about the 0.25 part? we'll just set alpha to 0.33 or 0.66 depending on surface flag..
+                glColor4f(1, 1, 1, 0.25);
+                R_TexEnv(GL_MODULATE);
+                */
+            }
 
             /* draw texture */
             for (int i = 0; i < currentmodel.nummodelsurfaces; i++)
@@ -493,10 +492,10 @@ namespace Quake2 {
                 }
             }
 
-            // if (currententity->flags & RF_TRANSLUCENT)
-            // {
-            //     glDisable(GL_BLEND);
-            // }
+            if ((currententity.flags & QShared.RF_TRANSLUCENT) != 0)
+            {
+                gl.Disable(EnableCap.Blend);
+            }
         }
 
         private void GL3_DrawBrushModel(GL gl, ref entity_t e, in gl3brushmodel_t currentmodel)
@@ -542,12 +541,8 @@ namespace Quake2 {
 
             if (rotated)
             {
-                var forward = new Vector3();
-                var right = new Vector3();
-                var up = new Vector3();
-
                 var temp = modelorg;
-                QShared.AngleVectors(e.angles, ref forward, ref right, ref up);
+                QShared.AngleVectors(e.angles, out var forward, out var right, out var up);
                 modelorg.X = Vector3.Dot(temp, forward);
                 modelorg.Y = -Vector3.Dot(temp, right);
                 modelorg.Z = Vector3.Dot(temp, up);
@@ -605,14 +600,14 @@ namespace Quake2 {
             {
                 var pleaf = (mleaf_t)anode;
 
-        //         /* check for door connected areas */
-        //         if (gl3_newrefdef.areabits)
-        //         {
-        //             if (!(gl3_newrefdef.areabits[pleaf->area >> 3] & (1 << (pleaf->area & 7))))
-        //             {
-        //                 return; /* not visible */
-        //             }
-        //         }
+                /* check for door connected areas */
+                if (gl3_newrefdef.areabits != null)
+                {
+                    if ((gl3_newrefdef.areabits[pleaf.area >> 3] & (1 << (pleaf.area & 7))) == 0)
+                    {
+                        return; /* not visible */
+                    }
+                }
 
                 // mark = pleaf->firstmarksurface;
                 // var c = pleaf.nummarksurfaces;

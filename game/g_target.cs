@@ -119,25 +119,25 @@ namespace Quake2 {
 
             // ent->noise_index = gi.soundindex(buffer);
 
-            // if (!ent->volume)
-            // {
-            //     ent->volume = 1.0;
-            // }
+            if (ent.volume == 0)
+            {
+                ent.volume = 1;
+            }
 
-            // if (!ent->attenuation)
-            // {
-            //     ent->attenuation = 1.0;
-            // }
-            // else if (ent->attenuation == -1) /* use -1 so 0 defaults to 1 */
-            // {
-            //     ent->attenuation = 0;
-            // }
+            if (ent.attenuation == 0)
+            {
+                ent.attenuation = 1;
+            }
+            else if (ent.attenuation == -1) /* use -1 so 0 defaults to 1 */
+            {
+                ent.attenuation = 0;
+            }
 
-            // /* check for prestarted looping sound */
-            // if (ent->spawnflags & 1)
-            // {
-            //     ent->s.sound = ent->noise_index;
-            // }
+            /* check for prestarted looping sound */
+            if ((ent.spawnflags & 1) != 0)
+            {
+                ent.s.sound = ent.noise_index;
+            }
 
             ent.use = g.Use_Target_Speaker;
 
@@ -169,8 +169,8 @@ namespace Quake2 {
             gi.WritePosition(self.s.origin);
             gi.multicast(self.s.origin, QShared.multicast_t.MULTICAST_PHS);
 
-            // T_RadiusDamage(self, self->activator, self->dmg, NULL,
-            //         self->dmg + 40, MOD_EXPLOSIVE);
+            T_RadiusDamage(self, self.activator, self.dmg, null,
+                    self.dmg + 40, MOD_EXPLOSIVE);
 
             var save = self.delay;
             self.delay = 0;

@@ -313,6 +313,39 @@ namespace Quake2 {
             SCR_DrawFieldScaled(x, y, color, width, value, 1.0f);
         }
 
+        /*
+        * Allows rendering code to cache all needed sbar graphics
+        */
+        private void SCR_TouchPics()
+        {
+            // int i, j;
+
+            // for (i = 0; i < 2; i++)
+            // {
+            //     for (j = 0; j < 11; j++)
+            //     {
+            //         Draw_FindPic(sb_nums[i][j]);
+            //     }
+            // }
+
+            // if (crosshair->value)
+            // {
+            //     if ((crosshair->value > 3) || (crosshair->value < 0))
+            //     {
+            //         crosshair->value = 3;
+            //     }
+
+            //     Com_sprintf(crosshair_pic, sizeof(crosshair_pic), "ch%i",
+            //             (int)(crosshair->value));
+            //     Draw_GetPicSize(&crosshair_width, &crosshair_height, crosshair_pic);
+
+            //     if (!crosshair_width)
+            //     {
+            //         crosshair_pic[0] = 0;
+            //     }
+            // }
+        }
+
         private void SCR_ExecuteLayoutString(string s)
         {
             // int x, y;
@@ -588,29 +621,24 @@ namespace Quake2 {
                     continue;
                 }
 
-            //     if (!strcmp(token, "rnum"))
-            //     {
-            //         /* armor number */
-            //         int color;
+                if (token.Equals("rnum"))
+                {
+                    /* armor number */
+                    int value = cl.frame.playerstate.stats[QShared.STAT_ARMOR];
 
-            //         width = 3;
-            //         value = cl.frame.playerstate.stats[STAT_ARMOR];
+                    if (value < 1)
+                    {
+                        continue;
+                    }
 
-            //         if (value < 1)
-            //         {
-            //             continue;
-            //         }
+                    if ((cl.frame.playerstate.stats[QShared.STAT_FLASHES] & 2) != 0)
+                    {
+                        vid.Draw_PicScaled(x, y, "field_3", scale);
+                    }
 
-            //         color = 0; /* green */
-
-            //         if (cl.frame.playerstate.stats[STAT_FLASHES] & 2)
-            //         {
-            //             Draw_PicScaled(x, y, "field_3", scale);
-            //         }
-
-            //         SCR_DrawFieldScaled(x, y, color, width, value, scale);
-            //         continue;
-            //     }
+                    SCR_DrawFieldScaled(x, y, 0, 3, value, scale);
+                    continue;
+                }
 
                 if (token.Equals("stat_string"))
                 {
@@ -627,6 +655,9 @@ namespace Quake2 {
                     if ((indx < 0) || (indx >= QShared.MAX_CONFIGSTRINGS))
                     {
                         common.Com_Error(QShared.ERR_DROP, "Bad stat_string index");
+                    }
+                    if (cl.configstrings[indx] == null) {
+                        Console.WriteLine($"Empty string {indx}");
                     }
 
                     DrawStringScaled(x, y, cl.configstrings[indx], scale);

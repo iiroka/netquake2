@@ -215,6 +215,40 @@ namespace Quake2 {
             R_SubdividePolygon(numverts, verts, ref fa);
         }
 
+        /*
+        * Does a water warp on the pre-fragmented glpoly_t chain
+        */
+        private void GL3_EmitWaterPolys(GL gl, msurface_t fa)
+        {
+            // glpoly_t *bp;
+            float scroll = 0.0f;
+
+            if ((fa.texinfo!.flags & QCommon.SURF_FLOWING) != 0)
+            {
+                scroll = -64.0f * ((gl3_newrefdef.time * 0.5f) - (int)(gl3_newrefdef.time * 0.5));
+                if (scroll == 0.0f) // this is done in GL3_DrawGLFlowingPoly() TODO: keep?
+                {
+                    scroll = -64.0f;
+                }
+            }
+
+            if(gl3state.uni3DData.scroll != scroll)
+            {
+                gl3state.uni3DData.scroll = scroll;
+                GL3_UpdateUBO3D(gl);
+            }
+
+            GL3_UseProgram(gl, gl3state.si3Dturb.shaderProgram);
+
+            GL3_BindVAO(gl, gl3state.vao3D);
+            GL3_BindVBO(gl, gl3state.vbo3D);
+
+            for (var bp = fa.polys; bp != null; bp = bp.next)
+            {
+                GL3_BufferAndDraw3D(gl, bp.vertices, PrimitiveType.TriangleFan);
+            }
+        }        
+
         // ########### below: Sky-specific stuff ##########
 
         private const float ON_EPSILON = 0.1f; /* point on plane side epsilon */
@@ -653,7 +687,7 @@ namespace Quake2 {
             {
                 // glRotatef(gl3_newrefdef.time * skyrotate, skyaxis[0], skyaxis[1], skyaxis[2]);
                 var rotAxis = new Vector3D<float>(skyaxis.X, skyaxis.Y, skyaxis.Z);
-                // modMVmat = HMM_MultiplyMat4(modMVmat, HMM_Rotate(gl3_newrefdef.time * skyrotate, rotAxis));
+                modMVmat = HMM_MultiplyMat4(modMVmat, HMM_Rotate(gl3_newrefdef.time * skyrotate, rotAxis));
             }
             gl3state.uni3DData.transModelMat4 = modMVmat;
             GL3_UpdateUBO3D(gl);

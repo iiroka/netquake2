@@ -121,7 +121,7 @@ namespace Quake2 {
             }
 
             /* get info on new armor */
-            var newinfo = (gitem_armor_t)ent.item!.info;
+            var newinfo = (gitem_armor_t)ent.item!.info!;
 
             var old_armor_index = g.ArmorIndex(other);
             gclient_t oclient = (gclient_t)other.client!;
@@ -245,21 +245,20 @@ namespace Quake2 {
                 oclient.bonus_alpha = 0.25f;
 
                 /* show icon and name on status bar */
-                // oclient.ps.stats[STAT_PICKUP_ICON] =
-                //     gi.imageindex( ent->item->icon);
+                oclient.ps.stats[QShared.STAT_PICKUP_ICON] = (short)gi.imageindex( ent.item.icon! );
                 oclient.ps.stats[QShared.STAT_PICKUP_STRING] =
                     (short)(QShared.CS_ITEMS + ent.item.index);
                 oclient.pickup_msg_time = level.time + 3.0f;
 
                 /* change selected item */
-                // if (ent.item.use)
-                // {
-                //     other->client->pers.selected_item =
-                //         other->client->ps.stats[STAT_SELECTED_ITEM] =
-                //         ITEM_INDEX( ent->item);
-                // }
+                if (ent.item.use != null)
+                {
+                    oclient.pers.selected_item =
+                        oclient.ps.stats[QShared.STAT_SELECTED_ITEM] =
+                            (short)ent.item.index;
+                }
 
-                // if (ent->item->pickup == Pickup_Health)
+                // if (ent.item.pickup == Pickup_Health)
                 // {
                 //     if (ent->count == 2)
                 //     {
@@ -312,9 +311,9 @@ namespace Quake2 {
                 // }
             }
 
-            // if (!(ent->spawnflags & ITEM_TARGETS_USED))
+            // if ((ent.spawnflags & ITEM_TARGETS_USED) == 0)
             // {
-            //     G_UseTargets(ent, other);
+                // G_UseTargets(ent, other);
             //     ent->spawnflags |= ITEM_TARGETS_USED;
             // }
 
@@ -323,9 +322,9 @@ namespace Quake2 {
                 return;
             }
 
-            // if (!((coop->value) &&
-            //     (ent->item->flags & IT_STAY_COOP)) ||
-            //     (ent->spawnflags & (DROPPED_ITEM | DROPPED_PLAYER_ITEM)))
+            // if (!(coop!.Bool &&
+            //     (ent.item.flags & IT_STAY_COOP) != 0) ||
+            //     (ent.spawnflags & (DROPPED_ITEM | DROPPED_PLAYER_ITEM)) != 0)
             // {
             //     if (ent->flags & FL_RESPAWN)
             //     {
@@ -333,9 +332,33 @@ namespace Quake2 {
             //     }
             //     else
             //     {
-            //         G_FreeEdict(ent);
+                    G_FreeEdict(ent);
             //     }
             // }
+        }
+
+        private void Use_Item(edict_t ent, edict_t _other /* unused */, edict_t? _activator /* unused */)
+        {
+            if (ent == null)
+            {
+                return;
+            }
+
+            ent.svflags &= ~QGameFlags.SVF_NOCLIENT;
+            ent.use = null;
+
+            if ((ent.spawnflags & ITEM_NO_TOUCH) != 0)
+            {
+                ent.solid = solid_t.SOLID_BBOX;
+                ent.touch = null;
+            }
+            else
+            {
+                ent.solid = solid_t.SOLID_TRIGGER;
+                ent.touch = Touch_Item;
+            }
+
+            gi.linkentity(ent);
         }
 
         /* ====================================================================== */
@@ -396,20 +419,20 @@ namespace Quake2 {
             //     }
             // }
 
-            // if (ent->spawnflags & ITEM_NO_TOUCH)
-            // {
-            //     ent->solid = SOLID_BBOX;
-            //     ent->touch = NULL;
-            //     ent->s.effects &= ~EF_ROTATE;
-            //     ent->s.renderfx &= ~RF_GLOW;
-            // }
+            if ((ent.spawnflags & ITEM_NO_TOUCH) != 0)
+            {
+                ent.solid = solid_t.SOLID_BBOX;
+                ent.touch = null;
+                ent.s.effects &= uint.MaxValue ^ QShared.EF_ROTATE;
+                ent.s.renderfx &= ~QShared.RF_GLOW;
+            }
 
-            // if (ent->spawnflags & ITEM_TRIGGER_SPAWN)
-            // {
-            //     ent->svflags |= SVF_NOCLIENT;
-            //     ent->solid = SOLID_NOT;
-            //     ent->use = Use_Item;
-            // }
+            if ((ent.spawnflags & ITEM_TRIGGER_SPAWN) != 0)
+            {
+                ent.svflags |= QGameFlags.SVF_NOCLIENT;
+                ent.solid = solid_t.SOLID_NOT;
+                ent.use = Use_Item;
+            }
 
             gi.linkentity(ent);
         }
@@ -521,15 +544,15 @@ namespace Quake2 {
             new gitem_t(){
                 classname = "item_armor_body",
                 pickup = Pickup_Armor,
-                // NULL,
-                // NULL,
+                use = null,
+                drop = null,
                 weaponthink = null,
                 // "misc/ar1_pkup.wav",
                 world_model = "models/items/armor/body/tris.md2", 
                 world_model_flags = QShared.EF_ROTATE,
                 icon = "i_bodyarmor",
                 pickup_name = "Body Armor",
-                // 3,
+                count_width = 3,
                 // 0,
                 // NULL,
                 // IT_ARMOR,
@@ -543,15 +566,15 @@ namespace Quake2 {
             new gitem_t(){
                 classname = "item_armor_combat",
                 pickup = Pickup_Armor,
-                // NULL,
-                // NULL,
+                use = null,
+                drop = null,
                 weaponthink = null,
                 // "misc/ar1_pkup.wav",
                 world_model = "models/items/armor/combat/tris.md2", 
                 world_model_flags = QShared.EF_ROTATE,
                 icon = "i_combatarmor",
                 pickup_name = "Combat Armor",
-                // 3,
+                count_width = 3,
                 // 0,
                 // NULL,
                 // IT_ARMOR,
@@ -565,15 +588,15 @@ namespace Quake2 {
             new gitem_t(){
                 classname = "item_armor_jacket",
                 pickup = Pickup_Armor,
-                // NULL,
-                // NULL,
+                use = null,
+                drop = null,
                 weaponthink = null,
                 // "misc/ar1_pkup.wav",
                 world_model = "models/items/armor/jacket/tris.md2", 
                 world_model_flags = QShared.EF_ROTATE,
                 icon = "i_jacketarmor",
                 pickup_name = "Jacket Armor",
-                // 3,
+                count_width = 3,
                 // 0,
                 // NULL,
                 // IT_ARMOR,
@@ -587,15 +610,15 @@ namespace Quake2 {
             new gitem_t(){
                 classname = "item_armor_shard",
                 pickup = Pickup_Armor,
-                // NULL,
-                // NULL,
+                use = null,
+                drop = null,
                 weaponthink = null,
                 // "misc/ar2_pkup.wav",
                 world_model = "models/items/armor/shard/tris.md2", 
                 world_model_flags = QShared.EF_ROTATE,
                 icon = "i_jacketarmor",
                 pickup_name = "Armor Shard",
-                // 3,
+                count_width = 3,
                 // 0,
                 // NULL,
                 // IT_ARMOR,
@@ -617,7 +640,7 @@ namespace Quake2 {
                 world_model_flags = QShared.EF_ROTATE,
                 icon = "i_powerscreen",
                 pickup_name = "Power Screen",
-                // 0,
+                count_width = 0,
                 // 60,
                 // NULL,
                 // IT_ARMOR,
@@ -639,7 +662,7 @@ namespace Quake2 {
                 world_model_flags = QShared.EF_ROTATE,
                 icon = "i_powershield",
                 pickup_name = "Power Shield",
-                // 0,
+                count_width = 0,
                 // 60,
                 // NULL,
                 // IT_ARMOR,
@@ -653,9 +676,9 @@ namespace Quake2 {
             always owned, never in the world */
             new gitem_t(){
                 classname = "weapon_blaster",
-                // NULL,
+                pickup = null,
                 // Use_Weapon,
-                // NULL,
+                drop = null,
                 weaponthink = Weapon_Blaster,
                 // "misc/w_pkup.wav",
                 world_model = null, 
@@ -663,7 +686,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_blast/tris.md2",
                 icon = "w_blaster",
                 pickup_name = "Blaster",
-                // 0,
+                count_width = 0,
                 // 0,
                 // NULL,
                 // IT_WEAPON | IT_STAY_COOP,
@@ -686,7 +709,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_shotg/tris.md2",
                 icon = "w_shotgun",
                 pickup_name = "Shotgun",
-                // 0,
+                count_width = 0,
                 // 1,
                 // "Shells",
                 // IT_WEAPON | IT_STAY_COOP,
@@ -709,7 +732,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_shotg2/tris.md2",
                 icon = "w_sshotgun",
                 pickup_name = "Super Shotgun",
-                // 0,
+                count_width = 0,
                 // 2,
                 // "Shells",
                 // IT_WEAPON | IT_STAY_COOP,
@@ -732,7 +755,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_machn/tris.md2",
                 icon = "w_machinegun",
                 pickup_name = "Machinegun",
-                // 0,
+                count_width = 0,
                 // 1,
                 // "Bullets",
                 // IT_WEAPON | IT_STAY_COOP,
@@ -755,7 +778,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_chain/tris.md2",
                 icon = "w_chaingun",
                 pickup_name = "Chaingun",
-                // 0,
+                count_width = 0,
                 // 1,
                 // "Bullets",
                 // IT_WEAPON | IT_STAY_COOP,
@@ -778,7 +801,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_handgr/tris.md2",
                 icon = "a_grenades",
                 pickup_name = "Grenades",
-                // 3,
+                count_width = 3,
                 // 5,
                 // "grenades",
                 // IT_AMMO | IT_WEAPON,
@@ -801,7 +824,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_launch/tris.md2",
                 icon = "w_glauncher",
                 pickup_name = "Grenade Launcher",
-                // 0,
+                count_width = 0,
                 // 1,
                 // "Grenades",
                 // IT_WEAPON | IT_STAY_COOP,
@@ -824,7 +847,7 @@ namespace Quake2 {
                 view_model = "models/weapons/v_rocket/tris.md2",
                 icon = "w_rlauncher",
                 pickup_name = "Rocket Launcher",
-                // 0,
+                count_width = 0,
                 // 1,
                 // "Rockets",
                 // IT_WEAPON | IT_STAY_COOP,
@@ -1540,6 +1563,18 @@ namespace Quake2 {
             {
                 itemlist[i] = (gitem_t)gameitemlist[i].Clone();
                 itemlist[i].index = i;
+            }
+        }
+
+        /*
+        * Called by worldspawn
+        */
+        private void SetItemNames()
+        {
+            for (int i = 0; i < itemlist.Length; i++)
+            {
+                ref var it = ref itemlist[i];
+                gi.configstring(QShared.CS_ITEMS + i, it.pickup_name!);
             }
 
             jacket_armor_index = FindItem("Jacket Armor")?.index ?? 0;

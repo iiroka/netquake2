@@ -500,7 +500,7 @@ namespace Quake2 {
             public Vector3 mins2, maxs2; /* size when clipping against mosnters */
             public Vector3 start, end;
             public QShared.trace_t trace;
-            public edict_s passedict;
+            public edict_s? passedict;
             public int contentmask;
         }
 
@@ -645,7 +645,7 @@ namespace Quake2 {
         * Passedict and edicts owned by passedict are explicitly not checked.
         */
         private QShared.trace_t SV_Trace(in Vector3 start, in Vector3? mins, in Vector3? maxs, in Vector3 end,
-                edict_s passedict, int contentmask)
+                edict_s? passedict, int contentmask)
         {
             var clip = new moveclip_t();
             clip.trace = new QShared.trace_t();

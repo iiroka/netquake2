@@ -58,9 +58,9 @@ namespace Quake2 {
         private void DrawStringScaled(int x, int y, string s, float factor)
         {
             int index = 0;
-            while (index < s.Length)
+            while (index < (s?.Length ?? 0))
             {
-                vid.Draw_CharScaled(x, y, s[index], factor);
+                vid.Draw_CharScaled(x, y, s![index], factor);
                 x += (int)(8*factor);
                 index++;
             }

@@ -102,7 +102,7 @@ namespace Quake2 {
             {"path_corner", SP_path_corner},
             // {"point_combat", SP_point_combat},
 
-            // {"misc_explobox", SP_misc_explobox},
+            {"misc_explobox", SP_misc_explobox},
             // {"misc_banner", SP_misc_banner},
             // {"misc_satellite_dish", SP_misc_satellite_dish},
             // {"misc_gib_arm", SP_misc_gib_arm},
@@ -374,7 +374,7 @@ namespace Quake2 {
 
             if (skill!.Int != skill_level)
             {
-                // gi.cvar_forceset("skill", va("%f", skill_level));
+                gi.cvar_forceset("skill", skill_level.ToString());
             }
 
             // SaveClientData();
@@ -641,8 +641,8 @@ namespace Quake2 {
             player bodies for coop / deathmatch */
             // InitBodyQue();
 
-            // /* set configstrings for items */
-            // SetItemNames();
+            /* set configstrings for items */
+            g.SetItemNames();
 
             if (!String.IsNullOrEmpty(g.st.nextmap))
             {
@@ -690,19 +690,19 @@ namespace Quake2 {
             /* --------------- */
 
             /* help icon for statusbar */
-            // gi.imageindex("i_help");
-            // g.level.pic_health = g.gi.imageindex("i_health");
-            // gi.imageindex("help");
-            // gi.imageindex("field_3");
+            g.gi.imageindex("i_help");
+            g.level.pic_health = g.gi.imageindex("i_health");
+            g.gi.imageindex("help");
+            g.gi.imageindex("field_3");
 
-            // if (!st.gravity)
-            // {
-            //     gi.cvar_set("sv_gravity", "800");
-            // }
-            // else
-            // {
-            //     gi.cvar_set("sv_gravity", st.gravity);
-            // }
+            if (g.st.gravity == null)
+            {
+                g.gi.cvar_set("sv_gravity", "800");
+            }
+            else
+            {
+                g.gi.cvar_set("sv_gravity", g.st.gravity);
+            }
 
             // snd_fry = gi.soundindex("player/fry.wav"); /* standing in lava / slime */
 
